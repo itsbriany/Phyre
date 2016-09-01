@@ -1,5 +1,5 @@
 os: Visual Studio 2015
 
 environment:
-  BOOST_ROOT: C:\Libraries\boost_1_57_0
+  BOOST_ROOT: C:\Libraries\boost_1_59_0
   
