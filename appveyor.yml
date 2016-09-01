@@ -1,5 +1,5 @@
 before_build:
-  - cmd: dir C:\Libraries\boost_1_59_0
+  - cmd: dir C:\Libraries\boost_1_59_0\boost\lambda
 
 environment:
   BOOST_ROOT: C:\Libraries\boost_1_59_0
