@@ -1,7 +1,9 @@
 before_build:
-  - cmd: dir C:\Libraries\boost_1_59_0\boost\lambda
+  - cmd: SET
+
+after_build:
+  - cmd: SET
 
 environment:
   BOOST_ROOT: C:\Libraries\boost_1_59_0
   BOOST_LIBRARYDIR: C:\Libraries\boost_1_59_0\lib64-msvc-14.0
-  
