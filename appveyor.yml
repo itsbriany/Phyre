@@ -1,6 +1,5 @@
 before_build:
-  - cmd: set BOOST_ROOT=C:\Libraries\boost_1_59_0
-  - cmd: set BOOST_LIBRARYDIR=%BOOST_ROOT%\lib64-msvc-14.0
+  - SET
 
 environment:
   BOOST_ROOT: C:\Libraries\boost_1_59_0
