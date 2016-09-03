@@ -18,6 +18,7 @@ environment:
   GAME_ENGINE_ROOT: C:\projects\GameEngine
   GOOGLE_TEST_DISTRIBUTION: C:\projects\GameEngine\ThirdParty\googletest
   GTEST_ROOT: C:\projects\GameEngine\ThirdParty\googletest\googletest
+  PROTOBUF_ROOT: C:\projects\GameEngine\ThirdParty\protobuf
 
 
 build:

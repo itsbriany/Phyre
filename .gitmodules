@@ -4,3 +4,6 @@
 [submodule "ThirdParty/protobuf"]
 	path = ThirdParty/protobuf
 	url = https://github.com/google/protobuf.git
+[submodule "GameEngine/GameEngine.Common/GameEngineCommon"]
+	path = GameEngine/GameEngine.Common/GameEngineCommon
+	url = https://github.com/itsbriany/GameEngineCommon.git

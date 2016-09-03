@@ -252,4 +252,8 @@ paket-files/
 *.sln.iml
 
 # Project specific
-tools/
+Tools/
+
+# Common generated code
+GameEngine/GameEngine.Common/*.h
+GameEngine/GameEngine.Common/*.cc
