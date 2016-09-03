@@ -3,7 +3,7 @@
 #include <iterator>
 #include <algorithm>
 
-int main()
+void buildme()
 {
 	using namespace boost::lambda;
 	typedef std::istream_iterator<int> in;
