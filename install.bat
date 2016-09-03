@@ -1,4 +1,4 @@
-git submodule update
+git submodule update --init --recursive
 cd %GOOGLE_TEST_DISTRIBUTION%
 cmake -DBUILD_GMOCK:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -G "Visual Studio 14"
 msbuild /m googletest-distribution.sln /p:Configuration=Debug /p:Platform="Win32"
