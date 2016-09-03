@@ -18,3 +18,4 @@ environment:
   GAME_ENGINE_ROOT: C:\projects\GameEngine
   GOOGLE_TEST_DISTRIBUTION: %GAME_ENGINE_ROOT%\googletest
   GTEST_ROOT: %GOOGLE_TEST_DISTRIBUTION%\googletest
+
