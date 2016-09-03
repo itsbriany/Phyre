@@ -2,7 +2,7 @@
 
 TEST(SimpleTest, TrueIsAlwaysAndForeverWillBeTrue)
 {
-	EXPECT_EQ(true, false);
+	EXPECT_EQ(true, true);
 }
 
 int main(int ac, char* av[])
