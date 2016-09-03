@@ -19,3 +19,5 @@ environment:
   GOOGLE_TEST_DISTRIBUTION: C:\projects\GameEngine\googletest
   GTEST_ROOT: C:\projects\GameEngine\googletest\googletest
 
+script:
+  - cmd: msbuild /m %APPVEYOR_BUILD_FOLDER%\GameEngine\GameEngine.sln /p:Configuration=Debug /p:Platform="Win32"
