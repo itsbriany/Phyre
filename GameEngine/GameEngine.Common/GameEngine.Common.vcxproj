@@ -24,6 +24,9 @@
   <ItemGroup>
     <ClInclude Include="Chat.pb.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="GameEngineCommon\chat.proto" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B19500D7-96CF-4CB1-8421-70FC72657730}</ProjectGuid>
     <RootNamespace>GameEngineCommon</RootNamespace>

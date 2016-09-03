@@ -3,11 +3,17 @@
 #include <iterator>
 #include <algorithm>
 
-void buildme()
+namespace GameEngine
 {
-	using namespace boost::lambda;
-	typedef std::istream_iterator<int> in;
+namespace Networking
+{
+	void buildme()
+	{
+		using namespace boost::lambda;
+		typedef std::istream_iterator<int> in;
 
-	std::for_each(
-		in(std::cin), in(), std::cout << (_1 * 3) << " ");
+		std::for_each(
+			in(std::cin), in(), std::cout << (_1 * 3) << " ");
+	}
+}
 }
