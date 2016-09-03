@@ -21,4 +21,8 @@ environment:
 
 
 build:
+  parallel: true
   project: C:\projects\GameEngine\GameEngine\GameEngine.sln
+
+test_script:
+  - cmd: C:\projects\GameEngine\GameEngine\Debug\GameEngine.Networking.Chat.Test.exe
