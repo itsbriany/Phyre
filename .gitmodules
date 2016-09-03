@@ -1,6 +1,6 @@
-[submodule "googletest"]
-	path = googletest
+[submodule "ThirdParty/googletest"]
+	path = ThirdParty/googletest
 	url = https://github.com/google/googletest.git
-[submodule "protobuf"]
-	path = protobuf
+[submodule "ThirdParty/protobuf"]
+	path = ThirdParty/protobuf
 	url = https://github.com/google/protobuf.git

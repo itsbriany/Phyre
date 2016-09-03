@@ -1,10 +1,10 @@
 git submodule update --init --recursive
 
-cd %GAME_ENGINE_ROOT%\protobuf\cmake
+cd %GAME_ENGINE_ROOT%\ThirdParty\protobuf\cmake
 cmake -Dprotobuf_BUILD_TESTS=OFF -G "Visual Studio 14"
 msbuild /m protobuf.sln /p:Configuration=Release /p:Platform="Win32"
-md %GAME_ENGINE_ROOT%\tools
-xcopy /s Release\* %GAME_ENGINE_ROOT%\tools
+md %GAME_ENGINE_ROOT%\Tools
+xcopy /s Release\* %GAME_ENGINE_ROOT%\Tools
 
 
 cd %GOOGLE_TEST_DISTRIBUTION%

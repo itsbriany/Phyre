@@ -16,8 +16,8 @@ environment:
   BOOST_ROOT: C:\Libraries\boost_1_59_0
   BOOST_LIBRARYDIR: C:\Libraries\boost_1_59_0\lib32-msvc-14.0
   GAME_ENGINE_ROOT: C:\projects\GameEngine
-  GOOGLE_TEST_DISTRIBUTION: C:\projects\GameEngine\googletest
-  GTEST_ROOT: C:\projects\GameEngine\googletest\googletest
+  GOOGLE_TEST_DISTRIBUTION: C:\projects\GameEngine\ThirdParty\googletest
+  GTEST_ROOT: C:\projects\GameEngine\ThirdParty\googletest\googletest
 
 
 build:
