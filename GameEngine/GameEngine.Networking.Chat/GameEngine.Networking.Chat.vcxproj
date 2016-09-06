@@ -150,6 +150,11 @@
     <ClInclude Include="tcp_socket.h" />
     <ClInclude Include="tcp_socket_impl.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GameEngine.Common\GameEngine.Common.vcxproj">
+      <Project>{b19500d7-96cf-4cb1-8421-70fc72657730}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -82,7 +82,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration)\;$(BOOST_ROOT)\stage\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration)\;$(BOOST_LIBRARYDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libboost_system-vc140-mt-gd-1_60.lib;gmock.lib;gmock_main.lib;GameEngine.Networking.Chat.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -139,6 +139,11 @@
   <ItemGroup>
     <ClInclude Include="mock_host_resolver.h" />
     <ClInclude Include="mock_tcp_socket.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GameEngine.Networking.Chat\GameEngine.Networking.Chat.vcxproj">
+      <Project>{4779c17f-3bf7-42ee-ba15-cdb3ab380ab7}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

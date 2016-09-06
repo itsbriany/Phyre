@@ -14,7 +14,7 @@ namespace networking
 		void Connect(boost::asio::ip::tcp::resolver::iterator it, OnConnectCallback& callback) override;
 		void Close() override;
 		void OnRead(const boost::system::error_code& ec, size_t bytes_transferred) override;
-		void Write(const std::string& data) override;
+		void Write(const std::string& data, OnWriteCallback callback) override;
 		
 
 	private:

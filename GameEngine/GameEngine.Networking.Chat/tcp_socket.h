@@ -10,12 +10,16 @@ namespace Networking
 	public:
         typedef std::function<void(const boost::system::error_code&)> OnConnectCallback;
 
+		// Arg1: Error on read
+		// Arg2: Data read
+		typedef std::function<void(const boost::system::error_code&, const std::string&)> OnWriteCallback;
+
 	    virtual ~TCPSocket() { }
 
 		// Triggers the callback function once a connection to the remote endpoint has been established
         virtual void Connect(boost::asio::ip::tcp::resolver::iterator it, OnConnectCallback& callback) = 0;
 		virtual void OnRead(const boost::system::error_code& ec, size_t bytes_transferred) = 0;
-		virtual void Write(const std::string& data) = 0;
+		virtual void Write(const std::string& data, OnWriteCallback callback) = 0;
 		
 		// Gracefully close the connection
 		virtual void Close() = 0;

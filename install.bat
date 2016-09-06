@@ -1,9 +1,5 @@
 git submodule update --init --recursive
 
-dir %BOOST_ROOT%
-dir %BOOST_ROOT%\lib
-dir %BOOST_ROOT%\stage\lib
-
 cd %PROTOBUF_ROOT%\cmake
 cmake -Dprotobuf_BUILD_TESTS=OFF -G "Visual Studio 14"
 msbuild /m protobuf.sln /p:Configuration=Release /p:Platform="Win32"

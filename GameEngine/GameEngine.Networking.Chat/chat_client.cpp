@@ -2,6 +2,7 @@
 #include <boost/bind/bind.hpp>
 #include "chat_client.h"
 #include "tcp_socket.h"
+#include <iostream>
 
 namespace GameEngine
 {
@@ -37,11 +38,21 @@ namespace Networking
 		}
 
 		std::string message = "Hello from Boost ASIO\r\n";
-		tcp_socket_.Write(message);
+		tcp_socket_.Write(message, boost::bind(&ChatClient::OnRead, this, boost::asio::placeholders::error, boost::placeholders::_2));
 	}
 
-	void ChatClient::OnRead(const boost::system::error_code& ec, size_t bytes_transferred)
+	void ChatClient::OnRead(const boost::system::error_code& ec, const std::string& data)
 	{
+		
+		if (ec)
+		{
+			OnError(ec);
+			return;
+		}
+
+		// TODO: This should be logged instead
+		// TODO: Read from the tcp socket buffer
+		std::cout << data << "\n";
 		/*if (!ec)
 		{
 			std::cout.write(bytes_.data(), bytes_transferred);

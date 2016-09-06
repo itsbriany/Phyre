@@ -42,7 +42,7 @@ namespace networking
 		                                    boost::asio::placeholders::bytes_transferred));
 	}
 
-	void TCPSocketImpl::Write(const std::string& data)
+	void TCPSocketImpl::Write(const std::string& data, OnWriteCallback callback)
 	{
 		write(socket_, boost::asio::buffer(data));		
 		AsyncRead();
