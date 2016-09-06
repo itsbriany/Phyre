@@ -10,9 +10,9 @@ cd %GAME_ENGINE_ROOT%
 Tools\protoc --proto_path=GameEngine\GameEngine.Common\GameEngineCommon\ --cpp_out=GameEngine\GameEngine.Common GameEngine\GameEngine.Common\GameEngineCommon\Chat.proto
 
 cd %GOOGLE_TEST_DISTRIBUTION%
-cmake -DBUILD_GMOCK:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -G "Visual Studio 14"
-msbuild /m googletest-distribution.sln /p:Configuration=Debug /p:Platform="Win32"
-msbuild /m googletest-distribution.sln /p:Configuration=Release /p:Platform="Win32"
+cmake -DBUILD_GMOCK:BOOL=ON -DBUILD_GTEST:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -G "Visual Studio 14"
+msbuild /m googletest-distribution.sln /p:Configuration=Debug /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1
+msbuild /m googletest-distribution.sln /p:Configuration=Release /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1
 cd %GAME_ENGINE_ROOT%\GameEngine
 md Debug
 md Release
