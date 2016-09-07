@@ -6,10 +6,10 @@ namespace GameEngine
 {
 namespace Networking
 {
-	class MockHostResolver : public HostResolver
-	{
-	public:
-	    MOCK_METHOD3(ResolveHost, void(const std::string& host, const std::string& service, OnHostResolvedCallback& callback));
-	};
+    class MockHostResolver : public HostResolver
+    {
+    public:
+        MOCK_METHOD3(ResolveHost, void(const std::string& host, const std::string& service, OnHostResolvedCallback& callback));
+    };
 }
 }
