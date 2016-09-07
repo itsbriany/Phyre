@@ -1,8 +1,8 @@
 #include <boost/asio.hpp>
 #include <boost/bind/bind.hpp>
+#include <iostream>
 #include "chat_client.h"
 #include "tcp_socket.h"
-#include <iostream>
 
 namespace GameEngine
 {
@@ -12,7 +12,7 @@ namespace Networking
 	using boost::asio::ip::tcp;
 
 	ChatClient::ChatClient(boost::asio::io_service& io_service, HostResolver& resolver, TCPSocket& tcp_socket) :
-        io_service_(io_service), host_resolver_(resolver), tcp_socket_(tcp_socket)
+        io_service_(io_service), host_resolver_(resolver), tcp_socket_(tcp_socket), is_connected_(false)
 	{
 	}
 
@@ -37,39 +37,36 @@ namespace Networking
 			return;
 		}
 
-		std::string message = "Hello from Boost ASIO\r\n";
-		tcp_socket_.Write(message, boost::bind(&ChatClient::OnRead, this, boost::asio::placeholders::error, boost::placeholders::_2));
+		is_connected_ = true;
 	}
 
-	void ChatClient::OnRead(const boost::system::error_code& ec, const std::string& data)
+	void ChatClient::OnRead(const boost::system::error_code& ec, const std::string& data) 
 	{
-		
 		if (ec)
 		{
 			OnError(ec);
 			return;
 		}
 
-		// TODO: This should be logged instead
-		// TODO: Read from the tcp socket buffer
+		// TODO: This should be logged by boost instead
 		std::cout << data << "\n";
-		/*if (!ec)
-		{
-			std::cout.write(bytes_.data(), bytes_transferred);
-			socket_.async_read_some(boost::asio::buffer(bytes_),
-				boost::bind(&ChatClient::OnRead, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
-		}*/
 	}
 
     void ChatClient::OnError(const boost::system::error_code& ec)
     {
 		// TODO: Log the error code
 		// TODO: We may also not always want to close the connection if the error is not severe enough
-
+		is_connected_ = false;
 		tcp_socket_.Close();
     }
 
-    void ChatClient::OnHostResolved(const boost::system::error_code& ec, tcp::resolver::iterator it)
+	void ChatClient::Write(const std::string data) const
+	{
+		if (is_connected_)
+			tcp_socket_.Write(data);
+	}
+
+	void ChatClient::OnHostResolved(const boost::system::error_code& ec, tcp::resolver::iterator it)
 	{
         if (ec)
         {

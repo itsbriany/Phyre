@@ -30,6 +30,12 @@ namespace Networking
 			chat_client_->OnHostResolved(boost::asio::error::host_not_found, it);
 		}
 
+		void TCPSocketWriteStub(const std::string data_to_send) const
+		{
+			boost::system::error_code ec;
+			tcp_socket_->OnRead(ec, data_to_send.size());
+		}
+
 	protected:
 		void SetUp() override
 		{
@@ -75,6 +81,38 @@ namespace Networking
 	{
 		EXPECT_CALL(*tcp_socket_, Close());
 		chat_client_->OnError(boost::asio::error::broken_pipe);
+	}
+
+	TEST_F(ChatClientTest, CanWriteWhenConnected)
+	{
+		boost::system::error_code ec;
+		std::string data_to_send = "A string\n";
+		
+		EXPECT_CALL(*tcp_socket_, Write(data_to_send));
+		
+		chat_client_->OnConnect(ec);
+		chat_client_->Write(data_to_send);
+	}
+
+	TEST_F(ChatClientTest, CannotWriteWhenDisconnected)
+	{
+		std::string data_to_send = "A string\n";
+
+		EXPECT_CALL(*tcp_socket_, Write(data_to_send)).Times(0);
+
+		chat_client_->Write(data_to_send);
+	}
+	
+	TEST_F(ChatClientTest, HandlesReadAfterWrite)
+	{
+		std::string data_to_send = "some sting\n";
+		boost::system::error_code ec;
+		ON_CALL(*tcp_socket_, Write(data_to_send)).WillByDefault(Invoke(boost::bind(&ChatClientTest::TCPSocketWriteStub, this, data_to_send)));
+		EXPECT_CALL(*tcp_socket_, Write(data_to_send));
+		EXPECT_CALL(*tcp_socket_, OnRead(ec, data_to_send.size()));
+
+		chat_client_->OnConnect(ec);
+		chat_client_->Write(data_to_send);
 	}
 }
 }

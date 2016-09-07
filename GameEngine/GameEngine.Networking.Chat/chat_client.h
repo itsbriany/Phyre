@@ -18,11 +18,13 @@ namespace Networking
 		void OnConnect(const boost::system::error_code& ec);
 		void OnRead(const boost::system::error_code& ec, const std::string& data);
         void OnError(const boost::system::error_code& ec);
+		void Write(const std::string data) const;
 
 	private:
 		boost::asio::io_service& io_service_;
 		HostResolver& host_resolver_;
         TCPSocket& tcp_socket_;
+		bool is_connected_;
 	};
 }
 }

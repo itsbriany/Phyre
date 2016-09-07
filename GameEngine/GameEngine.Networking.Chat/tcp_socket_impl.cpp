@@ -9,8 +9,8 @@ namespace networking
 
 	using boost::asio::ip::tcp;
 
-	TCPSocketImpl::TCPSocketImpl(boost::asio::io_service& io_service):
-		socket_(tcp::socket(io_service)), buffer_(std::vector<char>())
+	TCPSocketImpl::TCPSocketImpl(boost::asio::io_service& io_service, OnReadCallback on_read_callback):
+		socket_(tcp::socket(io_service)), buffer_(std::vector<char>()), on_read_callback_(on_read_callback)
 	{
 	}
 
@@ -30,6 +30,7 @@ namespace networking
 
 	void TCPSocketImpl::OnRead(const boost::system::error_code& ec, size_t bytes_transferred)
 	{
+		on_read_callback_(ec, std::string(buffer_.begin(), buffer_.end()));
 		AsyncRead();
 	}
 
@@ -42,7 +43,7 @@ namespace networking
 		                                    boost::asio::placeholders::bytes_transferred));
 	}
 
-	void TCPSocketImpl::Write(const std::string& data, OnWriteCallback callback)
+	void TCPSocketImpl::Write(std::string data)
 	{
 		write(socket_, boost::asio::buffer(data));		
 		AsyncRead();
