@@ -5,7 +5,7 @@ namespace GameEngine
 {
 namespace Networking
 {
-    class TCPSocketImpl : GameEngine::Networking::TCPSocket
+    class TCPSocketImpl : public TCPSocket
     {
     public:
         TCPSocketImpl(boost::asio::io_service& io_service);

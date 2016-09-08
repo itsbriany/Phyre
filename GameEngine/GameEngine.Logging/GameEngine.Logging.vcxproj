@@ -19,13 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{8F669A2D-8F97-4947-94BE-5B46ADD9EA9E}</ProjectGuid>
-    <RootNamespace>GameEngineNetworkingChatDemo</RootNamespace>
+    <ProjectGuid>{15B53520-8C14-44BF-91CE-D9E260B73CB0}</ProjectGuid>
+    <RootNamespace>GameEngineLogging</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
@@ -74,13 +74,8 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(BOOST_ROOT);$(SolutionDir)GameEngine.Logging;$(SolutionDir)GameEngine.Networking.Chat;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_WIN32_WINDOWS;_WINSOCK_DEPRECATED_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(BOOST_ROOT)</AdditionalIncludeDirectories>
     </ClCompile>
-    <Link>
-      <AdditionalLibraryDirectories>$(BOOST_LIBRARYDIR);$(SolutionDir)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libboost_system-vc140-mt-gd-1_60.lib;GameEngine.Logging.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -116,15 +111,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="chat_client_demo.cpp" />
+    <ClInclude Include="logger.h" />
+    <ClInclude Include="logging.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\GameEngine.Logging\GameEngine.Logging.vcxproj">
-      <Project>{15b53520-8c14-44bf-91ce-d9e260b73cb0}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\GameEngine.Networking.Chat\GameEngine.Networking.Chat.vcxproj">
-      <Project>{4779c17f-3bf7-42ee-ba15-cdb3ab380ab7}</Project>
-    </ProjectReference>
+    <ClCompile Include="logger.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
