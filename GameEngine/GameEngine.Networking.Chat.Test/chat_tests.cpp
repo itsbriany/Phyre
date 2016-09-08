@@ -33,6 +33,7 @@ namespace Networking
         void TCPSocketWriteStub(const std::string data_to_send) const
         {
             boost::system::error_code ec;
+            tcp_socket_->buffer_.insert(tcp_socket_->buffer_.end(), data_to_send.begin(), data_to_send.end());
             tcp_socket_->OnRead(ec, data_to_send.size());
         }
 
@@ -88,7 +89,10 @@ namespace Networking
         boost::system::error_code ec;
         std::string data_to_send = "A string\n";
         
-        EXPECT_CALL(*tcp_socket_, Write(data_to_send));
+        EXPECT_CALL(*tcp_socket_, Write(data_to_send, _))
+            .WillOnce(Invoke(boost::bind(&ChatClientTest::TCPSocketWriteStub,
+                                         this,
+                                         data_to_send)));
         
         chat_client_->OnConnect(ec);
         chat_client_->Write(data_to_send);
@@ -98,7 +102,7 @@ namespace Networking
     {
         std::string data_to_send = "A string\n";
 
-        EXPECT_CALL(*tcp_socket_, Write(data_to_send)).Times(0);
+        EXPECT_CALL(*tcp_socket_, Write(data_to_send, _)).Times(0);
 
         chat_client_->Write(data_to_send);
     }
@@ -107,12 +111,17 @@ namespace Networking
     {
         std::string data_to_send = "some sting\n";
         boost::system::error_code ec;
-        ON_CALL(*tcp_socket_, Write(data_to_send)).WillByDefault(Invoke(boost::bind(&ChatClientTest::TCPSocketWriteStub, this, data_to_send)));
-        EXPECT_CALL(*tcp_socket_, Write(data_to_send));
+
+        TCPSocket::OnReadCallback callback = boost::bind(&ChatClient::OnRead,
+                                                         chat_client_.get(),
+                                                         boost::asio::placeholders::error,
+                                                         boost::asio::placeholders::bytes_transferred);
+        EXPECT_CALL(*tcp_socket_, Write(data_to_send, _)).WillOnce(Invoke(boost::bind(&ChatClientTest::TCPSocketWriteStub, this, data_to_send)));
         EXPECT_CALL(*tcp_socket_, OnRead(ec, data_to_send.size()));
 
         chat_client_->OnConnect(ec);
         chat_client_->Write(data_to_send);
+        EXPECT_FALSE(tcp_socket_->buffer().empty());
     }
 }
 }

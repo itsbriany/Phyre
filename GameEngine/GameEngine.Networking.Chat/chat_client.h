@@ -16,9 +16,9 @@ namespace Networking
         void Connect(const std::string& host, const std::string& service);
         void OnHostResolved(const boost::system::error_code& ec, boost::asio::ip::tcp::resolver::iterator it);
         void OnConnect(const boost::system::error_code& ec);
-        void OnRead(const boost::system::error_code& ec, const std::string& data);
+        void OnRead(const boost::system::error_code& ec, size_t bytes_transferred);
         void OnError(const boost::system::error_code& ec);
-        void Write(const std::string data) const;
+        void Write(const std::string data);
 
     private:
         boost::asio::io_service& io_service_;

@@ -11,7 +11,7 @@ namespace Networking
     {
     }
 
-    void HostResolverImpl::ResolveHost(const std::string& host, const std::string& service, OnHostResolvedCallback& callback)
+    void HostResolverImpl::ResolveHost(const std::string& host, const std::string& service, OnHostResolvedCallback callback)
     {
         tcp::resolver::query host_query(host, service);
         resolver_.async_resolve(host_query, callback);

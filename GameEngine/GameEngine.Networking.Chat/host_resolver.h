@@ -16,7 +16,7 @@ namespace Networking
         // The callback will be fired when the host and service have been resolved
         virtual void ResolveHost(const std::string& host,
                                  const std::string& service,
-                                 OnHostResolvedCallback& on_host_resolved_callback) = 0;
+                                 OnHostResolvedCallback on_host_resolved_callback) = 0;
     };
 }
 }

@@ -1,23 +1,23 @@
 #pragma once
 #include "tcp_socket.h"
 
-namespace engine
+namespace GameEngine
 {
-namespace networking
+namespace Networking
 {
     class TCPSocketImpl : GameEngine::Networking::TCPSocket
     {
     public:
-        TCPSocketImpl(boost::asio::io_service& io_service, OnReadCallback on_read_callback);
+        TCPSocketImpl(boost::asio::io_service& io_service);
         ~TCPSocketImpl();
 
-        void Connect(boost::asio::ip::tcp::resolver::iterator it, OnConnectCallback& callback) override;
+        void Connect(boost::asio::ip::tcp::resolver::iterator it, OnConnectCallback callback) override;
         void Close() override;
         void OnRead(const boost::system::error_code& ec, size_t bytes_transferred) override;
-        void Write(std::string data) override;
+        void Write(const std::string data, OnReadCallback on_read_callback) override;
 
+        const std::vector<char>& buffer() const override { return buffer_; }
 
-        void set_on_read_callback(const OnReadCallback& on_read_callback) { on_read_callback_ = on_read_callback; }
 
     private:
         void AsyncRead();

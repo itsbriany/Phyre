@@ -40,7 +40,7 @@ namespace Networking
         is_connected_ = true;
     }
 
-    void ChatClient::OnRead(const boost::system::error_code& ec, const std::string& data) 
+    void ChatClient::OnRead(const boost::system::error_code& ec, size_t bytes_transferred) 
     {
         if (ec)
         {
@@ -48,8 +48,10 @@ namespace Networking
             return;
         }
 
-        // TODO: This should be logged by boost instead
-        std::cout << data << "\n";
+        // TODO: Probably want to start reading from the previous read + bytes_transferred
+        for (const char& byte : tcp_socket_.buffer())
+            std::cout << byte;
+        std::cout << '\n';
     }
 
     void ChatClient::OnError(const boost::system::error_code& ec)
@@ -60,10 +62,13 @@ namespace Networking
         tcp_socket_.Close();
     }
 
-    void ChatClient::Write(const std::string data) const
+    void ChatClient::Write(const std::string data)
     {
         if (is_connected_)
-            tcp_socket_.Write(data);
+            tcp_socket_.Write(data, boost::bind(&ChatClient::OnRead,
+                                                this,
+                                                boost::asio::placeholders::error,
+                                                boost::asio::placeholders::bytes_transferred));
     }
 
     void ChatClient::OnHostResolved(const boost::system::error_code& ec, tcp::resolver::iterator it)
