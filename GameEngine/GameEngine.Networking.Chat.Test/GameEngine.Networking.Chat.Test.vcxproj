@@ -77,7 +77,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(BOOST_ROOT);$(GMOCK_ROOT)\include;$(SolutionDir)GameEngine.Networking.Chat;$(GTEST_ROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BOOST_ROOT);$(GMOCK_ROOT)\include;$(SolutionDir)GameEngine.Logging;$(SolutionDir)GameEngine.Networking.Chat;$(GTEST_ROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WIN32_WINDOWS;_WINSOCK_DEPRECATED_NO_WARNINGS;GTEST_LINKED_AS_SHARED_LIBRARY=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
@@ -141,6 +141,9 @@
     <ClInclude Include="mock_tcp_socket.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\GameEngine.Logging\GameEngine.Logging.vcxproj">
+      <Project>{15b53520-8c14-44bf-91ce-d9e260b73cb0}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\GameEngine.Networking.Chat\GameEngine.Networking.Chat.vcxproj">
       <Project>{4779c17f-3bf7-42ee-ba15-cdb3ab380ab7}</Project>
     </ProjectReference>

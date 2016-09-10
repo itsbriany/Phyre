@@ -13,6 +13,7 @@ namespace Networking
         MOCK_METHOD2(OnRead, void(const boost::system::error_code& ec, size_t bytes_transferred));
         MOCK_METHOD2(Write, void(const std::string data, OnReadCallback on_read_callback));
         MOCK_METHOD0(Close, void());
+        MOCK_METHOD0(Read, void());
         
         const std::vector<char>& buffer() const override { return buffer_; }
 

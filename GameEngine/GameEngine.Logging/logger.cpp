@@ -23,6 +23,82 @@ namespace GameEngine
         ("error", kError)
         ("fatal", kFatal);
 
+        bool Logger::s_is_trace_enabled = true;
+        bool Logger::s_is_debug_enabled = true;
+        bool Logger::s_is_info_enabled = true;
+        bool Logger::s_is_warning_enabled = true;
+        bool Logger::s_is_error_enabled = true;
+        bool Logger::s_is_fatal_enabled = true;
+
+        void Logger::disable_lvl(LogLevel lvl)
+        {
+            switch(lvl)
+            {
+            case kTrace:
+                s_is_trace_enabled = false;
+                return;
+            case kDebug:
+                s_is_debug_enabled = false;
+                return;
+            case kInfo:
+                s_is_info_enabled = false;
+                return;
+            case kWarning:
+                s_is_warning_enabled = false;
+                return;
+            case kError:
+                s_is_error_enabled = false;
+                return;
+            default:
+                s_is_fatal_enabled = false;
+            }
+        }
+
+        void Logger::disable_all()
+        {
+            s_is_trace_enabled = false;
+            s_is_debug_enabled = false;
+            s_is_info_enabled = false;
+            s_is_warning_enabled = false;
+            s_is_error_enabled = false;
+            s_is_fatal_enabled = false;
+        }
+
+        void Logger::enable_lvl(LogLevel lvl)
+        {
+            switch (lvl)
+            {
+            case kTrace:
+                s_is_trace_enabled = true;
+                return;
+            case kDebug:
+                s_is_debug_enabled = true;
+                return;
+            case kInfo:
+                s_is_info_enabled = true;
+                return;
+            case kWarning:
+                s_is_warning_enabled = true;
+                return;
+            case kError:
+                s_is_error_enabled = true;
+                return;
+            default:
+                s_is_fatal_enabled = true;
+            }
+        }
+
+        void Logger::enable_all()
+        {
+            set_log_level(kTrace);
+            s_is_trace_enabled = true;
+            s_is_debug_enabled = true;
+            s_is_info_enabled = true;
+            s_is_warning_enabled = true;
+            s_is_error_enabled = true;
+            s_is_fatal_enabled = true;
+        }
+
         void Logger::set_log_level(const LogLevel& lvl)
         {
             // See more specific logging information
@@ -74,6 +150,15 @@ namespace GameEngine
                 );
                 break;
             }
+        }
+
+        std::string Logger::FormatClassName(std::string class_name)
+        {
+            std::string search = "class ";
+            size_t found = class_name.find("class ");
+            class_name.replace(found, search.size(), "[");
+            class_name += "] ";
+            return class_name;
         }
     }
 }

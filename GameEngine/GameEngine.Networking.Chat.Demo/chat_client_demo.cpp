@@ -11,16 +11,21 @@ namespace Networking
 {
     void ChatClientDemo()
     {
-        Logging::config();
-        Logging::trace("Trace!");
-        Logging::debug("Debug!");
+        Logging::set_log_level();
+        
         boost::asio::io_service io_service;
+
         boost::asio::ip::tcp::resolver resolver(io_service);
         HostResolverImpl host_resolver(io_service, resolver);
         TCPSocketImpl socket(io_service);
         ChatClient cc(io_service, host_resolver, socket);
-        cc.Connect("www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html", "http");
+        cc.Connect("theboostcpplibraries.com", "80");
         io_service.run();
+
+        // TODO: this will block the thread. Need to think of a better interface to handle asynchronous data
+        while (!cc.is_connected()) { }
+        cc.Write("GET / HTTP/1.1\r\nHost: theboostcpplibraries.com\r\n\r\n");
+        
     }
 }
 }

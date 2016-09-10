@@ -15,6 +15,7 @@ namespace Networking
         void Close() override;
         void OnRead(const boost::system::error_code& ec, size_t bytes_transferred) override;
         void Write(const std::string data, OnReadCallback on_read_callback) override;
+        void Read() override;
 
         const std::vector<char>& buffer() const override { return buffer_; }
 

@@ -6,39 +6,65 @@ namespace GameEngine
 namespace Logging
 {
 
-    static void config()
+    static void disable_all()
     {
-        Logger::set_log_level(Logger::kDebug);
+        Logger::disable_all();
     }
 
-    static void trace(const std::string& message)
+    static void disable_lvl(Logger::LogLevel log_level)
     {
-        Logger::trace(message);
+        Logger::disable_lvl(log_level);
     }
 
-    static void debug(const std::string& message)
+    static void enable_all()
     {
-        Logger::debug(message);
+        Logger::enable_all();
     }
 
-    static void info(const std::string& message)
+    static void enable_lvl(Logger::LogLevel log_level)
     {
-        Logger::info(message);
+        Logger::enable_lvl(log_level);
     }
 
-    static void warning(const std::string& message)
+    static void set_log_level(Logger::LogLevel log_level = Logger::kDebug)
     {
-        Logger::warning(message);
+        Logger::set_log_level(log_level);
     }
 
-    static void error(const std::string& message)
+    template <typename T>
+    static void trace(const std::string& message, const T& class_called_from)
     {
-        Logger::error(message);
+        Logger::trace(message, typeid(class_called_from).name());
     }
 
-    static void fatal(const std::string& message)
+    template <typename T>
+    static void debug(const std::string& message, const T& class_called_from)
     {
-        Logger::fatal(message);
+        Logger::debug(message, typeid(class_called_from).name());
+    }
+
+    template <typename T>
+    static void info(const std::string& message, const T& class_called_from)
+    {
+        Logger::info(message, typeid(class_called_from).name());
+    }
+
+    template <typename T>
+    static void warning(const std::string& message, const T& class_called_from)
+    {
+        Logger::warning(message, typeid(class_called_from).name());
+    }
+
+    template <typename T>
+    static void error(const std::string& message, const T& class_called_from)
+    {
+        Logger::error(message, typeid(class_called_from).name());
+    }
+
+    template <typename T>
+    static void fatal(const std::string& message, const T& class_called_from)
+    {
+        Logger::fatal(message, typeid(class_called_from).name());
     }
 
     

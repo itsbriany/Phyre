@@ -20,6 +20,7 @@ namespace Networking
         virtual void Connect(boost::asio::ip::tcp::resolver::iterator it, OnConnectCallback callback) = 0;
         virtual void OnRead(const boost::system::error_code& ec, size_t bytes_transferred) = 0;
         virtual void Write(const std::string data, OnReadCallback on_read_callback) = 0;
+        virtual void Read() = 0;
         
         // Get a reference to the read-only buffer
         virtual const std::vector<char>& buffer() const = 0;

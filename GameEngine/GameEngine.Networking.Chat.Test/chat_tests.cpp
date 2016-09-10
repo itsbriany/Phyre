@@ -4,6 +4,7 @@
 #include "chat_client.h"
 #include "mock_host_resolver.h"
 #include "mock_tcp_socket.h"
+#include "logging.h"
 
 namespace GameEngine
 {
@@ -17,6 +18,11 @@ namespace Networking
 
     class ChatClientTest : public ::testing::Test {
     public:
+        void OnConnectCallback() const
+        {
+            tcp_socket_->Read();
+        }
+
         void OnHostResolvedCallback(const std::string& host, const std::string& service) const
         {
             boost::system::error_code ec;
@@ -61,6 +67,21 @@ namespace Networking
         EXPECT_CALL(*host_resolver_, ResolveHost(host, service, _));
         ON_CALL(*host_resolver_, ResolveHost(host, service, _)).WillByDefault(Invoke(boost::bind(&ChatClientTest::OnHostResolvedCallback, this, host, service)));
         EXPECT_CALL(*tcp_socket_, Connect(_, _));
+
+        chat_client_->Connect(host, service);
+    }
+
+    TEST_F(ChatClientTest, ReadsAResponseAfterConnectingToAHost)
+    {
+        std::string host = "localhost";
+        std::string service = "http";
+
+        ON_CALL(*host_resolver_, ResolveHost(host, service, _)).WillByDefault(Invoke(boost::bind(&ChatClientTest::OnHostResolvedCallback, this, host, service)));
+        EXPECT_CALL(*host_resolver_, ResolveHost(host, service, _));
+
+        ON_CALL(*tcp_socket_, Connect(_, _)).WillByDefault(Invoke(boost::bind(&ChatClientTest::OnConnectCallback, this)));
+        EXPECT_CALL(*tcp_socket_, Connect(_, _));
+        EXPECT_CALL(*tcp_socket_, Read());
 
         chat_client_->Connect(host, service);
     }
@@ -128,6 +149,7 @@ namespace Networking
 
 int main(int ac, char* av[])
 {
+    GameEngine::Logging::disable_all();
     testing::InitGoogleMock(&ac, av);
     return RUN_ALL_TESTS();
 }

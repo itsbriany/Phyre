@@ -14,11 +14,14 @@ namespace Networking
         ChatClient(boost::asio::io_service& io_service, HostResolver& resolver, TCPSocket& tcp_socket);
         ~ChatClient();
         void Connect(const std::string& host, const std::string& service);
+        void Disconnect() const;
         void OnHostResolved(const boost::system::error_code& ec, boost::asio::ip::tcp::resolver::iterator it);
         void OnConnect(const boost::system::error_code& ec);
         void OnRead(const boost::system::error_code& ec, size_t bytes_transferred);
         void OnError(const boost::system::error_code& ec);
         void Write(const std::string data);
+
+        bool is_connected() const { return is_connected_; }
 
     private:
         boost::asio::io_service& io_service_;

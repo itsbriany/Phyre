@@ -85,7 +85,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(BOOST_ROOT);$(PROTOBUF_ROOT)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BOOST_ROOT);$(SolutionDir)GameEngine.Logging;$(PROTOBUF_ROOT)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WIN32_WINDOWS;_WINSOCK_DEPRECATED_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -153,6 +153,9 @@
   <ItemGroup>
     <ProjectReference Include="..\GameEngine.Common\GameEngine.Common.vcxproj">
       <Project>{b19500d7-96cf-4cb1-8421-70fc72657730}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\GameEngine.Logging\GameEngine.Logging.vcxproj">
+      <Project>{15b53520-8c14-44bf-91ce-d9e260b73cb0}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

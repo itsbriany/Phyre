@@ -1,6 +1,7 @@
 #include <boost/bind/bind.hpp>
 #include "tcp_socket_impl.h"
 #include "chat_client.h"
+#include "logging.h"
 
 namespace GameEngine
 {
@@ -18,13 +19,15 @@ namespace Networking
     {
     }
 
-    void TCPSocketImpl::Connect(boost::asio::ip::tcp::resolver::iterator it, OnConnectCallback callback)
+    void TCPSocketImpl::Connect(tcp::resolver::iterator it, OnConnectCallback callback)
     {
+        Logging::trace("Opening connection", *this);
         socket_.async_connect(*it, callback);
     }
 
     void TCPSocketImpl::Close()
     {
+        Logging::trace("Closing connection", *this);
         socket_.close();
     }
 
@@ -47,8 +50,17 @@ namespace Networking
     {
         on_read_callback_ = on_read_callback;
         write(socket_, boost::asio::buffer(data));
+        
+        std::ostringstream oss;
+        oss << "Wrote " << data.size() << " bytes to socket:\n" << data;
+        Logging::debug(oss.str(), *this);
+
         AsyncRead();
     }
 
+    void TCPSocketImpl::Read()
+    {
+        AsyncRead();
+    }
 }
 }
