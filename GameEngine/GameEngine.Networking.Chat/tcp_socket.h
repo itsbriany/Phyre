@@ -22,8 +22,7 @@ namespace Networking
         virtual void Write(const std::string data, OnReadCallback on_read_callback) = 0;
         virtual void Read() = 0;
         
-        // Get a reference to the read-only buffer
-        virtual const std::vector<char>& buffer() const = 0;
+        virtual std::array<char, 4096>& buffer() = 0;
         
         // Gracefully close the connection
         virtual void Close() = 0;

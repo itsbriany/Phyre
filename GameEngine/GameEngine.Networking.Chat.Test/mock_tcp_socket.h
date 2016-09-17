@@ -15,9 +15,9 @@ namespace Networking
         MOCK_METHOD0(Close, void());
         MOCK_METHOD0(Read, void());
         
-        const std::vector<char>& buffer() const override { return buffer_; }
+        std::array<char, 4096>& buffer() override { return buffer_; }
 
-        std::vector<char> buffer_;
+        std::array<char, 4096> buffer_;
     };
 }
 }

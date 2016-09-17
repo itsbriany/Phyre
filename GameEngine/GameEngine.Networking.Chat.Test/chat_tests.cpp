@@ -20,6 +20,7 @@ namespace Networking
     public:
         void OnConnectCallback() const
         {
+            chat_client_->OnConnect(boost::system::error_code());
             tcp_socket_->Read();
         }
 
@@ -39,7 +40,7 @@ namespace Networking
         void TCPSocketWriteStub(const std::string data_to_send) const
         {
             boost::system::error_code ec;
-            tcp_socket_->buffer_.insert(tcp_socket_->buffer_.end(), data_to_send.begin(), data_to_send.end());
+            std::memcpy(tcp_socket_->buffer().data(), data_to_send.c_str(), 4096);
             tcp_socket_->OnRead(ec, data_to_send.size());
         }
 
@@ -63,18 +64,20 @@ namespace Networking
     {
         std::string host = "localhost";
         std::string service = "http";
+        std::string data_to_send_on_connect = "Request to connect";
 
         EXPECT_CALL(*host_resolver_, ResolveHost(host, service, _));
         ON_CALL(*host_resolver_, ResolveHost(host, service, _)).WillByDefault(Invoke(boost::bind(&ChatClientTest::OnHostResolvedCallback, this, host, service)));
         EXPECT_CALL(*tcp_socket_, Connect(_, _));
 
-        chat_client_->Connect(host, service);
+        chat_client_->Connect(host, service, data_to_send_on_connect);
     }
 
     TEST_F(ChatClientTest, ReadsAResponseAfterConnectingToAHost)
     {
         std::string host = "localhost";
         std::string service = "http";
+        std::string data_to_send_on_connect = "Request to connect";
 
         ON_CALL(*host_resolver_, ResolveHost(host, service, _)).WillByDefault(Invoke(boost::bind(&ChatClientTest::OnHostResolvedCallback, this, host, service)));
         EXPECT_CALL(*host_resolver_, ResolveHost(host, service, _));
@@ -83,20 +86,21 @@ namespace Networking
         EXPECT_CALL(*tcp_socket_, Connect(_, _));
         EXPECT_CALL(*tcp_socket_, Read());
 
-        chat_client_->Connect(host, service);
+        chat_client_->Connect(host, service, data_to_send_on_connect);
     }
 
     TEST_F(ChatClientTest, CallsAnErrorHandlerWhenItCannotConnectToAHost)
     {
         std::string host = "localhost";
         std::string service = "http";
+        std::string data_to_send_on_connect = "Request to connect";
         
         EXPECT_CALL(*host_resolver_, ResolveHost(host, service, _));
         ON_CALL(*host_resolver_, ResolveHost(host, service, _))
             .WillByDefault(Invoke(boost::bind(&ChatClientTest::OnHostNotFoundCallback, this, host, service)));
         EXPECT_CALL(*tcp_socket_, Connect(_, _)).Times(0);
         
-        chat_client_->Connect(host, service);
+        chat_client_->Connect(host, service, data_to_send_on_connect);
     }
 
     TEST_F(ChatClientTest, ClosesConnectionOnError)
@@ -107,16 +111,22 @@ namespace Networking
 
     TEST_F(ChatClientTest, CanWriteWhenConnected)
     {
-        boost::system::error_code ec;
-        std::string data_to_send = "A string\n";
-        
-        EXPECT_CALL(*tcp_socket_, Write(data_to_send, _))
-            .WillOnce(Invoke(boost::bind(&ChatClientTest::TCPSocketWriteStub,
-                                         this,
-                                         data_to_send)));
-        
-        chat_client_->OnConnect(ec);
-        chat_client_->Write(data_to_send);
+        std::string host = "localhost";
+        std::string service = "http";
+        std::string data_to_send_on_connect = "Request to connect";
+
+        ON_CALL(*host_resolver_, ResolveHost(host, service, _)).WillByDefault(Invoke(boost::bind(&ChatClientTest::OnHostResolvedCallback, this, host, service)));
+        EXPECT_CALL(*host_resolver_, ResolveHost(host, service, _));
+
+        ON_CALL(*tcp_socket_, Connect(_, _)).WillByDefault(Invoke(boost::bind(&ChatClientTest::OnConnectCallback, this)));
+        EXPECT_CALL(*tcp_socket_, Connect(_, _));
+        EXPECT_CALL(*tcp_socket_, Write(data_to_send_on_connect, _))
+                    .WillOnce(Invoke(boost::bind(&ChatClientTest::TCPSocketWriteStub,
+                        this,
+                        data_to_send_on_connect)));
+
+        chat_client_->Connect(host, service, data_to_send_on_connect);
+        EXPECT_FALSE(tcp_socket_->buffer().empty());
     }
 
     TEST_F(ChatClientTest, CannotWriteWhenDisconnected)
@@ -126,23 +136,6 @@ namespace Networking
         EXPECT_CALL(*tcp_socket_, Write(data_to_send, _)).Times(0);
 
         chat_client_->Write(data_to_send);
-    }
-    
-    TEST_F(ChatClientTest, HandlesReadAfterWrite)
-    {
-        std::string data_to_send = "some sting\n";
-        boost::system::error_code ec;
-
-        TCPSocket::OnReadCallback callback = boost::bind(&ChatClient::OnRead,
-                                                         chat_client_.get(),
-                                                         boost::asio::placeholders::error,
-                                                         boost::asio::placeholders::bytes_transferred);
-        EXPECT_CALL(*tcp_socket_, Write(data_to_send, _)).WillOnce(Invoke(boost::bind(&ChatClientTest::TCPSocketWriteStub, this, data_to_send)));
-        EXPECT_CALL(*tcp_socket_, OnRead(ec, data_to_send.size()));
-
-        chat_client_->OnConnect(ec);
-        chat_client_->Write(data_to_send);
-        EXPECT_FALSE(tcp_socket_->buffer().empty());
     }
 }
 }

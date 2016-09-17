@@ -12,20 +12,24 @@ namespace Networking
         ~TCPSocketImpl();
 
         void Connect(boost::asio::ip::tcp::resolver::iterator it, OnConnectCallback callback) override;
+        void OnConnect(const boost::system::error_code& ec);
         void Close() override;
         void OnRead(const boost::system::error_code& ec, size_t bytes_transferred) override;
         void Write(const std::string data, OnReadCallback on_read_callback) override;
         void Read() override;
 
-        const std::vector<char>& buffer() const override { return buffer_; }
+        // This TCP buffer has a window frame of 4kb
+        std::array<char, 4096>& buffer() override { return buffer_; }
 
 
     private:
         void AsyncRead();
 
         boost::asio::ip::tcp::socket socket_;
-        std::vector<char> buffer_;
+        std::array<char, 4096> buffer_;
         OnReadCallback on_read_callback_;
+        OnConnectCallback on_connect_callback_;
+        bool is_open_;
     };
 }
 }

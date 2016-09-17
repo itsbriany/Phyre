@@ -20,9 +20,10 @@ namespace Networking
     {
     }
 
-    void ChatClient::Connect(const std::string& host, const std::string& service)
+    void ChatClient::Connect(const std::string& host, const std::string& service, const std::string& data_to_send)
     {
         Logging::info("Connecting to " + host + ':' + service, *this);
+        data_to_send_on_connect_ = data_to_send;
         HostResolver::OnHostResolvedCallback callback = boost::bind(&ChatClient::OnHostResolved,
                                                                     this,
                                                                     boost::asio::placeholders::error,
@@ -36,6 +37,7 @@ namespace Networking
         Logging::info("Disconnected from endpoint", *this);
     }
 
+    // TODO: On connect should write some data to the server
     void ChatClient::OnConnect(const boost::system::error_code& ec)
     {
         if (ec)
@@ -46,6 +48,7 @@ namespace Networking
 
         is_connected_ = true;
         Logging::info("Connection established", *this);
+        Write(data_to_send_on_connect_);
     }
 
     void ChatClient::OnRead(const boost::system::error_code& ec, size_t bytes_transferred) 
@@ -58,13 +61,8 @@ namespace Networking
 
         // TODO: Probably want to start reading from the previous read + bytes_transferred
         std::ostringstream oss;
-        for (const char& byte : tcp_socket_.buffer())
-            oss << byte;
-        oss << '\n';
-
-        std::ostringstream log_output_stream;
-        log_output_stream << "Read " << bytes_transferred << " bytes:\n" << oss.str();
-        Logging::info(log_output_stream.str(), *this);
+        oss.write(tcp_socket_.buffer().data(), bytes_transferred);
+        Logging::info(oss.str(), *this);
     }
 
     void ChatClient::OnError(const boost::system::error_code& ec)
@@ -73,6 +71,8 @@ namespace Networking
 
         // TODO: We may also not always want to close the connection if the error is not severe enough
         is_connected_ = false;
+
+        Logging::info("Closing connection", *this);
         tcp_socket_.Close();
     }
 
