@@ -4,6 +4,10 @@ compiler:
 os:
     - osx
 
+# Submodules are handled manually
+git:
+    submodules: false
+
 before_install:
     - if [ $TRAVIS_OS_NAME == osx ]; then brew update
     - if [ $TRAVIS_OS_NAME == osx ]; then brew install boost
