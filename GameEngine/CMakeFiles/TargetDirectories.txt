@@ -1,4 +1,0 @@
-/Users/itsbriany/version_control/git/GameEngine/GameEngine/Networking/Chat/Demo/CMakeFiles/ChatClientDemo.dir
-/Users/itsbriany/version_control/git/GameEngine/GameEngine/Logging/CMakeFiles/Logging.dir
-/Users/itsbriany/version_control/git/GameEngine/GameEngine/Networking/Chat/CMakeFiles/Chat.dir
-/Users/itsbriany/version_control/git/GameEngine/GameEngine/Common/CMakeFiles/Common.dir

@@ -26,7 +26,6 @@ namespace Networking
         cc.Connect(host, port_or_service, data_to_send_on_connect);
 
         io_service.run();
-        while (true) {}
     }
 }
 }

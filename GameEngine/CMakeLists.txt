@@ -13,10 +13,14 @@ set(BOOST_LIBRARY_DIRS "${BOOST_ROOT}/stage/lib")
 
 find_package(Boost 1.60 COMPONENTS thread log system)
 
-# Add Gtest libraries
-#set(GTEST_ROOT "$ENV{GTEST_ROOT}")
-#set(GTEST_INCLUDE_DIRS "${GTEST_ROOT}/include")
-#set(GTEST_LIBRARY_DIRS "${GTEST_ROOT}")
+# Add Gmock & Gtest libraries
+set(GMOCK_ROOT "$ENV{GMOCK_ROOT}")
+set(GMOCK_INCLUDE_DIRS "${GMOCK_ROOT}/include")
+set(GMOCK_LIBRARY_DIRS "${GMOCK_ROOT}")
+
+set(GTEST_ROOT "$ENV{GTEST_ROOT}")
+set(GTEST_INCLUDE_DIRS "${GTEST_ROOT}/include")
+set(GTEST_LIBRARY_DIRS "${GMOCK_ROOT}/gtest")
 
 
 add_subdirectory(Common)

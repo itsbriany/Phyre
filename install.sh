@@ -11,4 +11,6 @@ cd $GOOGLE_TEST_DISTRIBUTION
 cmake -DBUILD_GMOCK:BOOL=ON
 make
 
-cd $GAME_ENGINE_ROOT
+cd $GAME_ENGINE_ROOT/GameEngine
+cmake
+make
