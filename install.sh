@@ -1,5 +1,3 @@
-git submodule update --init --recursive
-
 cd ThirdParty/protobuf/cmake
 cmake -Dprotobuf_BUILD_TESTS=OFF
 make
