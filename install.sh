@@ -1,3 +1,5 @@
+mkdir Tools
+
 cd ThirdParty/protobuf/cmake
 cmake -Dprotobuf_BUILD_TESTS=OFF
 make
