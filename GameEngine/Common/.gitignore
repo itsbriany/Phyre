@@ -1,1 +1,4 @@
+# All code in this directory should be generated
+*.cc
+*.h
 libCommon.a
