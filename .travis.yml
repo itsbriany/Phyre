@@ -5,11 +5,7 @@ os:
     - osx
 
 env:
-    - GAME_ENGINE_ROOT=$TRAVIS_BUILD_DIR
-    - GOOGLE_TEST_DISTRIBUTION=$GAME_ENGINE_ROOT/ThirdParty/googletest
-    - GTEST_ROOT=$GAME_ENGINE_ROOT/ThirdParty/googletest/googletest
-    - GMOCK_ROOT=$GAME_ENGINE_ROOT/ThirdParty/googletest/googlemock
-    - PROTOBUF_ROOT=$GAME_ENGINE_ROOT/ThirdParty/protobuf
+    - GAME_ENGINE_ROOT=$TRAVIS_BUILD_DIR GOOGLE_TEST_DISTRIBUTION=$GAME_ENGINE_ROOT/ThirdParty/googletest GTEST_ROOT=$GAME_ENGINE_ROOT/ThirdParty/googletest/googletest GMOCK_ROOT=$GAME_ENGINE_ROOT/ThirdParty/googletest/googlemock PROTOBUF_ROOT=$GAME_ENGINE_ROOT/ThirdParty/protobuf
 
 before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
