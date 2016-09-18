@@ -1,0 +1,2 @@
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar cq libChat.a  CMakeFiles/Chat.dir/chat_client.cpp.o CMakeFiles/Chat.dir/host_resolver_impl.cpp.o CMakeFiles/Chat.dir/tcp_socket_impl.cpp.o
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib libChat.a
