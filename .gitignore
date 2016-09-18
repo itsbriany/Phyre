@@ -257,3 +257,7 @@ Tools/
 # Common generated code
 GameEngine/GameEngine.Common/*.h
 GameEngine/GameEngine.Common/*.cc
+
+# Vim
+**/*.swp
+**/*.swo

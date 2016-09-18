@@ -1,0 +1,16 @@
+language: cpp
+compiler:
+    - clang
+os:
+    - osx
+
+before_install:
+    - if [ $TRAVIS_OS_NAME == osx ]; then brew update
+    - if [ $TRAVIS_OS_NAME == osx ]; then brew install boost
+
+install:
+    - ./install.sh
+
+# Run the tests
+script:
+    - ./GameEngine/Networking/Chat/Test/ChatTests
