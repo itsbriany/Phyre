@@ -12,5 +12,5 @@ cmake -DBUILD_GMOCK:BOOL=ON
 make
 
 cd $GAME_ENGINE_ROOT/GameEngine
-cmake
+cmake CMakeLists.txt
 make

@@ -1,15 +1,15 @@
 # Vim
-./**/.*.swp
-./**/.*.swo
+**/.*.swp
+**/.*.swo
 
 # Visual Studio
-./**/*.vcxproj*
-./**/*.sln
+**/*.vcxproj*
+**/*.sln
 
-./**/CMakeCache.txt
-./**/CMakeFiles
-./**/CMakeScripts
-./**/Makefile
-./**/cmake_install.cmake
-./**/install_manifest.txt
-./**/CTestTestfile.cmake
+**/CMakeCache.txt
+**/CMakeFiles
+**/CMakeScripts
+**/Makefile
+**/cmake_install.cmake
+**/install_manifest.txt
+**/CTestTestfile.cmake
