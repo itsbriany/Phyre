@@ -9,6 +9,7 @@ git:
     submodules: false
 
 before_install:
+    - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules   # Clone submodule via HTTPS
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew unlink boost ; fi  # Stay cutting edge
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install boost ; fi
