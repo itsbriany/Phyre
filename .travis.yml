@@ -13,6 +13,8 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install boost ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew unlink cmake ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install cmake ; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew unlink llvm ; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm --with-clang ; fi # Clang is outdated on Travis
 
 install:
     - ./install.sh
