@@ -42,7 +42,7 @@ set(BOOST_ROOT "$ENV{BOOST_ROOT}")
 set(BOOST_INCLUDE_DIRS "${BOOST_ROOT}")
 # For appveyor CI
 if (WIN32)
-    set(BOOST_LIBRARY_DIRS "${BOOST_LIBRARY_DIRS}")
+    set(BOOST_LIBRARY_DIRS "$ENV{BOOST_LIBRARYDIR}")
     message("Boost library directory: ${BOOST_LIBRARY_DIRS}")
 else()
     set(BOOST_LIBRARY_DIRS "${BOOST_ROOT}/stage/lib")
