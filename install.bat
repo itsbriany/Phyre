@@ -21,3 +21,5 @@ xcopy /s %GOOGLE_TEST_DISTRIBUTION%\googlemock\gtest\Release\* Release
 xcopy /s %GOOGLE_TEST_DISTRIBUTION%\googlemock\Debug\* Debug
 xcopy /s %GOOGLE_TEST_DISTRIBUTION%\googlemock\Release\* Release
 
+cd %GOOGLE_TEST_DISTRIBUTION%\GameEngine
+cmake -G "Visual Studio 14"
