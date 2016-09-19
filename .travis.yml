@@ -3,9 +3,6 @@ compiler: clang
 os:
     - osx
 
-env:
-    - GAME_ENGINE_ROOT=/Users/travis/build/itsbriany/GameEngine GOOGLE_TEST_DISTRIBUTION=$GAME_ENGINE_ROOT/ThirdParty/googletest GTEST_ROOT=$GAME_ENGINE_ROOT/ThirdParty/googletest/googletest GMOCK_ROOT=$GAME_ENGINE_ROOT/ThirdParty/googletest/googlemock PROTOBUF_ROOT=$GAME_ENGINE_ROOT/ThirdParty/protobuf
-
 before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export CXX="/usr/local/bin/clang++-3.8 -stdlib=libc++"; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export CXXFLAGS="$CXXFLAGS -nostdinc++ -I/usr/local/opt/llvm38/lib/llvm-3.8/include/c++/v1"; fi
@@ -15,6 +12,13 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm38 ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade boost ; fi  # Stay cutting edge
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade cmake ; fi
+    - export GAME_ENGINE_ROOT=/Users/travis/build/itsbriany/GameEngine
+    - export GTEST_ROOT=$GAME_ENGINE_ROOT/ThirdParty/googletest/googletest
+    - export GMOCK_ROOT=$GAME_ENGINE_ROOT/ThirdParty/googletest/googlemock
+    - export GOOGLE_TEST_DISTRIBUTION=$GAME_ENGINE_ROOT/ThirdParty/googletest
+    - export PROTOBUF_ROOT=$GAME_ENGINE_ROOT/ThirdParty/protobuf
+
+
 
 install:
     - ./install.sh
