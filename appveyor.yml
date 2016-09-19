@@ -5,6 +5,7 @@ platform:
   
 configuration:
   - Debug
+  - Release
 
 clone_folder: C:\projects\GameEngine
 
@@ -23,8 +24,9 @@ environment:
 
 
 build:
-  parallel: true
+  parallel: false
   project: C:\projects\GameEngine\GameEngine\GameEngine.sln
 
 test_script:
-  - cmd: C:\projects\GameEngine\GameEngine\Debug\GameEngine.Networking.Chat.Test.exe
+  - cmd: C:\projects\GameEngine\GameEngine\Networking\Chat\Test\Debug\ChatTests.exe
+  - cmd: C:\projects\GameEngine\GameEngine\Networking\Chat\Test\Release\ChatTests.exe

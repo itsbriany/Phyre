@@ -7,7 +7,7 @@ md %GAME_ENGINE_ROOT%\Tools
 xcopy /s Release\* %GAME_ENGINE_ROOT%\Tools
 
 cd %GAME_ENGINE_ROOT%
-Tools\protoc --proto_path=GameEngine\GameEngine.Common\GameEngineCommon\ --cpp_out=GameEngine\GameEngine.Common GameEngine\GameEngine.Common\GameEngineCommon\Chat.proto
+Tools\protoc --proto_path=GameEngine\Common\GameEngineCommon\ --cpp_out=GameEngine\Common GameEngine\Common\GameEngineCommon\Chat.proto
 
 cd %GOOGLE_TEST_DISTRIBUTION%
 cmake -DBUILD_GMOCK:BOOL=ON -DBUILD_GTEST:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -G "Visual Studio 14"
@@ -20,3 +20,6 @@ xcopy /s %GOOGLE_TEST_DISTRIBUTION%\googlemock\gtest\Debug\* Debug
 xcopy /s %GOOGLE_TEST_DISTRIBUTION%\googlemock\gtest\Release\* Release
 xcopy /s %GOOGLE_TEST_DISTRIBUTION%\googlemock\Debug\* Debug
 xcopy /s %GOOGLE_TEST_DISTRIBUTION%\googlemock\Release\* Release
+
+cd %GOOGLE_TEST_DISTRIBUTION%\GameEngine
+cmake -G "Visual Studio 14"
