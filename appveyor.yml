@@ -5,6 +5,7 @@ platform:
   
 configuration:
   - Debug
+  - Release
 
 clone_folder: C:\projects\GameEngine
 
@@ -14,7 +15,7 @@ install:
 environment:
   MSVC_DEFAULT_OPTIONS: ON
   BOOST_ROOT: C:\Libraries\boost_1_60_0
-  BOOST_LIBRARYDIR: C:\Libraries\boost_1_60_0\lib32-msvc-14.0
+  BOOST_LIBRARY_DIRS: C:\Libraries\boost_1_60_0\lib32-msvc-14.0
   GAME_ENGINE_ROOT: C:\projects\GameEngine
   GOOGLE_TEST_DISTRIBUTION: C:\projects\GameEngine\ThirdParty\googletest
   GTEST_ROOT: C:\projects\GameEngine\ThirdParty\googletest\googletest
@@ -23,8 +24,9 @@ environment:
 
 
 build:
-  parallel: true
+  parallel: false
   project: C:\projects\GameEngine\GameEngine\GameEngine.sln
 
 test_script:
-  - cmd: C:\projects\GameEngine\GameEngine\Debug\GameEngine.Networking.Chat.Test.exe
+  - cmd: C:\projects\GameEngine\GameEngine\Networking\Chat\Test\Debug\ChatTests.exe
+  - cmd: C:\projects\GameEngine\GameEngine\Networking\Chat\Test\Release\ChatTests.exe
