@@ -15,10 +15,12 @@ endif()
 # NOTE for Mac OS X users: You will want to set the environment
 # variable DYLD_LIBRARY_PATH to point to you boost shared libraries (.dylib files).
 # Example: export DYLD_LIBRARY_PATH=$BOOST_ROOT/stage/lib
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_LOG_DYN_LINK -g -Wall -std=c++14")
- 
+
+# Set compiler options and preprocessor definitions 
 if (WIN32)
     add_definitions(-D_WIN32_WINNT=0x601 -DGTEST_LINKED_AS_SHARED_LIBRARY=1 -D_SCL_SECURE_NO_WARNINGS)
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_LOG_DYN_LINK -g -Wall -std=c++14")
 endif (WIN32)
 
 # Compile with less warnings on MSVC
@@ -33,17 +35,20 @@ if(MSVC)
   endif()
 endif()
 
+
 set(BOOST_ROOT "$ENV{BOOST_ROOT}")
 set(BOOST_INCLUDE_DIRS "${BOOST_ROOT}")
 # For appveyor CI
 if (WIN32)
     set(BOOST_LIBRARY_DIRS "$ENV{BOOST_LIBRARY_DIRS}")
+    message("Boost library directory: ${BOOST_LIBRARY_DIRS}")
 else()
     set(BOOST_LIBRARY_DIRS "${BOOST_ROOT}/stage/lib")
 endif()
-    
 
-find_package(Boost 1.60 COMPONENTS thread log system)
+find_package(Boost 1.60)
+
+    
 
 # Add Gmock & Gtest libraries
 set(GMOCK_ROOT "$ENV{GMOCK_ROOT}")

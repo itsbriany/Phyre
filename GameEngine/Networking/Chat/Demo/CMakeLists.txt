@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.3)
 
 project (ChatClientDemo)
-find_package(Boost)
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS} ../../../Logging ../)
     link_directories(${Boost_LIBRARY_DIRS})
