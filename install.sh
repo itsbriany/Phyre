@@ -1,3 +1,5 @@
+clang++ --version
+
 mkdir Tools
 
 cd ThirdParty/protobuf/cmake

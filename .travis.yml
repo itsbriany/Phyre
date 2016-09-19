@@ -5,9 +5,7 @@ os:
     - osx
 
 env:
-    - GAME_ENGINE_ROOT=$TRAVIS_BUILD_DIR GOOGLE_TEST_DISTRIBUTION=$GAME_ENGINE_ROOT/ThirdParty/googletest GTEST_ROOT=$GAME_ENGINE_ROOT/ThirdParty/googletest/googletest GMOCK_ROOT=$GAME_ENGINE_ROOT/ThirdParty/googletest/googlemock PROTOBUF_ROOT=$GAME_ENGINE_ROOT/ThirdParty/protobuf CLANG_VERSION=3.7 CPP=14 LIBCXX=On
-
-addons: *clang37
+    - GAME_ENGINE_ROOT=$TRAVIS_BUILD_DIR GOOGLE_TEST_DISTRIBUTION=$GAME_ENGINE_ROOT/ThirdParty/googletest GTEST_ROOT=$GAME_ENGINE_ROOT/ThirdParty/googletest/googletest GMOCK_ROOT=$GAME_ENGINE_ROOT/ThirdParty/googletest/googlemock PROTOBUF_ROOT=$GAME_ENGINE_ROOT/ThirdParty/protobuf CXX=/usr/local/bin/clang++-3.8
 
 before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
@@ -15,6 +13,8 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install boost ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew unlink cmake ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install cmake ; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew tap homebrew/versions ; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm38 ; fi
 
 install:
     - ./install.sh
