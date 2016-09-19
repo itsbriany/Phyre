@@ -71,11 +71,7 @@ set(PROTOBUF_INCLUDE_DIR "${PROTOBUF_ROOT}/src")
 set(PROTOBUF_LIBRARY_DIR "${PROTOBUF_ROOT}/cmake")
 
 set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MTd")
-
-if (WIN32)
-    set(CMAKE_C_FLAGS_DEBUG "/MTd")
-endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 add_subdirectory(Common)
 add_subdirectory(Logging)
