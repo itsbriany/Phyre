@@ -35,7 +35,9 @@ if(MSVC)
   endif()
 endif()
 
-set(Boost_USE_STATIC_LIBS ON) 
+if (WIN32)
+    set(Boost_USE_STATIC_LIBS ON)
+endif() 
 set(Boost_USE_MULTITHREADED ON)
 
 set(BOOST_ROOT "$ENV{BOOST_ROOT}")
@@ -69,7 +71,11 @@ set(PROTOBUF_INCLUDE_DIR "${PROTOBUF_ROOT}/src")
 set(PROTOBUF_LIBRARY_DIR "${PROTOBUF_ROOT}/cmake")
 
 set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MTd")
+
+if (WIN32)
+    set(CMAKE_C_FLAGS_DEBUG "/MTd")
+endif()
 
 add_subdirectory(Common)
 add_subdirectory(Logging)
