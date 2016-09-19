@@ -35,20 +35,22 @@ if(MSVC)
   endif()
 endif()
 
+set(Boost_USE_STATIC_LIBS ON) 
+set(Boost_USE_MULTITHREADED ON)
 
 set(BOOST_ROOT "$ENV{BOOST_ROOT}")
 set(BOOST_INCLUDE_DIRS "${BOOST_ROOT}")
 # For appveyor CI
 if (WIN32)
-    set(BOOST_LIBRARY_DIRS "$ENV{BOOST_LIBRARY_DIRS}")
+    set(BOOST_LIBRARY_DIRS "${BOOST_LIBRARY_DIRS}")
     message("Boost library directory: ${BOOST_LIBRARY_DIRS}")
 else()
     set(BOOST_LIBRARY_DIRS "${BOOST_ROOT}/stage/lib")
 endif()
 
-find_package(Boost 1.60)
 
-    
+find_package(Boost 1.60 REQUIRED COMPONENTS system log thread)
+
 
 # Add Gmock & Gtest libraries
 set(GMOCK_ROOT "$ENV{GMOCK_ROOT}")
@@ -67,7 +69,7 @@ set(PROTOBUF_INCLUDE_DIR "${PROTOBUF_ROOT}/src")
 set(PROTOBUF_LIBRARY_DIR "${PROTOBUF_ROOT}/cmake")
 
 set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 add_subdirectory(Common)
 add_subdirectory(Logging)
