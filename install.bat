@@ -14,5 +14,5 @@ cmake -DBUILD_GMOCK:BOOL=ON -DBUILD_GTEST:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -G
 msbuild /m googletest-distribution.sln /p:Configuration=Debug /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1
 msbuild /m googletest-distribution.sln /p:Configuration=Release /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1
 
-cd %GOOGLE_TEST_DISTRIBUTION%\GameEngine
+cd %GAME_ENGINE_ROOT%\GameEngine
 cmake -G "Visual Studio 14"
