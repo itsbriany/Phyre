@@ -22,11 +22,13 @@ environment:
   GMOCK_ROOT: C:\projects\GameEngine\ThirdParty\googletest\googlemock
   PROTOBUF_ROOT: C:\projects\GameEngine\ThirdParty\protobuf
 
+# The tests need to dynamically link to the appropriate configuration of gmock.dll
+after_install:
+  - cmd set PATH=%PATH%;%GMOCK_ROOT%\%CONFIGURATION%\;  
 
 build:
   parallel: false
   project: C:\projects\GameEngine\GameEngine\GameEngine.sln
 
 test_script:
-  - cmd: C:\projects\GameEngine\GameEngine\Networking\Chat\Test\Debug\ChatTests.exe
-  - cmd: C:\projects\GameEngine\GameEngine\Networking\Chat\Test\Release\ChatTests.exe
+  - cmd: C:\projects\GameEngine\GameEngine\Networking\Chat\Test\%CONFIGURATION%\ChatTests.exe
