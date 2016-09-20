@@ -24,7 +24,7 @@ environment:
 
 # The tests need to dynamically link to the appropriate configuration of gmock.dll
 before_build:
-  - cmd set PATH=%PATH%;%GMOCK_ROOT%\%CONFIGURATION%\;
+  - cmd: set PATH=%PATH%;%GMOCK_ROOT%\%CONFIGURATION%\;
 
 build:
   parallel: false
