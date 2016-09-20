@@ -32,39 +32,39 @@ namespace Logging
     }
 
     template <typename T>
-    static void trace(const std::string& message, const T& class_called_from)
+    static void trace(const std::string& message, const T& obj)
     {
-        Logger::trace(message, typeid(class_called_from).name());
+        Logger::trace(message, obj);
     }
 
     template <typename T>
-    static void debug(const std::string& message, const T& class_called_from)
+    static void debug(const std::string& message, const T& obj)
     {
-        Logger::debug(message, typeid(class_called_from).name());
+        Logger::debug(message, obj);
     }
 
     template <typename T>
-    static void info(const std::string& message, const T& class_called_from)
+    static void info(const std::string& message, const T& obj)
     {
-        Logger::info(message, typeid(class_called_from).name());
+        Logger::info(message, obj);
     }
 
     template <typename T>
-    static void warning(const std::string& message, const T& class_called_from)
+    static void warning(const std::string& message, const T& obj)
     {
-        Logger::warning(message, typeid(class_called_from).name());
+        Logger::warning(message, obj);
     }
 
     template <typename T>
-    static void error(const std::string& message, const T& class_called_from)
+    static void error(const std::string& message, const T& obj)
     {
-        Logger::error(message, typeid(class_called_from).name());
+        Logger::error(message, obj);
     }
 
     template <typename T>
-    static void fatal(const std::string& message, const T& class_called_from)
+    static void fatal(const std::string& message, const T& obj)
     {
-        Logger::fatal(message, typeid(class_called_from).name());
+        Logger::fatal(message, obj);
     }
 
     

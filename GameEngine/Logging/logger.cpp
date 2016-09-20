@@ -151,22 +151,5 @@ namespace GameEngine
                 break;
             }
         }
-
-        std::string Logger::FormatClassName(std::string class_name)
-        {
-            // TODO: Add include guards for different compilers here
-            // Only the MSVC compiler formats like the below.
-            // Clang on the other hand manages class names differently
-            // A work-around to this is to overload all << operators in each
-            // class instead of trying to demangle class names from different
-            // compilers.
-            /*
-            std::string search = "class ";
-            size_t found = class_name.find("class ");
-            class_name.replace(found, search.size(), "[");
-            class_name += "] ";
-            */
-            return class_name;
-        }
     }
 }

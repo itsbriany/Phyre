@@ -23,6 +23,10 @@ namespace Networking
 
         bool is_connected() const { return is_connected_; }
 
+		friend std::ostream& operator<<(std::ostream& os, const ChatClient& cc) {
+			return os << "[ChatClient] ";
+		}
+
     private:
         boost::asio::io_service& io_service_;
         HostResolver& host_resolver_;

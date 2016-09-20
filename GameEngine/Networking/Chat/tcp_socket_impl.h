@@ -21,6 +21,9 @@ namespace Networking
         // This TCP buffer has a window frame of 4kb
         std::array<char, 4096>& buffer() override { return buffer_; }
 
+		friend std::ostream& operator<<(std::ostream& os, const TCPSocketImpl& tcp_socket_impl) {
+			return os << "[TCPSocketImpl] ";
+		}
 
     private:
         void AsyncRead();
