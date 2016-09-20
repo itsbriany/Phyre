@@ -140,9 +140,11 @@ namespace Networking
 }
 }
 
-int main(int ac, char* av[])
+int main(int argc, char* argv[])
 {
+	argc = 0;
+	argv = nullptr;
     GameEngine::Logging::disable_all();
-    testing::InitGoogleMock(&ac, av);
+    testing::InitGoogleMock(&argc, argv);
     return RUN_ALL_TESTS();
 }
