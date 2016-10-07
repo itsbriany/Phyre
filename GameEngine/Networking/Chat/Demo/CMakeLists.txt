@@ -1,9 +1,0 @@
-cmake_minimum_required(VERSION 3.3)
-
-project (ChatClientDemo)
-if(Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS} ../../../Logging ../)
-    link_directories(${Boost_LIBRARY_DIRS})
-    add_executable(ChatClientDemo chat_client_demo.cpp)
-    target_link_libraries(ChatClientDemo ${Boost_LIBRARIES} Chat Logging)
-endif()

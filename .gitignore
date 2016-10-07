@@ -261,3 +261,14 @@ GameEngine/GameEngine.Common/*.cc
 # Vim
 **/*.swp
 **/*.swo
+cscope*
+tags
+
+# Lib files
+*.a
+
+# Test Binaries
+*Tests
+
+# Example Binaries
+*Demo

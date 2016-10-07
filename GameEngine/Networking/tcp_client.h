@@ -7,28 +7,27 @@ namespace GameEngine
 {
 namespace Networking
 {
-    class ChatClient
+    class TCPClient
     {
-        
+
     public:
-        ChatClient(boost::asio::io_service& io_service, HostResolver& resolver, TCPSocket& tcp_socket);
-        ~ChatClient();
+        TCPClient(HostResolver& resolver, TCPSocket& tcp_socket);
+        ~TCPClient();
         void Connect(const std::string& host, const std::string& service, const std::string& data_to_send);
         void Disconnect() const;
         void OnHostResolved(const boost::system::error_code& ec, boost::asio::ip::tcp::resolver::iterator it);
         void OnConnect(const boost::system::error_code& ec);
         void OnRead(const boost::system::error_code& ec, size_t bytes_transferred);
         void OnError(const boost::system::error_code& ec);
-        void Write(const std::string data);
+        void Write(const std::string& data);
 
         bool is_connected() const { return is_connected_; }
 
-		friend std::ostream& operator<<(std::ostream& os, const ChatClient& cc) {
-			return os << "[ChatClient] ";
-		}
+        friend std::ostream& operator<<(std::ostream& os, const TCPClient& cc) {
+                return os << "[TCPClient] ";
+        }
 
     private:
-        boost::asio::io_service& io_service_;
         HostResolver& host_resolver_;
         TCPSocket& tcp_socket_;
         bool is_connected_;
