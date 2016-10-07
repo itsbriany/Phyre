@@ -264,3 +264,6 @@ GameEngine/GameEngine.Common/*.cc
 
 # Lib files
 *.a
+
+# Test Binaries
+*Tests

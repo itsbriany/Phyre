@@ -1,5 +1,4 @@
 #include <gmock/gmock.h>
-#include <boost/asio.hpp>
 #include <boost/bind/bind.hpp>
 #include "tcp_client.h"
 #include "mock_host_resolver.h"
@@ -47,10 +46,9 @@ namespace Networking
     protected:
         void SetUp() override
         {
-            boost::asio::io_service io_service;
             host_resolver_.reset(new MockHostResolver);
             tcp_socket_.reset(new NiceMock<MockTCPSocket>);
-            tcp_client_.reset(new TCPClient(io_service, *host_resolver_, *tcp_socket_));
+            tcp_client_.reset(new TCPClient(*host_resolver_, *tcp_socket_));
         }
 
         std::unique_ptr<TCPClient> tcp_client_;

@@ -17,7 +17,7 @@ namespace Networking
         boost::asio::ip::tcp::resolver resolver(io_service);
         HostResolverImpl host_resolver(io_service, resolver);
         TCPSocketImpl socket(io_service);
-        TCPClient cc(io_service, host_resolver, socket);
+        TCPClient cc(host_resolver, socket);
 
         std::string host = "theboostcpplibraries.com";
         std::string port_or_service = "80";

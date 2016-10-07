@@ -12,8 +12,8 @@ namespace Networking
 
     using boost::asio::ip::tcp;
 
-    TCPClient::TCPClient(boost::asio::io_service& io_service, HostResolver& resolver, TCPSocket& tcp_socket) :
-        io_service_(io_service), host_resolver_(resolver), tcp_socket_(tcp_socket), is_connected_(false)
+    TCPClient::TCPClient(HostResolver& resolver, TCPSocket& tcp_socket) :
+        host_resolver_(resolver), tcp_socket_(tcp_socket), is_connected_(false)
     {
     }
 
