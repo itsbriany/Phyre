@@ -19,13 +19,13 @@ namespace Networking
         void OnConnect(const boost::system::error_code& ec);
         void OnRead(const boost::system::error_code& ec, size_t bytes_transferred);
         void OnError(const boost::system::error_code& ec);
-        void Write(const std::string data);
+        void Write(const std::string& data);
 
         bool is_connected() const { return is_connected_; }
 
-		friend std::ostream& operator<<(std::ostream& os, const TCPClient& cc) {
-			return os << "[TCPClient] ";
-		}
+        friend std::ostream& operator<<(std::ostream& os, const TCPClient& cc) {
+                return os << "[TCPClient] ";
+        }
 
     private:
         HostResolver& host_resolver_;

@@ -67,6 +67,6 @@ namespace Logging
         Logger::fatal(message, obj);
     }
 
-    
+
 }
 }
