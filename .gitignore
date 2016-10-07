@@ -267,3 +267,6 @@ GameEngine/GameEngine.Common/*.cc
 
 # Test Binaries
 *Tests
+
+# Example Binaries
+*Demo
