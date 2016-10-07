@@ -77,7 +77,7 @@ namespace Networking
         tcp_socket_.Close();
     }
 
-    void TCPClient::Write(const std::string data)
+    void TCPClient::Write(const std::string& data)
     {
         std::ostringstream log_output;
 
