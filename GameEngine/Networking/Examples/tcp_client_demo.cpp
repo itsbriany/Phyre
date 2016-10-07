@@ -1,5 +1,5 @@
 #include <boost/asio/io_service.hpp>
-#include "chat_client.h"
+#include "tcp_client.h"
 #include "tcp_socket_impl.h"
 #include "host_resolver_impl.h"
 #include "logging.h"
@@ -9,7 +9,7 @@ namespace GameEngine
 {
 namespace Networking
 {
-    void ChatClientDemoHTTP()
+    void TCPClientDemoHTTP()
     {
         Logging::set_log_level();
 
@@ -17,7 +17,7 @@ namespace Networking
         boost::asio::ip::tcp::resolver resolver(io_service);
         HostResolverImpl host_resolver(io_service, resolver);
         TCPSocketImpl socket(io_service);
-        ChatClient cc(io_service, host_resolver, socket);
+        TCPClient cc(io_service, host_resolver, socket);
 
         std::string host = "theboostcpplibraries.com";
         std::string port_or_service = "80";
@@ -32,6 +32,6 @@ namespace Networking
 
 int main(int argc, char* argv[])
 {
-    GameEngine::Networking::ChatClientDemoHTTP();
+    GameEngine::Networking::TCPClientDemoHTTP();
     return 0;
 }

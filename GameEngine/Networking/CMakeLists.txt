@@ -2,8 +2,11 @@ cmake_minimum_required(VERSION 3.3)
 
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS} ../Logging)
-    add_library(Networking host_resolver.h host_resolver_impl.h host_resolver_impl.cpp tcp_socket.h tcp_socket_impl.h tcp_socket_impl.cpp)
+    add_library(Networking host_resolver.h host_resolver_impl.h
+        host_resolver_impl.cpp tcp_socket.h tcp_socket_impl.h
+        tcp_socket_impl.cpp tcp_client.h tcp_client.cpp)
     target_link_libraries(Networking ${Boost_LIBRARIES} Logging)
 endif()
 
-add_subdirectory(Chat)
+add_subdirectory(Test)
+add_subdirectory(Examples)

@@ -25,4 +25,4 @@ install:
 
 # Run the tests
 script:
-    - ./GameEngine/Networking/Chat/Test/ChatTests
+    - ./GameEngine/Networking/Test/NetworkingTests
