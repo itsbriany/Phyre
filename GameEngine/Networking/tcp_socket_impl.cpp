@@ -1,6 +1,5 @@
 #include <boost/bind/bind.hpp>
 #include "tcp_socket_impl.h"
-#include "chat_client.h"
 #include "logging.h"
 
 namespace GameEngine
@@ -75,7 +74,7 @@ namespace Networking
                                     this,
                                     boost::asio::placeholders::error,
                                     boost::asio::placeholders::bytes_transferred));
-        
+
         std::ostringstream oss;
         oss << "Wrote " << data.size() << " bytes to socket:\n" << data;
         Logging::debug(oss.str(), *this);
