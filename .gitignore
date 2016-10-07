@@ -261,6 +261,8 @@ GameEngine/GameEngine.Common/*.cc
 # Vim
 **/*.swp
 **/*.swo
+cscope*
+tags
 
 # Lib files
 *.a
