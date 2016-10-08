@@ -8,5 +8,5 @@ if(Boost_FOUND)
     target_link_libraries(Networking ${Boost_LIBRARIES} Logging)
 endif()
 
-add_subdirectory(Test)
 add_subdirectory(Examples)
+add_subdirectory(XMPP)

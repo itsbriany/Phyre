@@ -7,8 +7,7 @@ namespace Networking
 {
     using boost::asio::ip::tcp;
 
-    HostResolverImpl::HostResolverImpl(boost::asio::io_service& io_service, tcp::resolver& resolver) :
-        io_service_(io_service), resolver_(resolver)
+    HostResolverImpl::HostResolverImpl(std::unique_ptr<tcp::resolver> resolver): resolver_(std::move(resolver))
     {
     }
 
@@ -16,7 +15,7 @@ namespace Networking
     {
         tcp::resolver::query host_query(host, service);
         Logging::debug("Resolving " + host + ':' + service + "...", *this);
-        resolver_.async_resolve(host_query, callback);
+        resolver_->async_resolve(host_query, callback);
     }
 }
 }

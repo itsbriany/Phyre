@@ -3,6 +3,8 @@
 #include <array>
 #include "tcp_client.h"
 #include "tcp_socket.h"
+#include "tcp_socket_impl.h"
+#include "host_resolver_impl.h"
 #include "logging.h"
 
 namespace GameEngine
@@ -12,13 +14,22 @@ namespace Networking
 
     using boost::asio::ip::tcp;
 
-    TCPClient::TCPClient(HostResolver& resolver, TCPSocket& tcp_socket) :
-        host_resolver_(resolver), tcp_socket_(tcp_socket), is_connected_(false)
+    TCPClient::TCPClient(std::unique_ptr<HostResolver> resolver, std::unique_ptr<TCPSocket> tcp_socket) :
+        host_resolver_(std::move(resolver)),
+        tcp_socket_(std::move(tcp_socket)),
+        is_connected_(false)
     {
     }
 
     TCPClient::~TCPClient()
     {
+    }
+
+    std::unique_ptr<TCPClient> TCPClient::MakeTCPClient(boost::asio::io_service& io_service, const std::string& host, const std::string& service) {
+        std::unique_ptr<tcp::resolver> resolver(new tcp::resolver(io_service));
+        std::unique_ptr<HostResolver> host_resolver = std::make_unique<HostResolverImpl>(HostResolverImpl(std::move(resolver)));
+        std::unique_ptr<TCPSocket> socket(new TCPSocketImpl(io_service));
+        return std::unique_ptr<TCPClient>(new TCPClient(std::move(host_resolver), std::move(socket)));
     }
 
     void TCPClient::Connect(const std::string& host, const std::string& service, const std::string& data_to_send)
@@ -29,12 +40,12 @@ namespace Networking
                                                                     this,
                                                                     boost::asio::placeholders::error,
                                                                     boost::asio::placeholders::iterator);
-        host_resolver_.ResolveHost(host, service, callback);
+        host_resolver_->ResolveHost(host, service, callback);
     }
 
     void TCPClient::Disconnect() const
     {
-        tcp_socket_.Close();
+        tcp_socket_->Close();
         Logging::info("Disconnected from endpoint", *this);
     }
 
@@ -62,7 +73,7 @@ namespace Networking
 
         // TODO: Probably want to start reading from the previous read + bytes_transferred
         std::ostringstream oss;
-        oss.write(tcp_socket_.buffer().data(), bytes_transferred);
+        oss.write(tcp_socket_->buffer().data(), bytes_transferred);
         Logging::info(oss.str(), *this);
     }
 
@@ -74,7 +85,7 @@ namespace Networking
         is_connected_ = false;
 
         Logging::info("Closing connection", *this);
-        tcp_socket_.Close();
+        tcp_socket_->Close();
     }
 
     void TCPClient::Write(const std::string& data)
@@ -85,10 +96,10 @@ namespace Networking
         {
             log_output << "Sending " << data.size() << " bytes to endpoint";
             Logging::info(log_output.str(), *this);
-            tcp_socket_.Write(data, boost::bind(&TCPClient::OnRead,
-                this,
-                boost::asio::placeholders::error,
-                boost::asio::placeholders::bytes_transferred));
+            tcp_socket_->Write(data, boost::bind(&TCPClient::OnRead,
+                                                this,
+                                                boost::asio::placeholders::error,
+                                                boost::asio::placeholders::bytes_transferred));
             return;
         }
 
@@ -104,7 +115,7 @@ namespace Networking
         }
 
         TCPSocket::OnConnectCallback callback = boost::bind(&TCPClient::OnConnect, this, boost::asio::placeholders::error);
-        tcp_socket_.Connect(it, callback);
+        tcp_socket_->Connect(it, callback);
     }
 }
 }

@@ -30,5 +30,5 @@ build:
   parallel: false
   project: C:\projects\GameEngine\GameEngine\GameEngine.sln
 
-test_script:
-  - cmd: C:\projects\GameEngine\GameEngine\Networking\Test\%CONFIGURATION%\NetworkingTests.exe
+# test_script:
+#  - cmd: C:\projects\GameEngine\GameEngine\Networking\Test\%CONFIGURATION%\NetworkingTests.exe

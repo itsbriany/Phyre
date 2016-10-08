@@ -48,7 +48,7 @@ namespace Networking
         {
             host_resolver_.reset(new MockHostResolver);
             tcp_socket_.reset(new NiceMock<MockTCPSocket>);
-            tcp_client_.reset(new TCPClient(*host_resolver_, *tcp_socket_));
+            tcp_client_.reset(new TCPClient(std::move(host_resolver_), std::move(tcp_socket_)));
         }
 
         std::unique_ptr<TCPClient> tcp_client_;

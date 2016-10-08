@@ -11,8 +11,11 @@ namespace Networking
     {
 
     public:
-        TCPClient(HostResolver& resolver, TCPSocket& tcp_socket);
+        TCPClient(std::unique_ptr<HostResolver> resolver, std::unique_ptr<TCPSocket> tcp_socket);
         ~TCPClient();
+
+        static std::unique_ptr<TCPClient> MakeTCPClient(boost::asio::io_service& io_service, const std::string& host, const std::string& service);
+
         void Connect(const std::string& host, const std::string& service, const std::string& data_to_send);
         void Disconnect() const;
         void OnHostResolved(const boost::system::error_code& ec, boost::asio::ip::tcp::resolver::iterator it);
@@ -28,8 +31,8 @@ namespace Networking
         }
 
     private:
-        HostResolver& host_resolver_;
-        TCPSocket& tcp_socket_;
+        std::unique_ptr<HostResolver> host_resolver_;
+        std::unique_ptr<TCPSocket> tcp_socket_;
         bool is_connected_;
         std::string data_to_send_on_connect_;
     };
