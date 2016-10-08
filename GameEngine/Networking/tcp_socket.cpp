@@ -10,7 +10,7 @@ namespace Networking
     using boost::asio::ip::tcp;
 
     TCPSocket::TCPSocket(boost::asio::io_service& io_service) :
-        socket_(std::make_unique<tcp::socket>(tcp::socket(io_service))),
+        socket_(io_service),
         buffer_(std::array<char, 4096>()),
         is_open_(false)
     {
@@ -24,7 +24,7 @@ namespace Networking
     {
         Logging::trace("Opening connection", *this);
         on_connect_callback_ = callback;
-        socket_->async_connect(*it, boost::bind(&TCPSocket::OnConnect, this, boost::asio::placeholders::error));
+        socket_.async_connect(*it, boost::bind(&TCPSocket::OnConnect, this, boost::asio::placeholders::error));
     }
 
     void TCPSocket::OnConnect(const boost::system::error_code& ec)
@@ -36,7 +36,7 @@ namespace Networking
     void TCPSocket::Close()
     {
         Logging::debug("Closing TCP connection", *this);
-        socket_->close();
+        socket_.close();
         is_open_ = false;
     }
 
@@ -53,7 +53,7 @@ namespace Networking
     {
         if (is_open_)
         {
-            socket_->async_read_some(boost::asio::buffer(buffer_, 4096),
+            socket_.async_read_some(boost::asio::buffer(buffer_, 4096),
                 boost::bind(&TCPSocket::OnRead,
                     this,
                     boost::asio::placeholders::error,
@@ -70,8 +70,10 @@ namespace Networking
         }
 
         on_read_callback_ = on_read_callback;
-        write(*socket_, boost::asio::buffer(data));
-        socket_->async_read_some(boost::asio::buffer(buffer_),
+
+        // TODO: Prefer to use async_write
+        write(socket_, boost::asio::buffer(data));
+        socket_.async_read_some(boost::asio::buffer(buffer_),
                                 boost::bind(&TCPSocket::OnRead,
                                     this,
                                     boost::asio::placeholders::error,

@@ -36,7 +36,7 @@ namespace Networking
     private:
         void AsyncRead();
 
-        std::unique_ptr<boost::asio::ip::tcp::socket> socket_;
+        boost::asio::ip::tcp::socket socket_;
         std::array<char, 4096> buffer_;
         OnReadCallback on_read_callback_;
         OnConnectCallback on_connect_callback_;

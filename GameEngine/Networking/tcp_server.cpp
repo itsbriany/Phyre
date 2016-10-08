@@ -12,7 +12,7 @@ namespace Networking
         acceptor_(io_service, tcp::endpoint(tcp::v4(), listen_port)) { }
 
     void TCPServer::StartAccept() {
-        TCPConnection::pointer new_connection = TCPConnection::create(acceptor_.get_io_service());
+        TCPServerConnection::pointer new_connection = TCPServerConnection::create(acceptor_.get_io_service());
 
         acceptor_.async_accept(new_connection->socket(),
                                boost::bind(&TCPServer::HandleAccept,
@@ -21,7 +21,7 @@ namespace Networking
                                            boost::asio::placeholders::error));
     }
 
-    void TCPServer::HandleAccept(TCPConnection::pointer new_connection,
+    void TCPServer::HandleAccept(TCPServerConnection::pointer new_connection,
                                  const boost::system::error_code& error) {
         if (!error)
         {
