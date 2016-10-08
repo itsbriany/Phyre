@@ -4,6 +4,10 @@ project (NetworkingExamples)
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS} ../)
     link_directories(${Boost_LIBRARY_DIRS})
+
+    add_executable(TCPServerDemo tcp_server_demo.cpp)
+    target_link_libraries(TCPServerDemo ${Boost_LIBRARIES} Networking)
+
     add_executable(TCPClientDemo tcp_client_demo.cpp)
     target_link_libraries(TCPClientDemo ${Boost_LIBRARIES} Networking)
 endif()
