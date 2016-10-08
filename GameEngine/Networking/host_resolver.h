@@ -10,13 +10,16 @@ namespace Networking
     public:
         typedef std::function<void(const boost::system::error_code&, boost::asio::ip::tcp::resolver::iterator)> OnHostResolvedCallback;
 
-        virtual ~HostResolver() { }
-        
-        // Resolves a domains for a host on a certian port or service
-        // The callback will be fired when the host and service have been resolved
-        virtual void ResolveHost(const std::string& host,
-                                 const std::string& service,
-                                 OnHostResolvedCallback on_host_resolved_callback) = 0;
+        HostResolver(std::unique_ptr<boost::asio::ip::tcp::resolver> resolver);
+        void ResolveHost(const std::string& host, const std::string& service, OnHostResolvedCallback callback);
+
+		friend std::ostream& operator<<(std::ostream& os, const HostResolver& host_resolver) {
+			return os << "[HostResolver] ";
+		}
+
+    private:
+        std::unique_ptr<boost::asio::ip::tcp::resolver> resolver_;
     };
 }
 }
+

@@ -3,8 +3,6 @@
 #include <array>
 #include "tcp_client.h"
 #include "tcp_socket.h"
-#include "tcp_socket_impl.h"
-#include "host_resolver_impl.h"
 #include "logging.h"
 
 namespace GameEngine
@@ -27,8 +25,8 @@ namespace Networking
 
     std::unique_ptr<TCPClient> TCPClient::MakeTCPClient(boost::asio::io_service& io_service, const std::string& host, const std::string& service) {
         std::unique_ptr<tcp::resolver> resolver(new tcp::resolver(io_service));
-        std::unique_ptr<HostResolver> host_resolver = std::make_unique<HostResolverImpl>(HostResolverImpl(std::move(resolver)));
-        std::unique_ptr<TCPSocket> socket(new TCPSocketImpl(io_service));
+        std::unique_ptr<HostResolver> host_resolver = std::make_unique<HostResolver>(HostResolver(std::move(resolver)));
+        std::unique_ptr<TCPSocket> socket(new TCPSocket(io_service));
         return std::unique_ptr<TCPClient>(new TCPClient(std::move(host_resolver), std::move(socket)));
     }
 

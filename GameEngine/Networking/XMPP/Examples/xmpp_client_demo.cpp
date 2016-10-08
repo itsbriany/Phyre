@@ -1,6 +1,6 @@
 #include "xmpp_client.h"
-#include "tcp_socket_impl.h"
-#include "host_resolver_impl.h"
+#include "tcp_socket.h"
+#include "host_resolver.h"
 #include "logging.h"
 
 
@@ -18,14 +18,6 @@ namespace Networking
         std::string data = "foo\r\n";
 
         std::unique_ptr<TCPClient> tcp_client = TCPClient::MakeTCPClient(io_service, host, service);
-
-        /**
-        boost::asio::ip::tcp::resolver resolver(io_service);
-        HostResolverImpl host_resolver(io_service, resolver);
-        TCPSocketImpl socket(io_service);
-        TCPClient tcp_client(host_resolver, socket);
-        */
-
         tcp_client->Connect(host, service, data);
 
         /*

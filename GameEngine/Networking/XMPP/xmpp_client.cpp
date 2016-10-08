@@ -1,6 +1,6 @@
 #include "xmpp_client.h"
-#include "tcp_socket_impl.h"
-#include "host_resolver_impl.h"
+#include "tcp_socket.h"
+#include "host_resolver.h"
 
 namespace GameEngine {
 namespace Networking {

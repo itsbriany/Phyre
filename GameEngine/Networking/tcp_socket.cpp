@@ -1,5 +1,5 @@
 #include <boost/bind/bind.hpp>
-#include "tcp_socket_impl.h"
+#include "tcp_socket.h"
 #include "logging.h"
 
 namespace GameEngine
@@ -9,38 +9,38 @@ namespace Networking
 
     using boost::asio::ip::tcp;
 
-    TCPSocketImpl::TCPSocketImpl(boost::asio::io_service& io_service) :
+    TCPSocket::TCPSocket(boost::asio::io_service& io_service) :
         socket_(std::make_unique<tcp::socket>(tcp::socket(io_service))),
         buffer_(std::array<char, 4096>()),
         is_open_(false)
     {
     }
 
-    TCPSocketImpl::~TCPSocketImpl()
+    TCPSocket::~TCPSocket()
     {
     }
 
-    void TCPSocketImpl::Connect(tcp::resolver::iterator it, OnConnectCallback callback)
+    void TCPSocket::Connect(tcp::resolver::iterator it, OnConnectCallback callback)
     {
         Logging::trace("Opening connection", *this);
         on_connect_callback_ = callback;
-        socket_->async_connect(*it, boost::bind(&TCPSocketImpl::OnConnect, this, boost::asio::placeholders::error));
+        socket_->async_connect(*it, boost::bind(&TCPSocket::OnConnect, this, boost::asio::placeholders::error));
     }
 
-    void TCPSocketImpl::OnConnect(const boost::system::error_code& ec)
+    void TCPSocket::OnConnect(const boost::system::error_code& ec)
     {
         is_open_ = true;
         on_connect_callback_(ec);
     }
 
-    void TCPSocketImpl::Close()
+    void TCPSocket::Close()
     {
         Logging::debug("Closing TCP connection", *this);
         socket_->close();
         is_open_ = false;
     }
 
-    void TCPSocketImpl::OnRead(const boost::system::error_code& ec, size_t bytes_transferred)
+    void TCPSocket::OnRead(const boost::system::error_code& ec, size_t bytes_transferred)
     {
         if (is_open_)
         {
@@ -49,19 +49,19 @@ namespace Networking
         }
     }
 
-    void TCPSocketImpl::AsyncRead()
+    void TCPSocket::AsyncRead()
     {
         if (is_open_)
         {
             socket_->async_read_some(boost::asio::buffer(buffer_, 4096),
-                boost::bind(&TCPSocketImpl::OnRead,
+                boost::bind(&TCPSocket::OnRead,
                     this,
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred));
         }
     }
 
-    void TCPSocketImpl::Write(const std::string data, OnReadCallback on_read_callback)
+    void TCPSocket::Write(const std::string data, OnReadCallback on_read_callback)
     {
         if (!is_open_)
         {
@@ -72,7 +72,7 @@ namespace Networking
         on_read_callback_ = on_read_callback;
         write(*socket_, boost::asio::buffer(data));
         socket_->async_read_some(boost::asio::buffer(buffer_),
-                                boost::bind(&TCPSocketImpl::OnRead,
+                                boost::bind(&TCPSocket::OnRead,
                                     this,
                                     boost::asio::placeholders::error,
                                     boost::asio::placeholders::bytes_transferred));
@@ -82,7 +82,7 @@ namespace Networking
         Logging::debug(oss.str(), *this);
     }
 
-    void TCPSocketImpl::Read()
+    void TCPSocket::Read()
     {
         if (!is_open_)
         {
