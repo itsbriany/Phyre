@@ -9,4 +9,5 @@ if(Boost_FOUND)
 endif()
 
 add_subdirectory(Examples)
+add_subdirectory(Test)
 add_subdirectory(XMPP)

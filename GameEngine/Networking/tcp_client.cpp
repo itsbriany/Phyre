@@ -12,89 +12,103 @@ namespace Networking
 
     using boost::asio::ip::tcp;
 
-    TCPClient::TCPClient(std::unique_ptr<HostResolver> resolver, std::unique_ptr<TCPSocket> tcp_socket) :
-        host_resolver_(std::move(resolver)),
-        tcp_socket_(std::move(tcp_socket)),
-        is_connected_(false)
-    {
-    }
+    TCPClient::TCPClient(boost::asio::io_service& io_service) :
+        io_service_(io_service),
+        is_connected_(false),
+        host_resolver_(HostResolver(std::unique_ptr<tcp::resolver>(new tcp::resolver(io_service_)))),
+        tcp_socket_(std::unique_ptr<TCPSocket>(new TCPSocket(io_service_))) { }
 
-    TCPClient::~TCPClient()
-    {
-    }
+    TCPClient::~TCPClient() { }
 
-    std::unique_ptr<TCPClient> TCPClient::MakeTCPClient(boost::asio::io_service& io_service, const std::string& host, const std::string& service) {
-        std::unique_ptr<tcp::resolver> resolver(new tcp::resolver(io_service));
-        std::unique_ptr<HostResolver> host_resolver = std::make_unique<HostResolver>(HostResolver(std::move(resolver)));
-        std::unique_ptr<TCPSocket> socket(new TCPSocket(io_service));
-        return std::unique_ptr<TCPClient>(new TCPClient(std::move(host_resolver), std::move(socket)));
-    }
-
-    void TCPClient::Connect(const std::string& host, const std::string& service, const std::string& data_to_send)
+    void TCPClient::Connect(const std::string& host, const std::string& service)
     {
         Logging::info("Connecting to " + host + ':' + service, *this);
-        data_to_send_on_connect_ = data_to_send;
-        HostResolver::OnHostResolvedCallback callback = boost::bind(&TCPClient::OnHostResolved,
+        HostResolver::OnHostResolvedCallback callback = boost::bind(&TCPClient::ResolveHostHandler,
                                                                     this,
                                                                     boost::asio::placeholders::error,
                                                                     boost::asio::placeholders::iterator);
-        host_resolver_->ResolveHost(host, service, callback);
+        host_resolver_.ResolveHost(host, service, callback);
     }
 
-    void TCPClient::Disconnect() const
-    {
-        tcp_socket_->Close();
+    void TCPClient::OnConnect() {
+        Logging::info("Connected", *this);
+    }
+
+    void TCPClient::OnDisconnect() {
         Logging::info("Disconnected from endpoint", *this);
     }
 
-    // TODO: On connect should write some data to the server
-    void TCPClient::OnConnect(const boost::system::error_code& ec)
+    void TCPClient::Disconnect()
     {
-        if (ec)
-        {
-            OnError(ec);
+        tcp_socket_->Close();
+        is_connected_ = false;
+        OnDisconnect();
+    }
+
+    void TCPClient::ConnectHandler(const boost::system::error_code& ec) {
+        if (ec) {
+            ErrorHandler(ec);
             return;
         }
 
         is_connected_ = true;
         Logging::info("Connection established", *this);
-        Write(data_to_send_on_connect_);
+        OnConnect();
     }
 
-    void TCPClient::OnRead(const boost::system::error_code& ec, size_t bytes_transferred)
-    {
+    void TCPClient::OnRead(const std::string& data) {
+        Logging::info(data, *this);
+    }
+
+    void TCPClient::ReadHandler(const boost::system::error_code& ec, size_t bytes_transferred) {
         if (ec)
         {
-            OnError(ec);
+            ErrorHandler(ec);
             return;
         }
 
-        // TODO: Probably want to start reading from the previous read + bytes_transferred
         std::ostringstream oss;
-        oss.write(tcp_socket_->buffer().data(), bytes_transferred);
+        oss << "Read " << bytes_transferred << " bytes";
         Logging::info(oss.str(), *this);
+
+        OnRead(tcp_socket_->buffer().data());
     }
 
-    void TCPClient::OnError(const boost::system::error_code& ec)
-    {
+    void TCPClient::OnError(const boost::system::error_code& ec) {
         Logging::error(ec.message(), *this);
-
-        // TODO: We may also not always want to close the connection if the error is not severe enough
-        is_connected_ = false;
-
-        Logging::info("Closing connection", *this);
-        tcp_socket_->Close();
     }
 
-    void TCPClient::Write(const std::string& data)
-    {
+    void TCPClient::ErrorHandler(const boost::system::error_code& ec) {
+        OnError(ec);
+        Disconnect();
+    }
+
+    void TCPClient::OnWrite(size_t bytes_transferred) {
+        Logging::info("Transferred all bytes", *this);
+    }
+
+    void TCPClient::WriteHandler(const boost::system::error_code& error_code, size_t bytes_transferred) {
+        if (error_code) {
+           ErrorHandler(error_code);
+           return;
+        }
+
+        std::ostringstream log_output;
+        log_output << "Sent " << bytes_transferred << " bytes to endpoint";
+        Logging::info(log_output.str(), *this);
+
+        OnWrite(bytes_transferred);
+        tcp_socket_->Read(boost::bind(&TCPClient::ReadHandler,
+                                      this,
+                                      boost::asio::placeholders::error,
+                                      boost::asio::placeholders::bytes_transferred));
+    }
+
+    void TCPClient::Write(const std::string& data) {
         std::ostringstream log_output;
 
-        if (is_connected_)
-        {
-            log_output << "Sending " << data.size() << " bytes to endpoint";
-            Logging::info(log_output.str(), *this);
-            tcp_socket_->Write(data, boost::bind(&TCPClient::OnRead,
+        if (is_connected_) {
+            tcp_socket_->Write(data, boost::bind(&TCPClient::WriteHandler,
                                                 this,
                                                 boost::asio::placeholders::error,
                                                 boost::asio::placeholders::bytes_transferred));
@@ -104,15 +118,19 @@ namespace Networking
         Logging::warning("Attempting to write when no connection has been established", *this);
     }
 
-    void TCPClient::OnHostResolved(const boost::system::error_code& ec, tcp::resolver::iterator it)
-    {
-        if (ec)
-        {
-            OnError(ec);
+    void TCPClient::OnHostResolved() {
+        Logging::info("Host resolved", *this);
+    }
+
+    void TCPClient::ResolveHostHandler(const boost::system::error_code& ec, tcp::resolver::iterator it) {
+        if (ec) {
+            ErrorHandler(ec);
             return;
         }
 
-        TCPSocket::OnConnectCallback callback = boost::bind(&TCPClient::OnConnect, this, boost::asio::placeholders::error);
+        OnHostResolved();
+
+        TCPSocket::OnConnectCallback callback = boost::bind(&TCPClient::ConnectHandler, this, boost::asio::placeholders::error);
         tcp_socket_->Connect(it, callback);
     }
 }

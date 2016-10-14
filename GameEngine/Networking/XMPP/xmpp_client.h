@@ -5,16 +5,10 @@
 namespace GameEngine {
 namespace Networking {
 
-    class XMPPClient {
+    class XMPPClient : public TCPClient {
         public:
-            XMPPClient(const std::string& xmpp_host, const std::string& service, TCPClient& tcp_client);
-            void Connect();
-
-        private:
-            std::string xmpp_host_;
-            std::string xmpp_service_;
-            TCPClient& tcp_client_;
-            SASLHandshake* sasl_handshake_;
+            XMPPClient(boost::asio::io_service& io_service);
+            void OnConnect() final;
     };
 
 }

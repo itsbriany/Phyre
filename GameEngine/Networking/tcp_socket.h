@@ -14,6 +14,7 @@ namespace Networking
         // Arg1: Error on read
         // Arg2: Bytes read
         typedef std::function<void(const boost::system::error_code&, size_t)> OnReadCallback;
+        typedef std::function<void(const boost::system::error_code&, size_t)> OnWriteCallback;
 
 
         TCPSocket(boost::asio::io_service& io_service);
@@ -23,14 +24,14 @@ namespace Networking
         void OnConnect(const boost::system::error_code& ec);
         void Close();
         void OnRead(const boost::system::error_code& ec, size_t bytes_transferred);
-        void Write(const std::string data, OnReadCallback on_read_callback);
-        void Read();
+        void Write(const std::string data, OnWriteCallback on_read_callback);
+        void Read(OnReadCallback on_read_callback);
 
         // This TCP buffer has a window frame of 4kb
         std::array<char, 4096>& buffer()  { return buffer_; }
 
-        friend std::ostream& operator<<(std::ostream& os, const TCPSocket& tcp_socket_impl) {
-                return os << "[TCPSocket] ";
+        friend std::ostream& operator<<(std::ostream& os, const TCPSocket& tcp_socket) {
+            return os << "[TCPSocket] ";
         }
 
     private:
@@ -39,6 +40,7 @@ namespace Networking
         boost::asio::ip::tcp::socket socket_;
         std::array<char, 4096> buffer_;
         OnReadCallback on_read_callback_;
+        OnWriteCallback on_write_callback_;
         OnConnectCallback on_connect_callback_;
         bool is_open_;
     };

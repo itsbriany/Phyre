@@ -6,10 +6,7 @@ namespace Networking {
 
     class SASLHandshake {
         public:
-            SASLHandshake(TCPClient& tcp_client);
-
-        private:
-            TCPClient& tcp_client_;
+            SASLHandshake();
     };
 
 }

@@ -9,26 +9,30 @@ namespace GameEngine
 {
 namespace Networking
 {
-    void TCPClientDemoHTTP()
-    {
-        Logging::set_log_level();
+    class TCPClientDemo : public TCPClient {
+        public:
+            TCPClientDemo(boost::asio::io_service& io_service) : TCPClient(io_service) { }
 
-        boost::asio::io_service io_service;
-        std::string host = "theboostcpplibraries.com";
-        std::string port_or_service = "80";
-        std::string data_to_send_on_connect = "GET / HTTP/1.1\r\nHost: theboostcpplibraries.com\r\n\r\n";
+            void Start() {
+                std::string host = "theboostcpplibraries.com";
+                std::string port_or_service = "80";
+                Connect(host, port_or_service);
+                io_service_.run();
+            }
 
-        std::unique_ptr<TCPClient> cc = TCPClient::MakeTCPClient(io_service, host, port_or_service);
-
-        cc->Connect(host, port_or_service, data_to_send_on_connect);
-
-        io_service.run();
-    }
+            void OnConnect() override {
+                std::string payload = "GET / HTTP/1.1\r\nHost: theboostcpplibraries.com\r\n\r\n";
+                Write(payload);
+            }
+    };
 }
 }
 
 int main(int argc, char* argv[])
 {
-    GameEngine::Networking::TCPClientDemoHTTP();
+    GameEngine::Logging::set_log_level();
+    boost::asio::io_service io_service;
+    GameEngine::Networking::TCPClientDemo client(io_service);
+    client.Start();
     return 0;
 }

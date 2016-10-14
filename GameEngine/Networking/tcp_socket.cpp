@@ -45,23 +45,15 @@ namespace Networking
         if (is_open_)
         {
             on_read_callback_(ec, bytes_transferred);
-            AsyncRead();
+            socket_.async_read_some(boost::asio::buffer(buffer_),
+                                    boost::bind(&TCPSocket::OnRead,
+                                                this,
+                                                boost::asio::placeholders::error,
+                                                boost::asio::placeholders::bytes_transferred));
         }
     }
 
-    void TCPSocket::AsyncRead()
-    {
-        if (is_open_)
-        {
-            socket_.async_read_some(boost::asio::buffer(buffer_, 4096),
-                boost::bind(&TCPSocket::OnRead,
-                    this,
-                    boost::asio::placeholders::error,
-                    boost::asio::placeholders::bytes_transferred));
-        }
-    }
-
-    void TCPSocket::Write(const std::string data, OnReadCallback on_read_callback)
+    void TCPSocket::Write(const std::string data, OnWriteCallback on_write_callback)
     {
         if (!is_open_)
         {
@@ -69,29 +61,28 @@ namespace Networking
             return;
         }
 
-        on_read_callback_ = on_read_callback;
-
-        // TODO: Prefer to use async_write
-        write(socket_, boost::asio::buffer(data));
-        socket_.async_read_some(boost::asio::buffer(buffer_),
-                                boost::bind(&TCPSocket::OnRead,
-                                    this,
-                                    boost::asio::placeholders::error,
-                                    boost::asio::placeholders::bytes_transferred));
+        boost::asio::async_write(socket_, boost::asio::buffer(data), on_write_callback);
 
         std::ostringstream oss;
         oss << "Wrote " << data.size() << " bytes to socket:\n" << data;
         Logging::debug(oss.str(), *this);
     }
 
-    void TCPSocket::Read()
+    void TCPSocket::Read(OnReadCallback on_read_callback)
     {
         if (!is_open_)
         {
             Logging::warning("Cannot read from closed socket", *this);
             return;
         }
-        AsyncRead();
+
+        on_read_callback_ = on_read_callback;
+
+        socket_.async_read_some(boost::asio::buffer(buffer_),
+                                boost::bind(&TCPSocket::OnRead,
+                                    this,
+                                    boost::asio::placeholders::error,
+                                    boost::asio::placeholders::bytes_transferred));
     }
 }
 }
