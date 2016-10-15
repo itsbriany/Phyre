@@ -11,7 +11,7 @@ namespace Networking
     void XMPPClientDemo()
     {
         boost::asio::io_service io_service;
-        std::string host = "0.0.0.0";
+        std::string host = "127.0.0.1";
         std::string service = "5222";
 
         XMPPClient xmpp_client(io_service);

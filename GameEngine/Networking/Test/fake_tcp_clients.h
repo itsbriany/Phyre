@@ -37,7 +37,7 @@ class TCPClientWrite : public TCPClient {
 
     protected:
         void OnConnect() override {
-            EXPECT_TRUE(is_connected_);
+            EXPECT_TRUE(is_connected());
             Write(payload_);
         }
 
@@ -84,7 +84,7 @@ class TCPClientDisconnect : public TCPClient {
         }
 
         void OnDisconnect() override {
-            EXPECT_FALSE(is_connected_);
+            EXPECT_FALSE(is_connected());
             io_service_.stop();
         }
 };

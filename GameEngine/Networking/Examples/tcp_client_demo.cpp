@@ -21,8 +21,10 @@ namespace Networking
             }
 
             void OnConnect() override {
-                std::string payload = "GET / HTTP/1.1\r\nHost: theboostcpplibraries.com\r\n\r\n";
-                Write(payload);
+				std::string payload1 = "GET / HTTP/1.1\r\n";
+				std::string payload2 = "Host: theboostcpplibraries.com\r\n\r\n";
+                Write(payload1);
+				Write(payload2);
             }
     };
 }

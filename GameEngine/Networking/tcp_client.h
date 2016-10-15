@@ -16,9 +16,12 @@ namespace Networking
 
         void Connect(const std::string& host, const std::string& service);
         void Disconnect();
-        void Write(const std::string& data);
-
-        bool is_connected() const { return is_connected_; }
+        void Write(const std::string& data) const;
+		
+		// Invoke this to reset the message buffer once any network transaction with the server has been completed
+		// This will free up all of the written messages bound to the lifetime of the TCP Socket
+		void TransactionComplete() const;
+        bool is_connected() const { return tcp_socket_->is_connected(); }
 
         friend std::ostream& operator<<(std::ostream& os, const TCPClient& cc) {
                 return os << "[TCPClient] ";
@@ -33,7 +36,6 @@ namespace Networking
         virtual void OnError(const boost::system::error_code& ec);
 
         boost::asio::io_service& io_service_;
-        bool is_connected_;
 
     private:
         void ConnectHandler(const boost::system::error_code& ec);
