@@ -9,15 +9,15 @@ namespace Networking
 
     using boost::asio::ip::tcp;
 
-    TCPSocket::TCPSocket(boost::asio::io_service& io_service, 
-    					 OnConnectCallback on_connect_callback,
-						 OnReadCallback on_read_callback,
-						 OnWriteCallback on_write_callback) :
+    TCPSocket::TCPSocket(boost::asio::io_service& io_service,
+                         OnConnectCallback on_connect_callback,
+                         OnReadCallback on_read_callback,
+                         OnWriteCallback on_write_callback) :
         socket_(io_service),
         buffer_(std::array<char, 4096>()),
-		on_connect_callback_(on_connect_callback),
-		on_read_callback_(on_read_callback),
-		on_write_callback_(on_write_callback),
+        on_connect_callback_(on_connect_callback),
+        on_read_callback_(on_read_callback),
+        on_write_callback_(on_write_callback),
         is_connected_(false)
     {
     }
@@ -58,15 +58,14 @@ namespace Networking
         }
     }
 
-	void TCPSocket::Write(const std::string& data)
+    void TCPSocket::Write(const std::string& data)
     {
         if (!is_connected_)
         {
             Logging::warning("Cannot write to closed socket", *this);
             return;
         }
-		message_queue_.push(data);
-        boost::asio::async_write(socket_, boost::asio::buffer(message_queue_.back()), on_write_callback_);
+        write(socket_, boost::asio::buffer(data));
 
         std::ostringstream oss;
         oss << "Wrote " << data.size() << " bytes to socket:\n" << data;
@@ -86,10 +85,5 @@ namespace Networking
                                     boost::asio::placeholders::error,
                                     boost::asio::placeholders::bytes_transferred));
     }
-
-	void TCPSocket::ResetMessageQueue(std::queue<std::string> new_message_queue)
-	{
-		message_queue_ = new_message_queue;
-	}
 }
 }

@@ -6,27 +6,8 @@ namespace GameEngine
 namespace Logging
 {
 
-    static void disable_all()
-    {
-        Logger::disable_all();
-    }
 
-    static void disable_lvl(Logger::LogLevel log_level)
-    {
-        Logger::disable_lvl(log_level);
-    }
-
-    static void enable_all()
-    {
-        Logger::enable_all();
-    }
-
-    static void enable_lvl(Logger::LogLevel log_level)
-    {
-        Logger::enable_lvl(log_level);
-    }
-
-    static void set_log_level(Logger::LogLevel log_level = Logger::kDebug)
+    static void set_log_level(LogLevel log_level = kDebug)
     {
         Logger::set_log_level(log_level);
     }
@@ -66,7 +47,6 @@ namespace Logging
     {
         Logger::fatal(message, obj);
     }
-
 
 }
 }

@@ -13,9 +13,9 @@ namespace Networking
         HostResolver(std::unique_ptr<boost::asio::ip::tcp::resolver> resolver);
         void ResolveHost(const std::string& host, const std::string& service, OnHostResolvedCallback callback);
 
-		friend std::ostream& operator<<(std::ostream& os, const HostResolver& host_resolver) {
-			return os << "[HostResolver] ";
-		}
+        friend std::ostream& operator<<(std::ostream& os, const HostResolver& host_resolver) {
+            return os << "[HostResolver] ";
+        }
 
     private:
         std::unique_ptr<boost::asio::ip::tcp::resolver> resolver_;

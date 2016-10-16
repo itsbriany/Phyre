@@ -16,11 +16,8 @@ namespace Networking
 
         void Connect(const std::string& host, const std::string& service);
         void Disconnect();
-        void Write(const std::string& data) const;
-		
-		// Invoke this to reset the message buffer once any network transaction with the server has been completed
-		// This will free up all of the written messages bound to the lifetime of the TCP Socket
-		void TransactionComplete() const;
+        void Write(const std::string& data);
+
         bool is_connected() const { return tcp_socket_->is_connected(); }
 
         friend std::ostream& operator<<(std::ostream& os, const TCPClient& cc) {

@@ -49,7 +49,6 @@ namespace Networking
     void TCPClient::Disconnect()
     {
         tcp_socket_->Close();
-		TransactionComplete();
         OnDisconnect();
     }
 
@@ -99,30 +98,28 @@ namespace Networking
            ErrorHandler(error_code);
            return;
         }
-
-        std::ostringstream log_output;
-        log_output << "Sent " << bytes_transferred << " bytes to endpoint";
-        Logging::info(log_output.str(), *this);
-
-        OnWrite(bytes_transferred);
-        tcp_socket_->Read();
     }
 
-    void TCPClient::Write(const std::string& data) const {
+    void TCPClient::Write(const std::string& data) {
         if (is_connected()) {
             tcp_socket_->Write(data);
+
+            std::ostringstream log_output;
+            log_output << "Sent " << data.size() << " bytes to endpoint";
+            Logging::info(log_output.str(), *this);
+
+            OnWrite(data.size());
+            tcp_socket_->Read();
+
             return;
         }
+
+
 
         Logging::warning("Attempting to write when no connection has been established", *this);
     }
 
-	void TCPClient::TransactionComplete() const
-	{
-		tcp_socket_->ResetMessageQueue();
-	}
-
-	void TCPClient::OnHostResolved() {
+    void TCPClient::OnHostResolved() {
         Logging::info("Host resolved", *this);
     }
 
@@ -133,8 +130,6 @@ namespace Networking
         }
 
         OnHostResolved();
-
-        TCPSocket::OnConnectCallback callback = boost::bind(&TCPClient::ConnectHandler, this, boost::asio::placeholders::error);
         tcp_socket_->Connect(it);
     }
 }
