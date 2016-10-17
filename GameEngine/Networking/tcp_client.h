@@ -27,8 +27,12 @@ namespace Networking
     protected:
         virtual void OnConnect();
         virtual void OnHostResolved();
-        virtual void OnWrite(size_t bytes_transferred);
-        virtual void OnRead(const std::string& data);
+
+        // When reading data, be sure to read only the amount to bytes that
+        // were received since you probably do not want to the whole buffer.
+        // (This would result in redundant data being read!)
+        virtual void OnRead(const std::string& buffer, size_t bytes_transferred);
+
         virtual void OnDisconnect();
         virtual void OnError(const boost::system::error_code& ec);
 
@@ -37,7 +41,6 @@ namespace Networking
     private:
         void ConnectHandler(const boost::system::error_code& ec);
         void ResolveHostHandler(const boost::system::error_code& ec, boost::asio::ip::tcp::resolver::iterator it);
-        void WriteHandler(const boost::system::error_code& ec, size_t bytes_transferred);
         void ReadHandler(const boost::system::error_code& ec, size_t bytes_transferred);
         void ErrorHandler(const boost::system::error_code& ec);
 

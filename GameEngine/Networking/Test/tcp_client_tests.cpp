@@ -40,15 +40,7 @@ namespace Networking
         io_service_.run();
     }
 
-    TEST_F(TCPClientTest, CanWriteToAService) {
-        std::string payload = "Hello!\r\n";
-        TCPClientWrite client(io_service_, payload);
-        tcp_server_.StartAccept();
-        client.Connect(host_, port_or_service_);
-        io_service_.run();
-    }
-
-    TEST_F(TCPClientTest, CanReadFromAService) {
+    TEST_F(TCPClientTest, CanReadAndWriteFromAService) {
         std::string payload = "Hello!\r\n";
         TCPClientRead client(io_service_, payload);
         tcp_server_.StartAccept();

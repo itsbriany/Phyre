@@ -20,10 +20,6 @@ namespace Networking
                                                 boost::bind(&TCPClient::ReadHandler,
                                                             this,
                                                             boost::asio::placeholders::error,
-                                                            boost::asio::placeholders::bytes_transferred),
-                                                boost::bind(&TCPClient::WriteHandler,
-                                                            this,
-                                                            boost::asio::placeholders::error,
                                                             boost::asio::placeholders::bytes_transferred))) { }
 
     TCPClient::~TCPClient() { }
@@ -62,22 +58,17 @@ namespace Networking
         OnConnect();
     }
 
-    void TCPClient::OnRead(const std::string& data) {
-        Logging::info(data, *this);
+    void TCPClient::OnRead(const std::string& data, size_t bytes_transferred) {
+        std::cout.write(tcp_socket_->buffer().data(), bytes_transferred);
     }
 
     void TCPClient::ReadHandler(const boost::system::error_code& ec, size_t bytes_transferred) {
-        if (ec)
-        {
+        if (ec) {
             ErrorHandler(ec);
             return;
         }
 
-        std::ostringstream oss;
-        oss << "Read " << bytes_transferred << " bytes";
-        Logging::info(oss.str(), *this);
-
-        OnRead(tcp_socket_->buffer().data());
+        OnRead(tcp_socket_->buffer().data(), bytes_transferred);
     }
 
     void TCPClient::OnError(const boost::system::error_code& ec) {
@@ -89,32 +80,14 @@ namespace Networking
         Disconnect();
     }
 
-    void TCPClient::OnWrite(size_t bytes_transferred) {
-        Logging::info("Transferred all bytes", *this);
-    }
-
-    void TCPClient::WriteHandler(const boost::system::error_code& error_code, size_t bytes_transferred) {
-    	if (error_code) {
-           ErrorHandler(error_code);
-           return;
-        }
-    }
-
     void TCPClient::Write(const std::string& data) {
         if (is_connected()) {
             tcp_socket_->Write(data);
-
             std::ostringstream log_output;
             log_output << "Sent " << data.size() << " bytes to endpoint";
             Logging::info(log_output.str(), *this);
-
-            OnWrite(data.size());
-            tcp_socket_->Read();
-
             return;
         }
-
-
 
         Logging::warning("Attempting to write when no connection has been established", *this);
     }

@@ -27,26 +27,6 @@ class TCPClientHostResolved : public TCPClient {
         }
 };
 
-class TCPClientWrite : public TCPClient {
-    public:
-        TCPClientWrite(boost::asio::io_service& io_service, const std::string& payload):
-            TCPClient(io_service),
-            payload_(payload) { }
-
-        std::string payload_;
-
-    protected:
-        void OnConnect() override {
-            EXPECT_TRUE(is_connected());
-            Write(payload_);
-        }
-
-        void OnWrite(size_t bytes_transferred) override {
-            EXPECT_EQ(bytes_transferred, payload_.size());
-            io_service_.stop();
-        }
-};
-
 class TCPClientRead : public TCPClient {
     public:
         TCPClientRead(boost::asio::io_service& io_service, const std::string& payload):
@@ -66,7 +46,7 @@ class TCPClientRead : public TCPClient {
             Write(payload_);
         }
 
-        void OnRead(const std::string& data) override {
+        void OnRead(const std::string& data, size_t bytes_transferred) override {
             Logging::info(data, *this);
             io_service_.stop();
         }

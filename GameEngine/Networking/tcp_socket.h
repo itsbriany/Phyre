@@ -12,12 +12,10 @@ namespace Networking
 
         typedef std::function<void(const boost::system::error_code&)> OnConnectCallback;
         typedef std::function<void(const boost::system::error_code&, size_t)> OnReadCallback;
-        typedef std::function<void(const boost::system::error_code&, size_t)> OnWriteCallback;
 
         TCPSocket(boost::asio::io_service& io_service,
                   OnConnectCallback on_connect_callback,
-                  OnReadCallback on_read_callback,
-                  OnWriteCallback on_write_callback);
+                  OnReadCallback on_read_callback);
         ~TCPSocket();
 
         void Connect(boost::asio::ip::tcp::resolver::iterator it);
@@ -41,7 +39,6 @@ namespace Networking
         std::array<char, 4096> buffer_;
         OnConnectCallback on_connect_callback_;
         OnReadCallback on_read_callback_;
-        OnWriteCallback on_write_callback_;
         bool is_connected_;
     };
 }

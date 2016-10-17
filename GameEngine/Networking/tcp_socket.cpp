@@ -11,13 +11,11 @@ namespace Networking
 
     TCPSocket::TCPSocket(boost::asio::io_service& io_service,
                          OnConnectCallback on_connect_callback,
-                         OnReadCallback on_read_callback,
-                         OnWriteCallback on_write_callback) :
+                         OnReadCallback on_read_callback) :
         socket_(io_service),
         buffer_(std::array<char, 4096>()),
         on_connect_callback_(on_connect_callback),
         on_read_callback_(on_read_callback),
-        on_write_callback_(on_write_callback),
         is_connected_(false)
     {
     }
@@ -70,6 +68,7 @@ namespace Networking
         std::ostringstream oss;
         oss << "Wrote " << data.size() << " bytes to socket:\n" << data;
         Logging::debug(oss.str(), *this);
+        Read();
     }
 
     void TCPSocket::Read()
