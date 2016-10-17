@@ -9,6 +9,9 @@ namespace Networking {
         public:
             XMPPClient(boost::asio::io_service& io_service);
             void OnConnect() final;
+            std::string log() override {
+                return "[XMPPClient]";
+            }
     };
 
 }

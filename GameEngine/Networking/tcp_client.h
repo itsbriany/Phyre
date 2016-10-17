@@ -7,7 +7,7 @@ namespace GameEngine
 {
 namespace Networking
 {
-    class TCPClient
+    class TCPClient : public Logging::Loggable
     {
 
     public:
@@ -20,8 +20,8 @@ namespace Networking
 
         bool is_connected() const { return tcp_socket_->is_connected(); }
 
-        friend std::ostream& operator<<(std::ostream& os, const TCPClient& cc) {
-                return os << "[TCPClient] ";
+        std::string log() override {
+            return "[TCPClient]";
         }
 
     protected:

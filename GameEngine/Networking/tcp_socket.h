@@ -1,4 +1,5 @@
 #pragma once
+#include "loggable.h"
 #include <boost/asio.hpp>
 #include <queue>
 
@@ -6,7 +7,7 @@ namespace GameEngine
 {
 namespace Networking
 {
-    class TCPSocket
+    class TCPSocket : public Logging::Loggable
     {
     public:
 
@@ -27,8 +28,8 @@ namespace Networking
         std::array<char, 4096>& buffer()  { return buffer_; }
         bool is_connected() const { return is_connected_; }
 
-        friend std::ostream& operator<<(std::ostream& os, const TCPSocket& tcp_socket) {
-            return os << "[TCPSocket] ";
+        std::string log() override {
+            return "[TCPSocket]";
         }
 
     private:

@@ -20,7 +20,7 @@ endif()
 if (WIN32)
     add_definitions(-D_WIN32_WINNT=0x601 -DGTEST_LINKED_AS_SHARED_LIBRARY=1 -D_SCL_SECURE_NO_WARNINGS)
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_LOG_DYN_LINK -g -Wall -Wno-deprecated-declarations -Wno-inconsistent-missing-override -std=c++14")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_LOG_DYN_LINK -g -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-inconsistent-missing-override -std=c++14")
 endif (WIN32)
 
 # Compile with less warnings on MSVC

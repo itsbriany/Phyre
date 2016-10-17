@@ -1,5 +1,6 @@
 #pragma once
 #include "log_level.h"
+#include "loggable.h"
 #include <map>
 #include <boost/log/core.hpp>
 #include <boost/log/utility/setup/common_attributes.hpp>
@@ -16,40 +17,35 @@ namespace Logging
         // Any log call with the level above or equal to the specified lvl will be logged
         static void set_log_level(const LogLevel& lvl);
 
-	template <typename T>
-        static void trace(const std::string& message, const T& obj)
+
+        static void trace(const std::string& message, Loggable& loggable)
         {
-            BOOST_LOG_TRIVIAL(trace) << obj << message;
+            BOOST_LOG_TRIVIAL(trace) << loggable.log() << ' ' <<  message;
         }
 
-	template <typename T>
-        static void debug(const std::string& message, const T& obj)
+        static void debug(const std::string& message, Loggable& loggable)
         {
-            BOOST_LOG_TRIVIAL(debug) << obj << message;
+            BOOST_LOG_TRIVIAL(debug) << loggable.log() << ' ' << message;
         }
 
-	template <typename T>
-        static void info(const std::string& message, const T& obj)
+        static void info(const std::string& message, Loggable& loggable)
         {
-            BOOST_LOG_TRIVIAL(info) << obj << message;
+            BOOST_LOG_TRIVIAL(info) << loggable.log() << ' ' << message;
         }
 
-	template <typename T>
-        static void warning(const std::string& message, const T& obj)
+        static void warning(const std::string& message, Loggable& loggable)
         {
-            BOOST_LOG_TRIVIAL(warning) << obj << message;
+            BOOST_LOG_TRIVIAL(warning) << loggable.log() << ' ' << message;
         }
 
-	template <typename T>
-        static void error(const std::string& message, const T& obj)
+        static void error(const std::string& message, Loggable& loggable)
         {
-            BOOST_LOG_TRIVIAL(error) << obj << message;
+            BOOST_LOG_TRIVIAL(error) << loggable.log() << ' ' << message;
         }
 
-	template <typename T>
-        static void fatal(const std::string& message, const T& obj)
+        static void fatal(const std::string& message, Loggable& loggable)
         {
-            BOOST_LOG_TRIVIAL(fatal) << obj << message;
+            BOOST_LOG_TRIVIAL(fatal) << loggable.log() << ' ' << message;
         }
 
     public:
