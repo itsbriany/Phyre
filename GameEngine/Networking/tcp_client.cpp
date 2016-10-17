@@ -58,8 +58,8 @@ namespace Networking
         OnConnect();
     }
 
-    void TCPClient::OnRead(const std::string& data, size_t bytes_transferred) {
-        std::cout.write(tcp_socket_->buffer().data(), bytes_transferred);
+    void TCPClient::OnRead(const std::string& data) {
+        std::cout << data;
     }
 
     void TCPClient::ReadHandler(const boost::system::error_code& ec, size_t bytes_transferred) {
@@ -68,7 +68,9 @@ namespace Networking
             return;
         }
 
-        OnRead(tcp_socket_->buffer().data(), bytes_transferred);
+        std::ostringstream buffer;
+        buffer.write(tcp_socket_->buffer().data(), bytes_transferred);
+        OnRead(buffer.str());
     }
 
     void TCPClient::OnError(const boost::system::error_code& ec) {

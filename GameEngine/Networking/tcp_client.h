@@ -27,12 +27,7 @@ namespace Networking
     protected:
         virtual void OnConnect();
         virtual void OnHostResolved();
-
-        // When reading data, be sure to read only the amount to bytes that
-        // were received since you probably do not want to the whole buffer.
-        // (This would result in redundant data being read!)
-        virtual void OnRead(const std::string& buffer, size_t bytes_transferred);
-
+        virtual void OnRead(const std::string& buffer);
         virtual void OnDisconnect();
         virtual void OnError(const boost::system::error_code& ec);
 
