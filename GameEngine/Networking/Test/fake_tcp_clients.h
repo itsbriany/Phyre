@@ -12,6 +12,7 @@ class TCPClientConnect : public TCPClient {
 
     protected:
         void OnConnect() override {
+            Disconnect();
             io_service_.stop();
         }
 };
@@ -34,8 +35,8 @@ class TCPClientRead : public TCPClient {
             payload_(payload) { }
 
 
-        friend std::ostream& operator<<(std::ostream& os, const TCPClientRead& client) {
-            return os << "[TCPClientRead] ";
+        std::string log() override {
+            return "[TCPClientRead]";
         }
 
 
@@ -43,10 +44,12 @@ class TCPClientRead : public TCPClient {
 
     protected:
         void OnConnect() override {
-            Write(payload_);
+            std::ostringstream oss;
+            oss << payload_;
+            Write(oss);
         }
 
-        void OnRead(const std::string& data, size_t bytes_transferred) override {
+        void OnRead(const std::string& data) override {
             Logging::info(data, *this);
             io_service_.stop();
         }

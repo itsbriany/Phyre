@@ -16,7 +16,7 @@ namespace Networking
 
         void Connect(const std::string& host, const std::string& service);
         void Disconnect();
-        void Write(const std::string& data);
+        void Write(const std::ostringstream& data_stream);
 
         bool is_connected() const { return tcp_socket_->is_connected(); }
 

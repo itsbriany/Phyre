@@ -1,7 +1,6 @@
 #pragma once
 #include "loggable.h"
 #include <boost/asio.hpp>
-#include <queue>
 
 namespace GameEngine
 {
@@ -21,10 +20,19 @@ namespace Networking
 
         void Connect(boost::asio::ip::tcp::resolver::iterator it);
         void Close();
+
+        /**
+        * Each time this is called, a read operation will immediately be called afterwards.
+        * It is therefore strongly advised to write all bytes to the data stream and read all necessary bytes
+        * before calling Write again.
+        */
         void Write(const std::string& data);
         void Read();
 
-        // This TCP buffer has a window frame of 4kb
+
+        /**
+         * This TCP buffer has a window frame of 4kb
+         */
         std::array<char, 4096>& buffer()  { return buffer_; }
         bool is_connected() const { return is_connected_; }
 

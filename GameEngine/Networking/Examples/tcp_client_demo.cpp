@@ -1,6 +1,5 @@
 #include <boost/asio/io_service.hpp>
 #include "tcp_client.h"
-#include "tcp_socket.h"
 #include "host_resolver.h"
 #include "logging.h"
 
@@ -21,10 +20,10 @@ namespace Networking
             }
 
             void OnConnect() override {
-                std::string payload1 = "GET / HTTP/1.1\r\n";
-                std::string payload2 = "Host: theboostcpplibraries.com\r\n\r\n";
-                Write(payload1);
-                Write(payload2);
+                std::ostringstream oss;
+                oss << "GET / HTTP/1.1\r\n";
+                oss << "Host: theboostcpplibraries.com\r\n\r\n";
+                Write(oss);
             }
     };
 }

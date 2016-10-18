@@ -64,10 +64,6 @@ namespace Networking
             return;
         }
         write(socket_, boost::asio::buffer(data));
-
-        std::ostringstream oss;
-        oss << "Wrote " << data.size() << " bytes to socket:\n" << data;
-        Logging::debug(oss.str(), *this);
         Read();
     }
 

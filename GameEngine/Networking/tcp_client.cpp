@@ -82,8 +82,9 @@ namespace Networking
         Disconnect();
     }
 
-    void TCPClient::Write(const std::string& data) {
+    void TCPClient::Write(const std::ostringstream& data_stream) {
         if (is_connected()) {
+            std::string data(data_stream.str());
             tcp_socket_->Write(data);
             std::ostringstream log_output;
             log_output << "Sent " << data.size() << " bytes to endpoint";
