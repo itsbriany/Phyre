@@ -6,9 +6,8 @@ if(Boost_FOUND)
         tcp_server.h tcp_server.cpp tcp_socket.h tcp_socket.cpp
         tcp_client.h tcp_client.cpp tcp_server_connection.h
         tcp_server_connection.cpp)
-    target_link_libraries(Networking ${Boost_LIBRARIES} Logging)
+    target_link_libraries(Networking ${Boost_LIBRARIES} Logging XMPP)
 endif()
 
 add_subdirectory(Examples)
-add_subdirectory(Test)
 add_subdirectory(XMPP)

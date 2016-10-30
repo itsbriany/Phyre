@@ -81,12 +81,31 @@ class TCPClientReadQueuedMessages : public TCPClient {
 
             Logging::info(data, *this);
 
-            EXPECT_STREQ(data.c_str(), message_queue_.front().c_str());
-            message_queue_.pop();
+            // Parse the received data so that we know if we need to request
+            // more. This is because we may receive data in chunks.
+            ParseData(data);
 
+
+            // Request more data since we have consumed all of the read bytes
             std::ostringstream oss;
             oss << "hello again";
             Write(oss);
+        }
+
+    private:
+        void ParseData(const std::string& received_data) {
+            size_t found = received_data.find(message_queue_.front());
+            while (found != std::string::npos) {
+                std::string token = received_data.substr(found, message_queue_.front().size());
+                EXPECT_STREQ(token.c_str(), message_queue_.front().c_str());
+                message_queue_.pop();
+
+                if (message_queue_.empty()) {
+                    io_service_.stop();
+                    return;
+                }
+                found = received_data.find(message_queue_.front());
+            }
         }
 };
 

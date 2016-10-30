@@ -23,4 +23,4 @@ install:
 
 # Run the tests
 script:
-    - ./GameEngine/Networking/Test/NetworkingTests
+    - ./GameEngine/Test/GameEngineTests

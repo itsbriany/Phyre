@@ -1,9 +1,10 @@
 #include <boost/assign.hpp>
 #include <gtest/gtest.h>
-#include "tcp_client.h"
 #include "fake_tcp_clients.h"
-#include "tcp_server.h"
 #include "logging.h"
+#include "tcp_client.h"
+#include "tcp_server.h"
+#include "XMPP/xmpp_tests.h"
 
 namespace GameEngine
 {
@@ -75,10 +76,4 @@ namespace Networking
     }
 
 }
-}
-
-int main(int argc, char* argv[]) {
-    GameEngine::Logging::set_log_level();
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }

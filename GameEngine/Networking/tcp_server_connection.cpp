@@ -19,8 +19,6 @@ namespace Networking {
         socket_.close();
     }
 
-    // Be careful when writing data here; large chunks of transmitted data
-    // will invoke multiple HandleRead calls
     void TCPServerConnection::HandleRead(const boost::system::error_code& error, size_t bytes_transferred) {
         if (error) {
             HandleError(error);
@@ -43,6 +41,10 @@ namespace Networking {
 
         write(socket_, boost::asio::buffer(message));
 
+        // This is an asynchronous read, therefore, data may come in bursts.
+        // i.e. multiple messages in the message queue may be sent at the same
+        // time. However, the order in which the messages were queued in the
+        // buffer should remain the same.
         socket_.async_read_some(boost::asio::buffer(buffer_),
                 boost::bind(&TCPServerConnection::HandleRead, shared_from_this(),
                     boost::asio::placeholders::error,

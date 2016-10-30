@@ -31,4 +31,4 @@ build:
   project: C:\projects\GameEngine\GameEngine\GameEngine.sln
 
 test_script:
-  - cmd: C:\projects\GameEngine\GameEngine\Networking\Test\%CONFIGURATION%\NetworkingTests.exe
+  - cmd: C:\projects\GameEngine\GameEngine\Test\%CONFIGURATION%\GameEngineTests.exe
