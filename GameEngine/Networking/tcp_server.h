@@ -6,21 +6,22 @@ namespace GameEngine
 {
 namespace Networking
 {
-    class TCPServer
+    class TCPServer : public Logging::Loggable
     {
 
     public:
-        TCPServer(boost::asio::io_service& io_service, uint16_t listen_port);
+        TCPServer(boost::asio::io_service& io_service, uint16_t listen_port, const std::queue<std::string>& message_queue = std::queue<std::string>());
 
         void StartAccept();
-        void HandleAccept(TCPServerConnection::pointer new_connection, const boost::system::error_code& error);
+        void HandleAccept(const boost::system::error_code& error);
 
-        friend std::ostream& operator<<(std::ostream& os, const TCPServer& server) {
-                return os << "[TCPServer] ";
-        }
+        // Loggable overrides
+        std::string log() override { return "[TCPServer]"; }
 
     private:
         boost::asio::ip::tcp::acceptor acceptor_;
+        TCPServerConnection::pointer p_connection_;
+        std::queue<std::string> message_queue_;
     };
 }
 }

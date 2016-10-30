@@ -1,3 +1,4 @@
+#include <boost/assign.hpp>
 #include <gtest/gtest.h>
 #include "tcp_client.h"
 #include "fake_tcp_clients.h"
@@ -8,7 +9,6 @@ namespace GameEngine
 {
 namespace Networking
 {
-
     class TCPClientTest : public ::testing::Test {
     protected:
         TCPClientTest():
@@ -17,8 +17,6 @@ namespace Networking
             tcp_server_(TCPServer(io_service_, std::stoi(port_or_service_))) { }
 
         virtual ~TCPClientTest() { }
-
-        void SetUp() override { }
 
         boost::asio::io_service io_service_;
         std::string host_;
@@ -62,6 +60,20 @@ namespace Networking
         client.Connect(host_, port_or_service_);
         io_service_.run();
     }
+
+    TEST_F(TCPClientTest, ServerSendsQueuedMessages) {
+        std::queue<std::string> message_queue;
+        boost::assign::push(message_queue)("first")("second")("third")("fourth")("fith");
+        std::string port_or_service = "1235";
+
+        tcp_server_ = TCPServer(io_service_, std::stoi(port_or_service), message_queue);
+        TCPClientReadQueuedMessages client(io_service_, message_queue);
+
+        tcp_server_.StartAccept();
+        client.Connect(host_, port_or_service);
+        io_service_.run();
+    }
+
 }
 }
 
