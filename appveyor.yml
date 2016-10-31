@@ -10,7 +10,7 @@ configuration:
 clone_folder: C:\projects\GameEngine
 
 install:
-  - install.bat
+  - ps: .\install.ps1
 
 environment:
   MSVC_DEFAULT_OPTIONS: ON
@@ -22,13 +22,9 @@ environment:
   GMOCK_ROOT: C:\projects\GameEngine\ThirdParty\googletest\googlemock
   PROTOBUF_ROOT: C:\projects\GameEngine\ThirdParty\protobuf
 
-# The tests need to dynamically link to the appropriate configuration of gmock.dll
-before_build:
-  - cmd: set PATH=%PATH%;%GMOCK_ROOT%\%CONFIGURATION%\;
-
 build:
   parallel: false
   project: C:\projects\GameEngine\GameEngine\GameEngine.sln
 
 test_script:
-  - cmd: C:\projects\GameEngine\GameEngine\Test\%CONFIGURATION%\GameEngineTests.exe
+  - ps: .\run_tests.ps1

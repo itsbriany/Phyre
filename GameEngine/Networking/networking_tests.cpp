@@ -4,7 +4,6 @@
 #include "logging.h"
 #include "tcp_client.h"
 #include "tcp_server.h"
-#include "XMPP/xmpp_tests.h"
 
 namespace GameEngine
 {
@@ -76,4 +75,10 @@ namespace Networking
     }
 
 }
+}
+
+int main(int argc, char* argv[]) {
+    GameEngine::Logging::set_log_level();
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
