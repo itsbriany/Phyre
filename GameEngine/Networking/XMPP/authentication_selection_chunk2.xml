@@ -1,0 +1,7 @@
+      <mechanism>PLAIN</mechanism>
+      <mechanism>DIGEST-MD5</mechanism>
+      <mechanism>X-OAUTH2</mechanism>
+      <mechanism>SCRAM-SHA-1</mechanism>
+    </mechanisms>
+  </stream:features>
+</stream:stream>
