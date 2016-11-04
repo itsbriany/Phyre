@@ -1,31 +1,56 @@
 #pragma once
+#include "loggable.h"
 #include <boost/asio.hpp>
 
 namespace GameEngine
 {
 namespace Networking
 {
-    class TCPSocket
+    class TCPSocket : public Logging::Loggable
     {
     public:
-        typedef std::function<void(const boost::system::error_code&)> OnConnectCallback;
 
-        // Arg1: Error on read
-        // Arg2: Bytes read
+        typedef std::function<void(const boost::system::error_code&)> OnConnectCallback;
         typedef std::function<void(const boost::system::error_code&, size_t)> OnReadCallback;
 
-        virtual ~TCPSocket() { }
+        TCPSocket(boost::asio::io_service& io_service,
+                  OnConnectCallback on_connect_callback,
+                  OnReadCallback on_read_callback);
+        ~TCPSocket();
 
-        // Triggers the callback function once a connection to the remote endpoint has been established
-        virtual void Connect(boost::asio::ip::tcp::resolver::iterator it, OnConnectCallback callback) = 0;
-        virtual void OnRead(const boost::system::error_code& ec, size_t bytes_transferred) = 0;
-        virtual void Write(const std::string data, OnReadCallback on_read_callback) = 0;
-        virtual void Read() = 0;
-        
-        virtual std::array<char, 4096>& buffer() = 0;
-        
-        // Gracefully close the connection
-        virtual void Close() = 0;
+        void Connect(boost::asio::ip::tcp::resolver::iterator it);
+        void Close();
+
+        /**
+        * Each time this is called, a read operation will immediately be called afterwards.
+        * It is therefore strongly advised to write all bytes to the data stream and read all necessary bytes
+        * before calling Write again.
+        */
+        void Write(const std::string& data);
+        void Read();
+
+
+        /**
+         * This TCP buffer has a window frame of 4kb
+         */
+        std::array<char, 4096>& buffer()  { return buffer_; }
+        bool is_connected() const { return is_connected_; }
+
+        std::string log() override {
+            return "[TCPSocket]";
+        }
+
+    private:
+        void OnConnect(const boost::system::error_code& ec);
+        void OnRead(const boost::system::error_code& ec, size_t bytes_transferred);
+
+        boost::asio::ip::tcp::socket socket_;
+        std::array<char, 4096> buffer_;
+        OnConnectCallback on_connect_callback_;
+        OnReadCallback on_read_callback_;
+        bool is_connected_;
     };
 }
 }
+
+

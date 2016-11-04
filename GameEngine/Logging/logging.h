@@ -1,4 +1,5 @@
 #pragma once
+#include "loggable.h"
 #include "logger.h"
 
 namespace GameEngine
@@ -6,67 +7,40 @@ namespace GameEngine
 namespace Logging
 {
 
-    static void disable_all()
-    {
-        Logger::disable_all();
-    }
-
-    static void disable_lvl(Logger::LogLevel log_level)
-    {
-        Logger::disable_lvl(log_level);
-    }
-
-    static void enable_all()
-    {
-        Logger::enable_all();
-    }
-
-    static void enable_lvl(Logger::LogLevel log_level)
-    {
-        Logger::enable_lvl(log_level);
-    }
-
-    static void set_log_level(Logger::LogLevel log_level = Logger::kDebug)
+    static void set_log_level(LogLevel log_level = kDebug)
     {
         Logger::set_log_level(log_level);
     }
 
-    template <typename T>
-    static void trace(const std::string& message, const T& obj)
+    static void trace(const std::string& message, Loggable& loggable)
     {
-        Logger::trace(message, obj);
+        Logger::trace(message, loggable);
     }
 
-    template <typename T>
-    static void debug(const std::string& message, const T& obj)
+    static void debug(const std::string& message, Loggable& loggable)
     {
-        Logger::debug(message, obj);
+        Logger::debug(message, loggable);
     }
 
-    template <typename T>
-    static void info(const std::string& message, const T& obj)
+    static void info(const std::string& message, Loggable& loggable)
     {
-        Logger::info(message, obj);
+        Logger::info(message, loggable);
     }
 
-    template <typename T>
-    static void warning(const std::string& message, const T& obj)
+    static void warning(const std::string& message, Loggable& loggable)
     {
-        Logger::warning(message, obj);
+        Logger::warning(message, loggable);
     }
 
-    template <typename T>
-    static void error(const std::string& message, const T& obj)
+    static void error(const std::string& message, Loggable& loggable)
     {
-        Logger::error(message, obj);
+        Logger::error(message, loggable);
     }
 
-    template <typename T>
-    static void fatal(const std::string& message, const T& obj)
+    static void fatal(const std::string& message, Loggable& loggable)
     {
-        Logger::fatal(message, obj);
+        Logger::fatal(message, loggable);
     }
-
 
 }
 }

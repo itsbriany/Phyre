@@ -5,7 +5,7 @@ os:
 
 before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export CXX="/usr/local/bin/clang++-3.8 -stdlib=libc++"; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export CXXFLAGS="$CXXFLAGS -nostdinc++ -I/usr/local/opt/llvm38/lib/llvm-3.8/include/c++/v1"; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/llvm38/lib/llvm-3.8/include/c++/v1"; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export LDFLAGS="$LDFLAGS -L/usr/local/opt/llvm38/lib/llvm-3.8/lib"; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export DYLD_LIBRARY_PATH=$BOOST_ROOT/stage/lib; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
@@ -16,11 +16,9 @@ before_install:
     - export GOOGLE_TEST_DISTRIBUTION=$GAME_ENGINE_ROOT/ThirdParty/googletest
     - export PROTOBUF_ROOT=$GAME_ENGINE_ROOT/ThirdParty/protobuf
 
-
-
 install:
     - ./install.sh
 
 # Run the tests
 script:
-    - ./GameEngine/Networking/Test/NetworkingTests
+    - ./run_tests.sh

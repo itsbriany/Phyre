@@ -7,31 +7,40 @@ namespace GameEngine
 {
 namespace Networking
 {
-    class TCPClient
+    class TCPClient : public Logging::Loggable
     {
 
     public:
-        TCPClient(HostResolver& resolver, TCPSocket& tcp_socket);
-        ~TCPClient();
-        void Connect(const std::string& host, const std::string& service, const std::string& data_to_send);
-        void Disconnect() const;
-        void OnHostResolved(const boost::system::error_code& ec, boost::asio::ip::tcp::resolver::iterator it);
-        void OnConnect(const boost::system::error_code& ec);
-        void OnRead(const boost::system::error_code& ec, size_t bytes_transferred);
-        void OnError(const boost::system::error_code& ec);
-        void Write(const std::string& data);
+        TCPClient(boost::asio::io_service& io_service);
+        virtual ~TCPClient();
 
-        bool is_connected() const { return is_connected_; }
+        void Connect(const std::string& host, const std::string& service);
+        void Disconnect();
+        void Write(const std::ostringstream& data_stream);
 
-        friend std::ostream& operator<<(std::ostream& os, const TCPClient& cc) {
-                return os << "[TCPClient] ";
+        bool is_connected() const { return tcp_socket_->is_connected(); }
+
+        std::string log() override {
+            return "[TCPClient]";
         }
 
+    protected:
+        virtual void OnConnect();
+        virtual void OnHostResolved();
+        virtual void OnRead(const std::string& buffer);
+        virtual void OnDisconnect();
+        virtual void OnError(const boost::system::error_code& ec);
+
+        boost::asio::io_service& io_service_;
+
     private:
-        HostResolver& host_resolver_;
-        TCPSocket& tcp_socket_;
-        bool is_connected_;
-        std::string data_to_send_on_connect_;
+        void ConnectHandler(const boost::system::error_code& ec);
+        void ResolveHostHandler(const boost::system::error_code& ec, boost::asio::ip::tcp::resolver::iterator it);
+        void ReadHandler(const boost::system::error_code& ec, size_t bytes_transferred);
+        void ErrorHandler(const boost::system::error_code& ec);
+
+        HostResolver host_resolver_;
+        std::unique_ptr<TCPSocket> tcp_socket_;
     };
 }
 }
