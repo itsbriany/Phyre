@@ -26,3 +26,4 @@ if ($gtest_filter) {
     .\GameEngineTests.exe
 }
 cd $CurrentWorkingDirectory.Path
+exit $LASTEXITCODE
