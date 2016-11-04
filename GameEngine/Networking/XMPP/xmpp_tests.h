@@ -24,7 +24,7 @@ class XMLParseTest : public ::testing::Test {
         };
         typedef std::vector<Flight> Sked;
 
-        Sked read(std::istream& ss)
+        Sked read(std::istream& ss) const
         {
             // populate tree structure pt
             using boost::property_tree::ptree;
@@ -82,16 +82,20 @@ class XMPPClientTest : public ::testing::Test, public Logging::Loggable {
 
         virtual ~XMPPClientTest() { }
 
+        static std::string resource_directory() { 
+            return "XMPPTestResources/";
+        }
+       
         std::string authentication_mechanism_response() {
-            return read_file("authentication_selection.xml");
+            return read_file(resource_directory() + "authentication_selection.xml");
         }
 
         std::string authentication_mechanism_response_first_chunk() {
-            return read_file("authentication_selection_chunk1.xml");
+            return read_file(resource_directory() + "authentication_selection_chunk1.xml");
         }
 
         std::string authentication_mechanism_response_second_chunk() {
-            return read_file("authentication_selection_chunk2.xml");
+            return read_file(resource_directory() + "authentication_selection_chunk2.xml");
         }
 
         // Reads a file without a newline at the end
@@ -178,10 +182,4 @@ TEST_F(XMPPClientTest, HandlesAuthenticationMeachanismSelectionState) {
 }
 
 }
-}
-
-int main(int argc, char* argv[]) {
-    GameEngine::Logging::set_log_level();
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }

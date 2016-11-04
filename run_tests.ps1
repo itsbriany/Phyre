@@ -1,25 +1,28 @@
+# If you want to filter tests, you can set the gtest_filter
+# which will be applied on GameEngineTests.exe.
+# Example: .\run_tests.exe -gtest_filter TCP*
+# will run all tests starting with TCP.
 param (
-    [switch]$Release = $false
+    [switch]$Release = $false,
+    [string]$gtest_filter = ""
 )
 
-if ($env:CONFIGURATION -eq "Release") {
-    $Release = $true
-}
+Import-Module $env:GAME_ENGINE_ROOT\Build.psm1 -Force -DisableNameChecking
 
-# Generate xml report for AppVeyor
-if ($env:APPVEYOR) {
-    $env:GTEST_OUTPUT = "xml"
-}
+$CurrentWorkingDirectory = pwd
+
+# Copy test resources over to the test runtime directories
+Copy-Test-Resources
 
 if ($release) {
-    Get-ChildItem -Path ThirdParty\googletest\googlemock\Release -Filter *.exe | % {& $_.FullName}
+    cd "$env:GAME_ENGINE_ROOT\ThirdParty\googletest\googlemock\Release"
 } else {
-    Get-ChildItem -Path ThirdParty\googletest\googlemock\Debug -Filter *.exe | % {& $_.FullName}
+    cd "$env:GAME_ENGINE_ROOT\ThirdParty\googletest\googlemock\Debug"
 }
 
-# upload results to AppVeyor
-if ($env:APPVEYOR) {
-    Resolve-Path $env:GAME_ENGINE_ROOT\test_detail.xml
-    $wc = New-Object 'System.Net.WebClient'
-    $wc.UploadFile("https://ci.appveyor.com/api/testresults/xunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $env:GAME_ENGINE_ROOT\test_detail.xml))
+if ($gtest_filter) {
+    .\GameEngineTests.exe --gtest_filter=$gtest_filter
+} else {
+    .\GameEngineTests.exe
 }
+cd $CurrentWorkingDirectory.Path
