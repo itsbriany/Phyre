@@ -16,8 +16,6 @@ before_install:
     - export GOOGLE_TEST_DISTRIBUTION=$GAME_ENGINE_ROOT/ThirdParty/googletest
     - export PROTOBUF_ROOT=$GAME_ENGINE_ROOT/ThirdParty/protobuf
 
-
-
 install:
     - ./install.sh
 
