@@ -1,5 +1,5 @@
 function Init-Submodules {
-    git submodule update --init --recursive $env:SUPPRESS_APPVEYOR_ERROR
+    git submodule update --init --recursive
 }
 
 # Copy test resources over to the test runtime directories
@@ -32,8 +32,8 @@ function Set-VS140-Environment {
 # Build the protobuf compiler
 function Build-Protobuf {
     cd $env:PROTOBUF_ROOT\cmake
-    cmake -Dprotobuf_BUILD_TESTS=OFF -G "Visual Studio 14" $env:SUPPRESS_APPVEYOR_ERROR
-    msbuild /m protobuf.sln /p:Configuration=Release /p:Platform="Win32" $env:SUPPRESS_APPVEYOR_ERROR
+    cmake -Dprotobuf_BUILD_TESTS=OFF -G "Visual Studio 14"
+    msbuild /m protobuf.sln /p:Configuration=Release /p:Platform="Win32"
 }
 
 function Create-Tools {
@@ -50,14 +50,14 @@ function Compile-Protobuf {
 # Build unit testing suite
 function Build-Gtest {
     cd $env:GOOGLE_TEST_DISTRIBUTION
-    cmake -DBUILD_GMOCK:BOOL=ON -DBUILD_GTEST:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -G "Visual Studio 14" $env:SUPPRESS_APPVEYOR_ERROR
-    msbuild /m googletest-distribution.sln /p:Configuration=Debug /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1 $env:SUPPRESS_APPVEYOR_ERROR
-    msbuild /m googletest-distribution.sln /p:Configuration=Release /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1 $env:SUPPRESS_APPVEYOR_ERROR
+    cmake -DBUILD_GMOCK:BOOL=ON -DBUILD_GTEST:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -G "Visual Studio 14"
+    msbuild /m googletest-distribution.sln /p:Configuration=Debug /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1
+    msbuild /m googletest-distribution.sln /p:Configuration=Release /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1
 }
 
 function Prepare-GameEngine-Solution {
     cd $env:GAME_ENGINE_ROOT\GameEngine
-    cmake -G "Visual Studio 14" $env:SUPPRESS_APPVEYOR_ERROR
+    cmake -G "Visual Studio 14"
     cd $env:GAME_ENGINE_ROOT
 }
 
