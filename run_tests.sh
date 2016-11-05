@@ -13,5 +13,9 @@ for TEST_RESOURCE_DIRECTORY in `find $PWD GameEngine -name "*TestResources"`; do
 done
 
 cd $GAME_ENGINE_ROOT/GameEngine/GameEngineTesting
-./GameEngineTests --gtest_filter=$GTEST_FILTER
+if [[ -z "$GTEST_FILTER" ]]; then
+    ./GameEngineTests
+else
+    ./GameEngineTests --gtest_filter=$GTEST_FILTER
+fi
 cd $GAME_ENGINE_ROOT
