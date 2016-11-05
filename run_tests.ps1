@@ -7,6 +7,10 @@ param (
     [string]$gtest_filter = ""
 )
 
+if ($env:CONFIGURATION -eq "Release") {
+    $Release = $true
+}
+
 Import-Module $env:GAME_ENGINE_ROOT\Build.psm1 -Force -DisableNameChecking
 
 $CurrentWorkingDirectory = pwd
