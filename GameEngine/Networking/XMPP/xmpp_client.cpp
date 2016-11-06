@@ -16,8 +16,8 @@ void XMPPClient::OnConnect() {
 }
 
 void XMPPClient::OnRead(const std::string& bytes_read) {
-    std::string message = "From server: " + std::string(bytes_read);
-    Logging::info(message, *this);
+    std::string message = "From server: \n" + std::string(bytes_read);
+    Logging::debug(message, *this);
     switch (state_) {
         case TransactionState::kSelectAuthenticationMechanism:
             HandleSelectAuthenticationMechanism(bytes_read);
@@ -46,6 +46,7 @@ void XMPPClient::HandleSelectAuthenticationMechanism(const std::string& bytes_re
     }
 
     state_ = TransactionState::kDecodeBase64Challenge;
+    Logging::debug("Sending authentication mechanism...", *this);
     Write(authentication_mechanism());
 }
 
@@ -57,14 +58,22 @@ bool XMPPClient::IsMD5AuthenticationMechanismAvailable(const std::unordered_set<
 std::stringstream XMPPClient::ExtractAuthenticationMechanismResponse(const std::string& bytes_read) {
     buffer_ += bytes_read;
     std::stringstream extracted_response;
-    std::string search = "</stream:stream>";
-    size_t found = buffer_.find(search);
-    if (found == std::string::npos) {
+    std::string search_start = "<stream:features>";
+    std::string search_end = "</stream:features>";
+
+    size_t found_start = buffer_.find(search_start);
+    if (found_start == std::string::npos) {
         return extracted_response;
     }
 
-    extracted_response << buffer_.substr(0, found + search.size());
-    buffer_ = buffer_.substr(found + search.size());
+    size_t found_end = buffer_.find(search_end);
+    if (found_end == std::string::npos) {
+        return extracted_response;
+    }
+
+    size_t bytes_to_extract = found_end + search_end.size() - found_start;
+    extracted_response << buffer_.substr(found_start, bytes_to_extract);
+    buffer_ = buffer_.substr(found_end + search_end.size());
     return extracted_response;
 }
 
@@ -96,13 +105,12 @@ std::ostringstream XMPPClient::xml_version() {
 std::ostringstream XMPPClient::initiation_stream() {
     std::ostringstream oss;
     oss << xml_version().str();
-    oss << "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='localhost' version='1.0'/>";
+    oss << "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='localhost' version='1.0'>";
     return oss;
 }
 
 std::ostringstream XMPPClient::authentication_mechanism() {
     std::ostringstream oss;
-    oss << xml_version().str();
     oss << "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='DIGEST-MD5'/>";
     return oss;
 }
