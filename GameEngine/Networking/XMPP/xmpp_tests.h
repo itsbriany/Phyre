@@ -82,10 +82,10 @@ class XMPPClientTest : public ::testing::Test, public Logging::Loggable {
 
         virtual ~XMPPClientTest() { }
 
-        static std::string resource_directory() { 
+        static std::string resource_directory() {
             return "XMPPTestResources/";
         }
-       
+
         std::string authentication_mechanism_response() {
             return read_file(resource_directory() + "authentication_selection.xml");
         }
@@ -133,7 +133,7 @@ class XMPPClientTest : public ::testing::Test, public Logging::Loggable {
 
 TEST_F(XMPPClientTest, ExtractAuthenticationMechanismResponseExcessData) {
     std::string response = authentication_mechanism_response();
-    std::string expected = response;
+    std::string expected = response.substr(response.find("<stream:features>"));
 
     std::string excess = "More data";
     std::string bytes_read = response + excess;
@@ -158,7 +158,8 @@ TEST_F(XMPPClientTest, ExtractAuthenticationMechanismResponseChunks) {
 }
 
 TEST_F(XMPPClientTest, ParsesAuthenticationMechanisms) {
-    std::string payload = authentication_mechanism_response();
+    std::string response = authentication_mechanism_response();
+    std::string payload = response.substr(response.find("<stream:features>"));
     std::stringstream ss;
     ss << payload;
 

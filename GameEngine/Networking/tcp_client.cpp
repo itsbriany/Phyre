@@ -68,9 +68,9 @@ namespace Networking
             return;
         }
 
-        std::ostringstream buffer;
-        buffer.write(tcp_socket_->buffer().data(), bytes_transferred);
-        OnRead(buffer.str());
+        std::ostringstream read_buffer;
+        read_buffer.write(tcp_socket_->buffer().data(), bytes_transferred);
+        OnRead(read_buffer.str());
     }
 
     void TCPClient::OnError(const boost::system::error_code& ec) {
@@ -87,7 +87,8 @@ namespace Networking
             std::string data(data_stream.str());
             tcp_socket_->Write(data);
             std::ostringstream log_output;
-            log_output << "Sent " << data.size() << " bytes to endpoint";
+            log_output << "Sent " << data.size() << " bytes to endpoint:\n";
+            log_output << data;
             Logging::info(log_output.str(), *this);
             return;
         }
