@@ -1,6 +1,10 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C++ Express 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "b64", "b64.vcxproj", "{D54C5158-15DD-4E97-AC43-E4B9C24574FE}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "base64", "base64.vcxproj", "{0B094121-DC64-4D74-AFA0-750B83F800D0}"
 EndProject
 Global
@@ -9,6 +13,10 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D54C5158-15DD-4E97-AC43-E4B9C24574FE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D54C5158-15DD-4E97-AC43-E4B9C24574FE}.Debug|Win32.Build.0 = Debug|Win32
+		{D54C5158-15DD-4E97-AC43-E4B9C24574FE}.Release|Win32.ActiveCfg = Release|Win32
+		{D54C5158-15DD-4E97-AC43-E4B9C24574FE}.Release|Win32.Build.0 = Release|Win32
 		{0B094121-DC64-4D74-AFA0-750B83F800D0}.Debug|Win32.ActiveCfg = Debug|Win32
 		{0B094121-DC64-4D74-AFA0-750B83F800D0}.Debug|Win32.Build.0 = Debug|Win32
 		{0B094121-DC64-4D74-AFA0-750B83F800D0}.Release|Win32.ActiveCfg = Release|Win32
