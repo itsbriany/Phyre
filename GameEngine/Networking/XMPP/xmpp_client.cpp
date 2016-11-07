@@ -18,9 +18,15 @@ void XMPPClient::OnConnect() {
 void XMPPClient::OnRead(const std::string& bytes_read) {
     std::string message = "From server: \n" + std::string(bytes_read);
     Logging::debug(message, *this);
+    buffer_ += bytes_read;
+
+    // TODO SASL should be its own state
     switch (state_) {
         case TransactionState::kSelectAuthenticationMechanism:
             HandleSelectAuthenticationMechanism(bytes_read);
+            break;
+        case TransactionState::kDecodeBase64Challenge:
+            HandleDecodeBase64Challenge(bytes_read);
             break;
         default:
             Logging::error("Unknown TransactionState", *this);
@@ -50,31 +56,58 @@ void XMPPClient::HandleSelectAuthenticationMechanism(const std::string& bytes_re
     Write(authentication_mechanism());
 }
 
+void XMPPClient::HandleDecodeBase64Challenge(const std::string& bytes_read) {
+    std::string start_tag = "<challenge";
+    std::string end_tag = "</challenge>";
+    std::stringstream extracted_response = ExtractXML(start_tag, end_tag);
+    if (extracted_response.str().empty()) {
+        return;
+    }
+    std::string base64_challenge = ParseBase64Challenge(extracted_response);
+    std::string decoded_challenge = DecodeBase64(base64_challenge);
+}
+
+std::string XMPPClient::ParseBase64Challenge(std::istream& xml_stream) {
+    boost::property_tree::ptree pt;
+    read_xml(xml_stream, pt);
+    boost::property_tree::ptree::const_iterator it = pt.begin();
+    return it->second.get_value<std::string>();
+}
+
+std::string XMPPClient::DecodeBase64(const std::string& input) {
+    std::istringstream iss(input);
+    std::ostringstream oss;
+    base64_decoder_.decode(iss, oss);
+    return oss.str();
+}
+
 bool XMPPClient::IsMD5AuthenticationMechanismAvailable(const std::unordered_set<std::string>& authentication_mechanism_set) {
     std::string md5 = "DIGEST-MD5";
     return authentication_mechanism_set.find(md5) != authentication_mechanism_set.end();
 }
 
-std::stringstream XMPPClient::ExtractAuthenticationMechanismResponse(const std::string& bytes_read) {
-    buffer_ += bytes_read;
+std::stringstream XMPPClient::ExtractXML(const std::string& start_tag, const std::string& end_tag) {
     std::stringstream extracted_response;
-    std::string search_start = "<stream:features>";
-    std::string search_end = "</stream:features>";
-
-    size_t found_start = buffer_.find(search_start);
+    size_t found_start = buffer_.find(start_tag);
     if (found_start == std::string::npos) {
         return extracted_response;
     }
 
-    size_t found_end = buffer_.find(search_end);
+    size_t found_end = buffer_.find(end_tag);
     if (found_end == std::string::npos) {
         return extracted_response;
     }
 
-    size_t bytes_to_extract = found_end + search_end.size() - found_start;
+    size_t bytes_to_extract = found_end + end_tag.size() - found_start;
     extracted_response << buffer_.substr(found_start, bytes_to_extract);
-    buffer_ = buffer_.substr(found_end + search_end.size());
+    buffer_ = buffer_.substr(found_end + end_tag.size());
     return extracted_response;
+}
+
+std::stringstream XMPPClient::ExtractAuthenticationMechanismResponse(const std::string& bytes_read) {
+    std::string search_start = "<stream:features>";
+    std::string search_end = "</stream:features>";
+    return ExtractXML(search_start, search_end);
 }
 
 std::unordered_set<std::string> XMPPClient::ParseAuthenticationMechanisms(std::istream& xml_stream) {
