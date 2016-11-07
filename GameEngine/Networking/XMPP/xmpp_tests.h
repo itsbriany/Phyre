@@ -86,6 +86,10 @@ class XMPPClientTest : public ::testing::Test, public Logging::Loggable {
             return "XMPPTestResources/";
         }
 
+        std::string generic_xml() {
+            return read_file(resource_directory() + "generic.xml");
+        }
+
         std::string authentication_mechanism_response() {
             return read_file(resource_directory() + "authentication_selection.xml");
         }
@@ -96,6 +100,10 @@ class XMPPClientTest : public ::testing::Test, public Logging::Loggable {
 
         std::string authentication_mechanism_response_second_chunk() {
             return read_file(resource_directory() + "authentication_selection_chunk2.xml");
+        }
+
+        std::string base64_challenge() {
+            return read_file(resource_directory() + "base64_challenge.xml");
         }
 
         // Reads a file without a newline at the end
@@ -131,6 +139,22 @@ class XMPPClientTest : public ::testing::Test, public Logging::Loggable {
 
 };
 
+TEST_F(XMPPClientTest, ExtractXML) {
+    std::string payload = generic_xml();
+    std::string start_tag = "<stream:features>";
+    std::string end_tag = "</stream:features>";
+    size_t start_tag_pos = payload.find(start_tag);
+    size_t end_tag_pos = payload.find(end_tag);
+
+    p_xmpp_client_->buffer() += payload;
+    std::string extracted_xml = p_xmpp_client_->ExtractXML(start_tag, end_tag).str();
+    std::string expected_xml = payload.substr(start_tag_pos, end_tag_pos + end_tag.size() - start_tag_pos);
+    EXPECT_STREQ(extracted_xml.c_str(), expected_xml.c_str());
+
+    std::string remaining_bytes = payload.substr(end_tag_pos + end_tag.size());
+    EXPECT_STREQ(p_xmpp_client_->buffer().c_str(), remaining_bytes.c_str());
+}
+
 TEST_F(XMPPClientTest, ExtractAuthenticationMechanismResponseExcessData) {
     std::string response = authentication_mechanism_response();
     std::string expected = response.substr(response.find("<stream:features>"));
@@ -138,6 +162,7 @@ TEST_F(XMPPClientTest, ExtractAuthenticationMechanismResponseExcessData) {
     std::string excess = "More data";
     std::string bytes_read = response + excess;
 
+    p_xmpp_client_->buffer() += bytes_read;
     std::stringstream extracted_response = p_xmpp_client_->ExtractAuthenticationMechanismResponse(bytes_read);
     EXPECT_STREQ(extracted_response.str().c_str(), expected.c_str());
     EXPECT_STREQ(p_xmpp_client_->buffer().c_str(), excess.c_str());
@@ -147,13 +172,13 @@ TEST_F(XMPPClientTest, ExtractAuthenticationMechanismResponseChunks) {
     std::string first_chunk = authentication_mechanism_response_first_chunk();
     std::string second_chunk = authentication_mechanism_response_second_chunk();
 
+    p_xmpp_client_->buffer() += first_chunk;
     std::stringstream extracted_response = p_xmpp_client_->ExtractAuthenticationMechanismResponse(first_chunk);
     EXPECT_TRUE(extracted_response.str().empty());
-    EXPECT_STREQ(p_xmpp_client_->buffer().c_str(), first_chunk.c_str());
 
+    p_xmpp_client_->buffer() += second_chunk;
     extracted_response = p_xmpp_client_->ExtractAuthenticationMechanismResponse(second_chunk);
     std::string expected_response = first_chunk + second_chunk;
-    EXPECT_TRUE(p_xmpp_client_->buffer().empty());
     EXPECT_STREQ(extracted_response.str().c_str(), expected_response.c_str());
 }
 
@@ -178,8 +203,25 @@ TEST_F(XMPPClientTest, HandlesAuthenticationMeachanismSelectionState) {
     std::string payload = authentication_mechanism_response();
     EXPECT_EQ(p_xmpp_client_->state(), XMPPClient::TransactionState::kSelectAuthenticationMechanism);
 
-    p_xmpp_client_->HandleSelectAuthenticationMechanism(payload);
+    p_xmpp_client_->OnRead(payload);
     EXPECT_EQ(p_xmpp_client_->state(), XMPPClient::TransactionState::kDecodeBase64Challenge);
+}
+
+TEST_F(XMPPClientTest, ParsesBase64Challenge) {
+    std::string expected = "bm9uY2U9IjM0ODE5ODkxNDYyNDY2NTcyMjQiLHFvcD0iYXV0aCIsY2hhcnNldD11dGYtOCxhbGdvcml0aG09bWQ1LXNlc3M=";
+    std::stringstream ss;
+    ss << base64_challenge();
+
+    std::string parsed_challenge = p_xmpp_client_->ParseBase64Challenge(ss);
+    EXPECT_STREQ(parsed_challenge.c_str(), expected.c_str());
+}
+
+TEST_F(XMPPClientTest, DecodesBase64) {
+    std::string input = "bm9uY2U9IjM0ODE5ODkxNDYyNDY2NTcyMjQiLHFvcD0iYXV0aCIsY2hhcnNldD11dGYtOCxhbGdvcml0aG09bWQ1LXNlc3M=";
+    std::string expected = "nonce=\"3481989146246657224\",qop=\"auth\",charset=utf-8,algorithm=md5-sess";
+
+    std::string decoded = p_xmpp_client_->DecodeBase64(input);
+    EXPECT_STREQ(decoded.c_str(), expected.c_str());
 }
 
 }

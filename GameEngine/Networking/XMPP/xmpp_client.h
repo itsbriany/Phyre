@@ -1,5 +1,7 @@
 #pragma once
 #include <boost/property_tree/ptree.hpp>
+#include <b64/encode.h>
+#include <b64/decode.h>
 #include <unordered_set>
 #include "tcp_client.h"
 
@@ -26,6 +28,9 @@ namespace Networking {
             // Called each time a boost::asio error occurs
             void OnError(const boost::system::error_code& ec) final;
 
+            // Extract XML from the buffer
+            std::stringstream ExtractXML(const std::string& start_tag, const std::string& end_tag);
+
             // Handles the Authentication Mechanism selection stage in SASL
             void HandleSelectAuthenticationMechanism(const std::string& bytes_read);
 
@@ -35,6 +40,13 @@ namespace Networking {
             // Parses the xml and searches for the available authentication
             // mechanisms
             std::unordered_set<std::string> ParseAuthenticationMechanisms(std::istream& xml_stream);
+
+            // Handles the base 64 challenge decoding stage in SASL
+            void HandleDecodeBase64Challenge(const std::string& bytes_read);
+
+            std::string ParseBase64Challenge(std::istream& xml_stream);
+
+            std::string DecodeBase64(const std::string& input);
 
             std::string& buffer() { return buffer_; }
 
@@ -49,8 +61,6 @@ namespace Networking {
                                                         std::unordered_set<std::string>& authentication_mechanism_set);
 
             bool IsMD5AuthenticationMechanismAvailable(const std::unordered_set<std::string>& authentication_mechanism_set);
-
-
             std::ostringstream xml_version();
 
             // The first stream used to authenticate
@@ -58,6 +68,12 @@ namespace Networking {
 
             // Authentication mechanism stream
             std::ostringstream authentication_mechanism();
+
+            // A base64 encoder
+            base64::encoder base64_encoder_;
+
+            // A base64 decoder
+            base64::decoder base64_decoder_;
 
             // All data read from endpoint ends up here
             std::string buffer_;

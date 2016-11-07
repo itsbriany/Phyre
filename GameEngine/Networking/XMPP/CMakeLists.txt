@@ -2,9 +2,10 @@ cmake_minimum_required(VERSION 3.3)
 
 if(Boost_FOUND)
     # Library
-    include_directories(${Boost_INCLUDE_DIRS} ../)
+    include_directories(${Boost_INCLUDE_DIRS} ${BASE64_INCLUDE_DIR} ../)
+    link_directories(${BASE64_LIBRARY_DIR})
     add_library(XMPP xmpp_client.h xmpp_client.cpp xmpp_tests.h)
-    target_link_libraries(XMPP ${Boost_LIBRARIES} Networking)
+    target_link_libraries(XMPP ${Boost_LIBRARIES} Networking b64)
 
     # The executable must run with gmock.dll in the same directory
     if (WIN32)

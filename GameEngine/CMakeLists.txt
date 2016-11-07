@@ -17,10 +17,13 @@ endif()
 # Example: export DYLD_LIBRARY_PATH=$BOOST_ROOT/stage/lib
 
 # Set compiler options and preprocessor definitions
+
+set(BASE64_DEFINITIONS "-DBUFFERSIZE=16777216")
+
 if (WIN32)
-    add_definitions(-D_WIN32_WINNT=0x601 -DGTEST_LINKED_AS_SHARED_LIBRARY=1 -D_SCL_SECURE_NO_WARNINGS)
+    add_definitions(-D_WIN32_WINNT=0x601 -DGTEST_LINKED_AS_SHARED_LIBRARY=1 -D_SCL_SECURE_NO_WARNINGS ${BASE64_DEFINITIONS})
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_LOG_DYN_LINK -g -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-inconsistent-missing-override -std=c++14")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${BASE64_DEFINITIONS} -DBOOST_LOG_DYN_LINK -g -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-inconsistent-missing-override -std=c++14")
 endif (WIN32)
 
 # Compile with less warnings on MSVC
@@ -72,6 +75,11 @@ set(PROTOBUF_LIBRARY_DIR "${PROTOBUF_ROOT}/cmake")
 
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
+# Add Base64
+set(BASE64_ROOT "$ENV{GAME_ENGINE_ROOT}/ThirdParty/libb64-1.2")
+set(BASE64_INCLUDE_DIR "${BASE64_ROOT}/include")
+set(BASE64_LIBRARY_DIR "${BASE64_ROOT}/src")
 
 add_subdirectory(Common)
 add_subdirectory(Logging)
