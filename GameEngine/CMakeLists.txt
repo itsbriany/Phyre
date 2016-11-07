@@ -79,7 +79,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 # Add Base64
 set(BASE64_ROOT "$ENV{GAME_ENGINE_ROOT}/ThirdParty/libb64-1.2")
 set(BASE64_INCLUDE_DIR "${BASE64_ROOT}/include")
-set(BASE64_LIBRARY_DIR "${BASE64_ROOT}/src")
+if (MSVC)
+    set(BASE64_LIBRARY_DIR "${BASE64_ROOT}/base64/VisualStudioProject")
+else()
+    set(BASE64_LIBRARY_DIR "${BASE64_ROOT}/src")
+endif()
 
 add_subdirectory(Common)
 add_subdirectory(Logging)

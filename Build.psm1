@@ -8,10 +8,12 @@ function Copy-Test-Resources {
     $TestResourceDirectories = "*TestResources"
     $TestResources = Get-ChildItem -Recurse $TestResourceDirectories | ?{ $_.PSIsContainer }
     foreach ($TestResource in $TestResources) {
-    $TestResourceBaseName = $TestResource.BaseName
-    $TestResourceFullName = $TestResource.FullName
-    Copy-Item -Force $TestResourceFullName "$env:GAME_ENGINE_ROOT\ThirdParty\googletest\googlemock\Debug\$TestResourceBaseName" -Recurse
-    Copy-Item -Force $TestResourceFullName "$env:GAME_ENGINE_ROOT\ThirdParty\googletest\googlemock\Release\$TestResourceBaseName" -Recurse
+        $TestResourceBaseName = $TestResource.BaseName
+        $TestResourceFullName = $TestResource.FullName
+        mkdir -Force $env:GAME_ENGINE_ROOT\ThirdParty\googletest\googlemock\Debug\$TestResourceBaseName > $null
+        mkdir -Force $env:GAME_ENGINE_ROOT\ThirdParty\googletest\googlemock\Release\$TestResourceBaseName > $null
+        Copy-Item -Force $TestResourceFullName\* "$env:GAME_ENGINE_ROOT\ThirdParty\googletest\googlemock\Debug\$TestResourceBaseName"
+        Copy-Item -Force $TestResourceFullName\* "$env:GAME_ENGINE_ROOT\ThirdParty\googletest\googlemock\Release\$TestResourceBaseName"
     }
     cd $env:GAME_ENGINE_ROOT
 }
@@ -21,9 +23,9 @@ function Set-VS140-Environment {
     pushd "$env:VS140COMNTOOLS"
     cmd /c "vsvars32.bat&set" |
     foreach {
-    if ($_ -match "=") {
-        $v = $_.split("="); set-item -force -path "ENV:\$($v[0])"  -value "$($v[1])"
-    }
+        if ($_ -match "=") {
+            $v = $_.split("="); set-item -force -path "ENV:\$($v[0])"  -value "$($v[1])"
+        }
     }
     popd
     write-host "`nVisual Studio 2015 Command Prompt variables set." -ForegroundColor Yellow
@@ -53,6 +55,12 @@ function Build-Gtest {
     cmake -DBUILD_GMOCK:BOOL=ON -DBUILD_GTEST:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -G "Visual Studio 14" $env:SUPPRESS_APPVEYOR_ERROR
     msbuild /m googletest-distribution.sln /p:Configuration=Debug /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1 $env:SUPPRESS_APPVEYOR_ERROR
     msbuild /m googletest-distribution.sln /p:Configuration=Release /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1 $env:SUPPRESS_APPVEYOR_ERROR
+}
+
+function Build-Base64 {
+    cd $env:GAME_ENGINE_ROOT\ThirdParty\libb64-1.2\base64\VisualStudioProject
+    msbuild /m base64.sln /p:Configuration=Debug /p:Platform="Win32"
+    msbuild /m base64.sln /p:Configuration=Release /p:Platform="Win32"
 }
 
 function Prepare-GameEngine-Solution {
