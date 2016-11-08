@@ -1,86 +1,41 @@
 #pragma once
-#include <boost/property_tree/ptree.hpp>
-#include <b64/encode.h>
-#include <b64/decode.h>
-#include <unordered_set>
+#include <memory>
 #include "tcp_client.h"
+#include "xmpp_state.h"
 
 namespace GameEngine {
 namespace Networking {
 
-    class XMPPClient : public TCPClient {
-        public:
-            enum TransactionState {
-                kSelectAuthenticationMechanism,
-                kDecodeBase64Challenge
-            };
+class XMPPState;
+class XMPPClient : public TCPClient {
+    public:
+        XMPPClient(boost::asio::io_service& io_service);
+        XMPPClient(XMPPClient&& other);
 
+        // Called each time a connection is established
+        void OnConnect() final;
 
-            XMPPClient(boost::asio::io_service& io_service);
-            XMPPClient(XMPPClient&& other);
+        // Called every time some bytes are read from the endpoint
+        void OnRead(const std::string& bytes_read) final;
 
-            // Called each time a connection is established
-            void OnConnect() final;
+        // Called each time a boost::asio error occurs
+        void OnError(const boost::system::error_code& ec) final;
 
-            // Called every time some bytes are read from the endpoint
-            void OnRead(const std::string& bytes_read) final;
+        void set_state(std::unique_ptr<XMPPState> p_state) { p_state_ = std::move(p_state); }
 
-            // Called each time a boost::asio error occurs
-            void OnError(const boost::system::error_code& ec) final;
+        std::string& buffer() { return buffer_; }
 
-            // Extract XML from the buffer
-            std::stringstream ExtractXML(const std::string& start_tag, const std::string& end_tag);
+        std::string log() override {
+            return "[XMPPClient]";
+        }
 
-            // Handles the Authentication Mechanism selection stage in SASL
-            void HandleSelectAuthenticationMechanism(const std::string& bytes_read);
+    private:
+        // All data read from endpoint ends up here
+        std::string buffer_;
 
-            // Extracts the authentication mechanism response from the buffer
-            std::stringstream ExtractAuthenticationMechanismResponse(const std::string& bytes_read);
-
-            // Parses the xml and searches for the available authentication
-            // mechanisms
-            std::unordered_set<std::string> ParseAuthenticationMechanisms(std::istream& xml_stream);
-
-            // Handles the base 64 challenge decoding stage in SASL
-            void HandleDecodeBase64Challenge(const std::string& bytes_read);
-
-            std::string ParseBase64Challenge(std::istream& xml_stream);
-
-            std::string DecodeBase64(const std::string& input);
-
-            std::string& buffer() { return buffer_; }
-
-            TransactionState state() const { return state_; }
-
-            std::string log() override {
-                return "[XMPPClient]";
-            }
-
-        private:
-            void ParseAuthenticationMechanismsRecursive(const boost::property_tree::ptree& pt,
-                                                        std::unordered_set<std::string>& authentication_mechanism_set);
-
-            bool IsMD5AuthenticationMechanismAvailable(const std::unordered_set<std::string>& authentication_mechanism_set);
-            std::ostringstream xml_version();
-
-            // The first stream used to authenticate
-            std::ostringstream initiation_stream();
-
-            // Authentication mechanism stream
-            std::ostringstream authentication_mechanism();
-
-            // A base64 encoder
-            base64::encoder base64_encoder_;
-
-            // A base64 decoder
-            base64::decoder base64_decoder_;
-
-            // All data read from endpoint ends up here
-            std::string buffer_;
-
-            // The current transactional state
-            TransactionState state_;
-    };
+        // The current state in the lifetime of the XMPP protocol
+        std::unique_ptr<XMPPState> p_state_;
+};
 
 }
 }
