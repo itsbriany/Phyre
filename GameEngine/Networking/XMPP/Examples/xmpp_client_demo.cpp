@@ -11,10 +11,12 @@ namespace Networking
     void XMPPClientDemo()
     {
         boost::asio::io_service io_service;
-        std::string host = "127.0.0.1";
+        std::string host = "dev-server";
         std::string service = "5222";
+        std::string username = "admin";
+        std::string password = "password";
 
-        XMPPClient xmpp_client(io_service);
+        XMPPClient xmpp_client(io_service, host, username, password);
         xmpp_client.Connect(host, service);
 
         io_service.run();

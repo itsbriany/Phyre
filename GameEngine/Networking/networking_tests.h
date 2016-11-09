@@ -1,3 +1,4 @@
+#pragma once
 #include <boost/assign.hpp>
 #include <gtest/gtest.h>
 #include "fake_tcp_clients.h"

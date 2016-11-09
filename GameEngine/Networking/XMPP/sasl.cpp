@@ -1,32 +1,50 @@
+#include <boost/algorithm/string.hpp>
+#include <boost/assign/list_of.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+#include <boost/random/random_device.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
 #include "sasl.h"
 
 namespace GameEngine {
 namespace Networking {
 
+std::unordered_map<SASL::Mechanism, std::string> SASL::s_digest_map = boost::assign::map_list_of
+(kSHA1, "SCRAM-SHA-1")
+(kMD5, "DIGEST-MD5")
+(kNone, "PLAIN");
+
 SASL::SASL(XMPPClient& client): XMPPState(client), transaction_state_(kInitializeStream) { }
 
 void SASL::Update() {
     switch (transaction_state_) {
-        case TransactionState::kInitializeStream:
+        case kInitializeStream:
             HandleInitializeStream();
             break;
-        case TransactionState::kSelectAuthenticationMechanism:
+        case kSelectAuthenticationMechanism:
             HandleSelectAuthenticationMechanism();
             break;
-        case TransactionState::kDecodeBase64Challenge:
+        case kDecodeBase64Challenge:
             HandleDecodeBase64Challenge();
             break;
         default:
             Logging::error("Unknown Transaction State", *this);
             client_.Disconnect();
-            return;
     }
 }
 
 void SASL::HandleInitializeStream() {
     client_.Write(initiation_stream());
-    transaction_state_ = TransactionState::kSelectAuthenticationMechanism;
+    transaction_state_ = kSelectAuthenticationMechanism;
+}
+
+SASL::Mechanism SASL::SetAuthenticationMechanism(const std::unordered_set<std::string>& authentication_mechanism_set) {
+    if (IsSHA1AuthenticationMechanismAvailable(authentication_mechanism_set)) {
+        return kSHA1;
+    }
+    if (IsMD5AuthenticationMechanismAvailable(authentication_mechanism_set)) {
+        return kMD5;
+    }
+    return kNone;
 }
 
 void SASL::HandleSelectAuthenticationMechanism() {
@@ -35,15 +53,15 @@ void SASL::HandleSelectAuthenticationMechanism() {
         return;
 
     std::unordered_set<std::string> authentication_mechanism_set = ParseAuthenticationMechanisms(authentication_mechanism_response);
-    if (!IsMD5AuthenticationMechanismAvailable(authentication_mechanism_set)) {
-        Logging::error("Only MD5 SASL authentication mechanism is supported", *this);
+    Mechanism mechanism = SetAuthenticationMechanism(authentication_mechanism_set);
+    if (mechanism == kNone) {
+        Logging::error("Only SRCAM-SHA1 and MD5 SASL authentication mechanism is supported", *this);
         client_.Disconnect();
-        return;
     }
 
-    transaction_state_ = TransactionState::kDecodeBase64Challenge;
-    Logging::debug("Sending authentication mechanism...", *this);
-    client_.Write(authentication_mechanism());
+    transaction_state_ = kDecodeBase64Challenge;
+    Logging::debug("Initiating authentication exchange...", *this);
+    client_.Write(InitiateAuthenticationStream(mechanism));
 }
 
 void SASL::HandleDecodeBase64Challenge() {
@@ -55,13 +73,23 @@ void SASL::HandleDecodeBase64Challenge() {
     }
     std::string base64_challenge = ParseBase64Challenge(extracted_response);
     std::string decoded_challenge = DecodeBase64(base64_challenge);
+
 }
 
-std::string SASL::ParseBase64Challenge(std::istream& xml_stream) {
+std::string SASL::ParseBase64Challenge(std::istream& xml_stream) const {
     boost::property_tree::ptree pt;
     read_xml(xml_stream, pt);
     boost::property_tree::ptree::const_iterator it = pt.begin();
     return it->second.get_value<std::string>();
+}
+
+std::string SASL::EncodeBase64(const std::string& input) {
+    std::istringstream iss(input);
+    std::ostringstream oss;
+    base64_encoder_.encode(iss, oss);
+    std::string encoded_without_linefeed = oss.str();
+	boost::erase_all(encoded_without_linefeed, std::string("\n"));
+    return encoded_without_linefeed;
 }
 
 std::string SASL::DecodeBase64(const std::string& input) {
@@ -71,12 +99,31 @@ std::string SASL::DecodeBase64(const std::string& input) {
     return oss.str();
 }
 
+std::string SASL::GenerateNonce() {
+    std::string chars(
+        "abcdefghijklmnopqrstuvwxyz"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "1234567890");
+    boost::random::random_device rng;
+    boost::random::uniform_int_distribution<> index_dist(0, chars.size() - 1);
+    std::string nonce;
+    for (int i = 0; i < 32; ++i) {
+        nonce += chars[index_dist(rng)];
+    }
+    return nonce;
+}
+
 bool SASL::IsMD5AuthenticationMechanismAvailable(const std::unordered_set<std::string>& authentication_mechanism_set) {
     std::string md5 = "DIGEST-MD5";
     return authentication_mechanism_set.find(md5) != authentication_mechanism_set.end();
 }
 
-std::stringstream SASL::ExtractXML(const std::string& start_tag, const std::string& end_tag) {
+bool SASL::IsSHA1AuthenticationMechanismAvailable(const std::unordered_set<std::string>& authentication_mechanism_set) {
+    std::string sha1 = "SCRAM-SHA-1";
+    return authentication_mechanism_set.find(sha1) != authentication_mechanism_set.end();
+}
+
+std::stringstream SASL::ExtractXML(const std::string& start_tag, const std::string& end_tag) const {
     std::stringstream extracted_response;
     size_t found_start = client_.buffer().find(start_tag);
     if (found_start == std::string::npos) {
@@ -94,13 +141,13 @@ std::stringstream SASL::ExtractXML(const std::string& start_tag, const std::stri
     return extracted_response;
 }
 
-std::stringstream SASL::ExtractAuthenticationMechanismResponse() {
+std::stringstream SASL::ExtractAuthenticationMechanismResponse() const {
     std::string search_start = "<stream:features>";
     std::string search_end = "</stream:features>";
     return ExtractXML(search_start, search_end);
 }
 
-std::unordered_set<std::string> SASL::ParseAuthenticationMechanisms(std::istream& xml_stream) {
+std::unordered_set<std::string> SASL::ParseAuthenticationMechanisms(std::istream& xml_stream) const {
     boost::property_tree::ptree pt;
     std::unordered_set<std::string> authentication_mechanism_set;
     read_xml(xml_stream, pt);
@@ -125,17 +172,33 @@ std::ostringstream SASL::xml_version() {
     return oss;
 }
 
-std::ostringstream SASL::initiation_stream() {
+std::ostringstream SASL::initiation_stream() const {
     std::ostringstream oss;
     oss << xml_version().str();
-    oss << "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='localhost' version='1.0'>";
+    oss << "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='" << client_.host() << "' version='1.0'>";
     return oss;
 }
 
-std::ostringstream SASL::authentication_mechanism() {
-    std::ostringstream oss;
-    oss << "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='DIGEST-MD5'/>";
-    return oss;
+std::string SASL::SHA1AuthenticationPayload() {
+    std::ostringstream payload_stream;
+    std::string g2s_header = "n,,";
+    std::string nonce = GenerateNonce();
+    payload_stream << g2s_header << "n=" << client_.username() << ",r=" << nonce;
+    return EncodeBase64(payload_stream.str());
+}
+
+std::ostringstream SASL::InitiateAuthenticationStream(Mechanism mechanism) {
+    std::ostringstream authentication_stream;
+    authentication_stream << "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='" << s_digest_map[mechanism] << '\'';
+    if (mechanism == kSHA1) {
+        authentication_stream << '>';
+        authentication_stream << SHA1AuthenticationPayload();
+        authentication_stream << "</auth>";
+        return authentication_stream;
+    }
+    
+    authentication_stream << "/>";
+    return authentication_stream;
 }
 
 }

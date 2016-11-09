@@ -36,11 +36,11 @@ function Build-Protobuf {
     cd $env:PROTOBUF_ROOT\cmake
     cmake -Dprotobuf_BUILD_TESTS=OFF -G "Visual Studio 14"
     msbuild /m protobuf.sln /p:Configuration=Release /p:Platform="Win32"
+    Copy-Item Release\protoc.exe $env:GAME_ENGINE_ROOT\Tools
 }
 
 function Create-Tools {
     mkdir -Force $env:GAME_ENGINE_ROOT\Tools
-    Copy-Item Release\protoc.exe $env:GAME_ENGINE_ROOT\Tools
 }
 
 # Compile the protobuf files for target platforms
@@ -61,6 +61,7 @@ function Build-Base64 {
     cd $env:GAME_ENGINE_ROOT\ThirdParty\libb64-1.2\base64\VisualStudioProject
     msbuild /m base64.sln /p:Configuration=Debug /p:Platform="Win32"
     msbuild /m base64.sln /p:Configuration=Release /p:Platform="Win32"
+    mv -Force $env:GAME_ENGINE_ROOT\ThirdParty\libb64-1.2\base64\VisualStudioProject\Release\base64.exe $env:GAME_ENGINE_ROOT\Tools
 }
 
 function Prepare-GameEngine-Solution {

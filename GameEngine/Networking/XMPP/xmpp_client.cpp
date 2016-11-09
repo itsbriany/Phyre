@@ -1,15 +1,12 @@
-#include <boost/property_tree/xml_parser.hpp>
-#include "host_resolver.h"
 #include "logging.h"
 #include "sasl.h"
-#include "tcp_socket.h"
 #include "xmpp_client.h"
 
 namespace GameEngine {
 namespace Networking {
 
-XMPPClient::XMPPClient(boost::asio::io_service& io_service):
-    TCPClient(io_service), p_state_(std::make_unique<SASL>(*this)) { }
+XMPPClient::XMPPClient(boost::asio::io_service& io_service, const std::string& host, const std::string& username, const std::string& password):
+    TCPClient(io_service), host_(host), p_state_(std::make_unique<SASL>(*this)), username_(username), password_(password) { }
 
 void XMPPClient::OnConnect() {
     p_state_->Update();

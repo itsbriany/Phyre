@@ -1,3 +1,4 @@
+#pragma once
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <fstream>
@@ -77,8 +78,10 @@ TEST_F(XMLParseTest, CanParseXML) {
 class SASLTest : public ::testing::Test, public Logging::Loggable {
     protected:
         SASLTest():
-            host_("127.0.0.1"),
+            host_("localhost"),
             port_or_service_("1234"),
+            username_("admin"),
+            password_("password"),
             tcp_server_(TCPServer(io_service_, std::stoi(port_or_service_))) { }
 
         virtual ~SASLTest() { }
@@ -125,7 +128,7 @@ class SASLTest : public ::testing::Test, public Logging::Loggable {
         }
 
         void SetUp() override {
-            p_xmpp_client_ = std::make_unique<XMPPClient>(io_service_);
+            p_xmpp_client_ = std::make_unique<XMPPClient>(io_service_, host_, username_, password_);
             p_sasl_ = std::make_unique<SASL>(*p_xmpp_client_);
         }
 
@@ -136,6 +139,8 @@ class SASLTest : public ::testing::Test, public Logging::Loggable {
         boost::asio::io_service io_service_;
         std::string host_;
         std::string port_or_service_;
+        std::string username_;
+        std::string password_;
         TCPServer tcp_server_;
         std::unique_ptr<XMPPClient> p_xmpp_client_;
         std::unique_ptr<SASL> p_sasl_;
@@ -232,6 +237,40 @@ TEST_F(SASLTest, DecodesBase64) {
 
     std::string decoded = p_sasl_->DecodeBase64(input);
     EXPECT_STREQ(decoded.c_str(), expected.c_str());
+}
+
+TEST_F(SASLTest, EncodesBase64) {
+    std::string input = "nonce=\"3481989146246657224\",qop=\"auth\",charset=utf-8,algorithm=md5-sess";
+    std::string expected = "bm9uY2U9IjM0ODE5ODkxNDYyNDY2NTcyMjQiLHFvcD0iYXV0aCIsY2hhcnNldD11dGYtOCxhbGdvcml0aG09bWQ1LXNlc3M=";
+
+    std::string encoded = p_sasl_->EncodeBase64(input);
+    EXPECT_STREQ(encoded.c_str(), expected.c_str());
+}
+
+TEST_F(SASLTest, InitiateAuthenticationStreamMD5) {
+    std::string authentication_payload = p_sasl_->InitiateAuthenticationStream(SASL::Mechanism::kMD5).str();
+    std::string expected = "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='DIGEST-MD5'/>";
+    EXPECT_STREQ(authentication_payload.c_str(), expected.c_str());
+}
+
+TEST_F(SASLTest, InitiateAuthenticationStreamOther) {
+    std::string authentication_payload = p_sasl_->InitiateAuthenticationStream(SASL::Mechanism::kNone).str();
+    std::string expected = "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='PLAIN'/>";
+    EXPECT_STREQ(authentication_payload.c_str(), expected.c_str());
+}
+
+TEST_F(SASLTest, InitiateAuthenticationStreamSHA1) {
+    std::string authentication_payload = p_sasl_->InitiateAuthenticationStream(SASL::Mechanism::kSHA1).str();
+    EXPECT_TRUE(authentication_payload.find("SCRAM-SHA-1") != std::string::npos);
+
+    size_t initial_message_start = authentication_payload.find('>');
+    size_t initial_message_end = authentication_payload.find('<');
+	initial_message_end = authentication_payload.find('<', initial_message_end + 1);
+    size_t expected_size = 60;
+	std::string expected_first_characters = "biws";
+    std::string initial_message = authentication_payload.substr(initial_message_start + 1, initial_message_end - initial_message_start - 1);
+    EXPECT_EQ(initial_message.size(), expected_size);
+	EXPECT_STREQ(initial_message.substr(0, 4).c_str(), expected_first_characters.c_str());
 }
 
 }
