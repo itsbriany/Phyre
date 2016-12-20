@@ -19,7 +19,7 @@ namespace Networking
         }
 
     private:
-        std::unique_ptr<boost::asio::ip::tcp::resolver> resolver_;
+        std::unique_ptr<boost::asio::ip::tcp::resolver> m_resolver;
     };
 }
 }

@@ -7,14 +7,14 @@ namespace Networking {
 class XMPPClient;
 class XMPPState {
     public:
-        XMPPState(XMPPClient& client): client_(client) {}
+        XMPPState(XMPPClient& client): m_client(client) {}
         virtual ~XMPPState() { }
 
         // Updates the state of the XMPP client
         virtual void Update() = 0;
 
     protected:
-        XMPPClient& client_;
+        XMPPClient& m_client;
 };
 
 }

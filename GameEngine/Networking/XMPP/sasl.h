@@ -42,15 +42,13 @@ class SASL : public XMPPState, public Logging::Loggable {
         void HandleInitializeStream();
         void HandleSelectAuthenticationMechanism();
         void HandleDecodeBase64Challenge();
-
         std::unordered_set<std::string> ParseAuthenticationMechanisms(std::istream& xml_stream) const;
         std::string ParseBase64Challenge(std::istream& xml_stream) const;
         std::string EncodeBase64(const std::string& input);
         std::string DecodeBase64(const std::string& input);
         std::ostringstream InitiateAuthenticationStream(Mechanism mechanism);
-        
-        TransactionState transaction_state() const { return transaction_state_; }
-        void set_transaction_state(TransactionState transaction_state) { transaction_state_ = transaction_state; }
+        TransactionState transaction_state() const { return m_transaction_state; }
+        void set_transaction_state(TransactionState transaction_state) { m_transaction_state = transaction_state; }
 
         static std::string GenerateNonce();
 
@@ -68,18 +66,18 @@ class SASL : public XMPPState, public Logging::Loggable {
 
         // The first stream used to authenticate
         std::ostringstream initiation_stream() const;
-        
+
         // Map a digest to a string
         static std::unordered_map<Mechanism, std::string> s_digest_map;
 
         // A base64 encoder
-        base64::encoder base64_encoder_;
+        base64::encoder m_base64_encoder;
 
         // A base64 decoder
-        base64::decoder base64_decoder_;
+        base64::decoder m_base64_decoder;
 
         // Internal transactional state
-        TransactionState transaction_state_;
+        TransactionState m_transaction_state;
 };
 
 }

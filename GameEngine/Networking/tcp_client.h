@@ -18,7 +18,7 @@ namespace Networking
         void Disconnect();
         void Write(const std::ostringstream& data_stream);
 
-        bool is_connected() const { return tcp_socket_->is_connected(); }
+        bool is_connected() const { return m_ptr_tcp_socket->is_connected(); }
 
         std::string log() override {
             return "[TCPClient]";
@@ -31,7 +31,7 @@ namespace Networking
         virtual void OnDisconnect();
         virtual void OnError(const boost::system::error_code& ec);
 
-        boost::asio::io_service& io_service_;
+        boost::asio::io_service& m_io_service;
 
     private:
         void ConnectHandler(const boost::system::error_code& ec);
@@ -39,8 +39,8 @@ namespace Networking
         void ReadHandler(const boost::system::error_code& ec, size_t bytes_transferred);
         void ErrorHandler(const boost::system::error_code& ec);
 
-        HostResolver host_resolver_;
-        std::unique_ptr<TCPSocket> tcp_socket_;
+        HostResolver m_host_resolver;
+        std::unique_ptr<TCPSocket> m_ptr_tcp_socket;
     };
 }
 }

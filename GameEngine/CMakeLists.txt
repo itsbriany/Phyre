@@ -9,9 +9,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     endif()
 endif()
 
-# SET(CMAKE_CXX_FLAGS "-g -Wall -Werror -std=c++14")
-# set(CMAKE_CXX_FLAGS "-g -Wall -std=c++14")
-
 # NOTE for Mac OS X users: You will want to set the environment
 # variable DYLD_LIBRARY_PATH to point to you boost shared libraries (.dylib files).
 # Example: export DYLD_LIBRARY_PATH=$BOOST_ROOT/stage/lib
@@ -45,6 +42,7 @@ set(Boost_USE_MULTITHREADED ON)
 
 set(BOOST_ROOT "$ENV{BOOST_ROOT}")
 set(BOOST_INCLUDE_DIRS "${BOOST_ROOT}")
+
 # For appveyor CI
 if (WIN32)
     set(BOOST_LIBRARY_DIRS "$ENV{BOOST_LIBRARYDIR}")
@@ -54,7 +52,7 @@ else()
 endif()
 
 
-find_package(Boost 1.60 REQUIRED COMPONENTS system log thread)
+find_package(Boost 1.60 REQUIRED COMPONENTS system log thread random)
 
 
 # Add Gmock & Gtest libraries

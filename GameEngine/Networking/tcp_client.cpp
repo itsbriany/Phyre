@@ -13,9 +13,9 @@ namespace Networking
     using boost::asio::ip::tcp;
 
     TCPClient::TCPClient(boost::asio::io_service& io_service) :
-        io_service_(io_service),
-        host_resolver_(HostResolver(std::unique_ptr<tcp::resolver>(new tcp::resolver(io_service_)))),
-        tcp_socket_(std::make_unique<TCPSocket>(io_service_,
+        m_io_service(io_service),
+        m_host_resolver(HostResolver(std::unique_ptr<tcp::resolver>(new tcp::resolver(m_io_service)))),
+        m_ptr_tcp_socket(std::make_unique<TCPSocket>(m_io_service,
                                                 boost::bind(&TCPClient::ConnectHandler, this, boost::asio::placeholders::error),
                                                 boost::bind(&TCPClient::ReadHandler,
                                                             this,
@@ -31,7 +31,7 @@ namespace Networking
                                                                     this,
                                                                     boost::asio::placeholders::error,
                                                                     boost::asio::placeholders::iterator);
-        host_resolver_.ResolveHost(host, service, callback);
+        m_host_resolver.ResolveHost(host, service, callback);
     }
 
     void TCPClient::OnConnect() {
@@ -44,7 +44,7 @@ namespace Networking
 
     void TCPClient::Disconnect()
     {
-        tcp_socket_->Close();
+        m_ptr_tcp_socket->Close();
         OnDisconnect();
     }
 
@@ -69,7 +69,7 @@ namespace Networking
         }
 
         std::ostringstream read_buffer;
-        read_buffer.write(tcp_socket_->buffer().data(), bytes_transferred);
+        read_buffer.write(m_ptr_tcp_socket->buffer().data(), bytes_transferred);
         OnRead(read_buffer.str());
     }
 
@@ -85,7 +85,7 @@ namespace Networking
     void TCPClient::Write(const std::ostringstream& data_stream) {
         if (is_connected()) {
             std::string data(data_stream.str());
-            tcp_socket_->Write(data);
+            m_ptr_tcp_socket->Write(data);
             std::ostringstream log_output;
             log_output << "Sent " << data.size() << " bytes to endpoint:\n";
             log_output << data;
@@ -107,7 +107,7 @@ namespace Networking
         }
 
         OnHostResolved();
-        tcp_socket_->Connect(it);
+        m_ptr_tcp_socket->Connect(it);
     }
 }
 }

@@ -33,8 +33,8 @@ namespace Networking
         /**
          * This TCP buffer has a window frame of 4kb
          */
-        std::array<char, 4096>& buffer()  { return buffer_; }
-        bool is_connected() const { return is_connected_; }
+        std::array<char, 4096>& buffer()  { return m_buffer; }
+        bool is_connected() const { return m_is_connected; }
 
         std::string log() override {
             return "[TCPSocket]";
@@ -44,11 +44,11 @@ namespace Networking
         void OnConnect(const boost::system::error_code& ec);
         void OnRead(const boost::system::error_code& ec, size_t bytes_transferred);
 
-        boost::asio::ip::tcp::socket socket_;
-        std::array<char, 4096> buffer_;
-        OnConnectCallback on_connect_callback_;
-        OnReadCallback on_read_callback_;
-        bool is_connected_;
+        boost::asio::ip::tcp::socket m_socket;
+        std::array<char, 4096> m_buffer;
+        OnConnectCallback m_on_connect_callback;
+        OnReadCallback m_on_read_callback;
+        bool m_is_connected;
     };
 }
 }
