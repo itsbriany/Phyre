@@ -1,0 +1,5 @@
+*.a
+*.o
+base64/VisualStudioProject/Release
+base64/VisualStudioProject/Debug
+base64/base64

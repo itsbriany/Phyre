@@ -1,70 +1,55 @@
 #pragma once
-#include <boost/property_tree/ptree.hpp>
-#include <unordered_set>
+#include <memory>
 #include "tcp_client.h"
+#include "xmpp_state.h"
 
 namespace GameEngine {
 namespace Networking {
 
-    class XMPPClient : public TCPClient {
-        public:
-            enum TransactionState {
-                kSelectAuthenticationMechanism,
-                kDecodeBase64Challenge
-            };
+class XMPPState;
+class XMPPClient : public TCPClient {
+    public:
+        XMPPClient(boost::asio::io_service& io_service, const std::string& host, const std::string& username, const std::string& password = "");
 
+        // Called each time a connection is established
+        void OnConnect() final;
 
-            XMPPClient(boost::asio::io_service& io_service);
-            XMPPClient(XMPPClient&& other);
+        // Called every time some bytes are read from the endpoint
+        void OnRead(const std::string& bytes_read) final;
 
-            // Called each time a connection is established
-            void OnConnect() final;
+        // Called each time a boost::asio error occurs
+        void OnError(const boost::system::error_code& ec) final;
 
-            // Called every time some bytes are read from the endpoint
-            void OnRead(const std::string& bytes_read) final;
+        void set_state(std::unique_ptr<XMPPState> ptr_state) { m_ptr_state = std::move(ptr_state); }
 
-            // Called each time a boost::asio error occurs
-            void OnError(const boost::system::error_code& ec) final;
+        std::string& buffer() { return m_buffer; }
 
-            // Handles the Authentication Mechanism selection stage in SASL
-            void HandleSelectAuthenticationMechanism(const std::string& bytes_read);
+        std::string host() const { return m_host; }
 
-            // Extracts the authentication mechanism response from the buffer
-            std::stringstream ExtractAuthenticationMechanismResponse(const std::string& bytes_read);
+        std::string username() const { return m_username; }
 
-            // Parses the xml and searches for the available authentication
-            // mechanisms
-            std::unordered_set<std::string> ParseAuthenticationMechanisms(std::istream& xml_stream);
+        std::string password() const { return m_password; }
 
-            std::string& buffer() { return buffer_; }
+        std::string log() override {
+            return "[XMPPClient]";
+        }
 
-            TransactionState state() const { return state_; }
+    private:
+        // All data read from endpoint ends up here
+        std::string m_buffer;
 
-            std::string log() override {
-                return "[XMPPClient]";
-            }
+        // The XMPP host
+        std::string m_host;
 
-        private:
-            void ParseAuthenticationMechanismsRecursive(const boost::property_tree::ptree& pt,
-                                                        std::unordered_set<std::string>& authentication_mechanism_set);
+        // XMPP Username
+        std::string m_username;
 
-            bool IsMD5AuthenticationMechanismAvailable(const std::unordered_set<std::string>& authentication_mechanism_set);
+        // XMPP Password
+        std::string m_password;
 
-
-            std::ostringstream xml_version();
-
-            // The first stream used to authenticate
-            std::ostringstream initiation_stream();
-
-            // Authentication mechanism stream
-            std::ostringstream authentication_mechanism();
-
-            // All data read from endpoint ends up here
-            std::string buffer_;
-
-            // The current transactional state
-            TransactionState state_;
-    };
+        // The current state in the lifetime of the XMPP protocol
+        std::unique_ptr<XMPPState> m_ptr_state;
+};
 
 }
 }

@@ -14,7 +14,7 @@ class TCPClientConnect : public TCPClient {
     protected:
         void OnConnect() override {
             Disconnect();
-            io_service_.stop();
+            m_io_service.stop();
         }
 };
 
@@ -25,7 +25,7 @@ class TCPClientHostResolved : public TCPClient {
 
     protected:
         void OnHostResolved() override {
-            io_service_.stop();
+            m_io_service.stop();
         }
 };
 
@@ -52,7 +52,7 @@ class TCPClientRead : public TCPClient {
 
         void OnRead(const std::string& data) override {
             Logging::info(data, *this);
-            io_service_.stop();
+            m_io_service.stop();
         }
 };
 
@@ -75,7 +75,7 @@ class TCPClientReadQueuedMessages : public TCPClient {
 
         void OnRead(const std::string& data) override {
             if (message_queue_.empty()) {
-                io_service_.stop();
+                m_io_service.stop();
                 return;
             }
 
@@ -101,7 +101,7 @@ class TCPClientReadQueuedMessages : public TCPClient {
                 message_queue_.pop();
 
                 if (message_queue_.empty()) {
-                    io_service_.stop();
+                    m_io_service.stop();
                     return;
                 }
                 found = received_data.find(message_queue_.front());
@@ -124,7 +124,7 @@ class TCPClientDisconnect : public TCPClient {
 
         void OnDisconnect() override {
             EXPECT_FALSE(is_connected());
-            io_service_.stop();
+            m_io_service.stop();
         }
 };
 
@@ -139,7 +139,7 @@ class TCPClientError : public TCPClient {
         }
 
         void OnDisconnect() override {
-            io_service_.stop();
+            m_io_service.stop();
         }
 };
 

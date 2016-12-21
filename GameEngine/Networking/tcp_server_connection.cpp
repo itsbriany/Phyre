@@ -4,9 +4,9 @@ namespace GameEngine {
 namespace Networking {
 
     TCPServerConnection::TCPServerConnection(boost::asio::io_service& io_service, const std::queue<std::string>& message_queue):
-        socket_(io_service),
-        default_message_("Greetings From TCPServerConnection!\r\n"),
-        message_queue_(message_queue) { }
+        m_socket(io_service),
+        m_default_message("Greetings From TCPServerConnection!\r\n"),
+        m_message_queue(message_queue) { }
 
 
     TCPServerConnection::pointer
@@ -16,7 +16,7 @@ namespace Networking {
 
     void TCPServerConnection::HandleError(const boost::system::error_code& error) {
         Logging::error(error.message(), *this);
-        socket_.close();
+        m_socket.close();
     }
 
     void TCPServerConnection::HandleRead(const boost::system::error_code& error, size_t bytes_transferred) {
@@ -25,27 +25,27 @@ namespace Networking {
             return;
         }
         std::ostringstream oss;
-        oss.write(buffer_.data(), bytes_transferred);
+        oss.write(m_buffer.data(), bytes_transferred);
         Logging::info(oss.str(), *this);
         Write();
     }
 
     void TCPServerConnection::Write() {
         std::string message;
-        if (!message_queue_.empty()) {
-            message = message_queue_.front();
-            message_queue_.pop();
+        if (!m_message_queue.empty()) {
+            message = m_message_queue.front();
+            m_message_queue.pop();
         } else {
-            message = default_message_;
+            message = m_default_message;
         }
 
-        write(socket_, boost::asio::buffer(message));
+        write(m_socket, boost::asio::buffer(message));
 
         // This is an asynchronous read, therefore, data may come in bursts.
         // i.e. multiple messages in the message queue may be sent at the same
         // time. However, the order in which the messages were queued in the
         // buffer should remain the same.
-        socket_.async_read_some(boost::asio::buffer(buffer_),
+        m_socket.async_read_some(boost::asio::buffer(m_buffer),
                 boost::bind(&TCPServerConnection::HandleRead, shared_from_this(),
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred));

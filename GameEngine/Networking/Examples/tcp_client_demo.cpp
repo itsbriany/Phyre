@@ -16,7 +16,7 @@ namespace Networking
                 std::string host = "theboostcpplibraries.com";
                 std::string port_or_service = "80";
                 Connect(host, port_or_service);
-                io_service_.run();
+                m_io_service.run();
             }
 
             void OnConnect() override {

@@ -19,9 +19,9 @@ namespace Networking
         std::string log() override { return "[TCPServer]"; }
 
     private:
-        boost::asio::ip::tcp::acceptor acceptor_;
-        TCPServerConnection::pointer p_connection_;
-        std::queue<std::string> message_queue_;
+        boost::asio::ip::tcp::acceptor m_acceptor;
+        TCPServerConnection::pointer m_ptr_connection;
+        std::queue<std::string> m_message_queue;
     };
 }
 }
