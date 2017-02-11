@@ -14,7 +14,7 @@ namespace Networking
 
     TCPClient::TCPClient(boost::asio::io_service& io_service) :
         io_service_(io_service),
-        host_resolver_(HostResolver(std::unique_ptr<tcp::resolver>(new tcp::resolver(io_service_)))),
+        host_resolver_(HostResolver(std::make_unique<tcp::resolver>(io_service_))),
         ptr_tcp_socket_(std::make_unique<TCPSocket>(io_service_,
                                                 boost::bind(&TCPClient::ConnectHandler, this, boost::asio::placeholders::error),
                                                 boost::bind(&TCPClient::ReadHandler,
