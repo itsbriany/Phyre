@@ -7,10 +7,20 @@
 namespace GameEngine {
 namespace Networking {
 
-class TCPClientConnect : public TCPClient {
+class FakeTCPClient : public TCPClient {
+    public:
+        explicit FakeTCPClient(boost::asio::io_service& io_service) : TCPClient(io_service) {}
+        ~FakeTCPClient() {
+            if (is_connected()) {
+                this->Disconnect();
+            }
+        }
+};
+
+class TCPClientConnect : public FakeTCPClient {
     public:
         TCPClientConnect(boost::asio::io_service& io_service):
-            TCPClient(io_service) { }
+            FakeTCPClient(io_service) { }
 
     protected:
         void OnConnect() override {
@@ -19,10 +29,10 @@ class TCPClientConnect : public TCPClient {
         }
 };
 
-class TCPClientHostResolved : public TCPClient {
+class TCPClientHostResolved : public FakeTCPClient {
     public:
         TCPClientHostResolved(boost::asio::io_service& io_service):
-            TCPClient(io_service) { }
+            FakeTCPClient(io_service) { }
 
     protected:
         void OnHostResolved() override {
@@ -30,10 +40,10 @@ class TCPClientHostResolved : public TCPClient {
         }
 };
 
-class TCPClientRead : public TCPClient {
+class TCPClientRead : public FakeTCPClient {
     public:
         TCPClientRead(boost::asio::io_service& io_service, const std::string& payload):
-            TCPClient(io_service),
+            FakeTCPClient(io_service),
             payload_(payload) { }
 
 
@@ -57,10 +67,10 @@ class TCPClientRead : public TCPClient {
         }
 };
 
-class TCPClientReadQueuedMessages : public TCPClient {
+class TCPClientReadQueuedMessages : public FakeTCPClient {
     public:
         TCPClientReadQueuedMessages(boost::asio::io_service& io_service, const std::queue<std::string>& message_queue):
-            TCPClient(io_service),
+            FakeTCPClient(io_service),
             message_queue_(message_queue) { }
 
         std::string log() override { return "[TCPClientReadQueuedMessages]"; }
@@ -112,10 +122,10 @@ class TCPClientReadQueuedMessages : public TCPClient {
 
 
 
-class TCPClientDisconnect : public TCPClient {
+class TCPClientDisconnect : public FakeTCPClient {
     public:
         TCPClientDisconnect(boost::asio::io_service& io_service):
-            TCPClient(io_service) { }
+            FakeTCPClient(io_service) { }
 
 
     protected:
@@ -129,10 +139,10 @@ class TCPClientDisconnect : public TCPClient {
         }
 };
 
-class TCPClientError : public TCPClient {
+class TCPClientError : public FakeTCPClient {
     public:
         TCPClientError(boost::asio::io_service& io_service):
-            TCPClient(io_service) { }
+            FakeTCPClient(io_service) { }
 
     protected:
         void OnError(const boost::system::error_code& ec) {
