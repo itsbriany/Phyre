@@ -75,7 +75,7 @@ TEST_F(XMLParseTest, CanParseXML) {
     EXPECT_TRUE(sked[1].cancelled);
 }
 
-class SASLTest : public ::testing::Test, public Logging::Loggable {
+class SASLTest : public ::testing::Test, public Logging::LoggableInterface {
     protected:
         SASLTest():
             host_("localhost"),
@@ -128,8 +128,8 @@ class SASLTest : public ::testing::Test, public Logging::Loggable {
         }
 
         void SetUp() override {
-            p_xmpp_client_ = std::make_unique<XMPPClient>(io_service_, host_, username_, password_);
-            p_sasl_ = std::make_unique<SASL>(*p_xmpp_client_);
+            ptr_xmpp_client_ = std::make_unique<XMPPClient>(io_service_, host_, username_, password_);
+			ptr_sasl_ = std::make_unique<SASL>(*ptr_xmpp_client_);
         }
 
         std::string log() override {
@@ -142,8 +142,8 @@ class SASLTest : public ::testing::Test, public Logging::Loggable {
         std::string username_;
         std::string password_;
         TCPServer tcp_server_;
-        std::unique_ptr<XMPPClient> p_xmpp_client_;
-        std::unique_ptr<SASL> p_sasl_;
+        std::unique_ptr<XMPPClient> ptr_xmpp_client_;
+        std::unique_ptr<SASL> ptr_sasl_;
 };
 
 TEST_F(SASLTest, ExtractXML) {
@@ -153,13 +153,13 @@ TEST_F(SASLTest, ExtractXML) {
     size_t start_tag_pos = payload.find(start_tag);
     size_t end_tag_pos = payload.find(end_tag);
 
-    p_xmpp_client_->buffer() += payload;
-    std::string extracted_xml = p_sasl_->ExtractXML(start_tag, end_tag).str();
+    ptr_xmpp_client_->buffer() += payload;
+    std::string extracted_xml = ptr_sasl_->ExtractXML(start_tag, end_tag).str();
     std::string expected_xml = payload.substr(start_tag_pos, end_tag_pos + end_tag.size() - start_tag_pos);
     EXPECT_STREQ(extracted_xml.c_str(), expected_xml.c_str());
 
     std::string remaining_bytes = payload.substr(end_tag_pos + end_tag.size());
-    EXPECT_STREQ(p_xmpp_client_->buffer().c_str(), remaining_bytes.c_str());
+    EXPECT_STREQ(ptr_xmpp_client_->buffer().c_str(), remaining_bytes.c_str());
 }
 
 TEST_F(SASLTest, ExtractAuthenticationMechanismResponseExcessData) {
@@ -169,22 +169,22 @@ TEST_F(SASLTest, ExtractAuthenticationMechanismResponseExcessData) {
     std::string excess = "More data";
     std::string bytes_read = response + excess;
 
-    p_xmpp_client_->buffer() += bytes_read;
-    std::stringstream extracted_response = p_sasl_->ExtractAuthenticationMechanismResponse();
+    ptr_xmpp_client_->buffer() += bytes_read;
+    std::stringstream extracted_response = ptr_sasl_->ExtractAuthenticationMechanismResponse();
     EXPECT_STREQ(extracted_response.str().c_str(), expected.c_str());
-    EXPECT_STREQ(p_xmpp_client_->buffer().c_str(), excess.c_str());
+    EXPECT_STREQ(ptr_xmpp_client_->buffer().c_str(), excess.c_str());
 }
 
 TEST_F(SASLTest, ExtractAuthenticationMechanismResponseChunks) {
     std::string first_chunk = authentication_mechanism_response_first_chunk();
     std::string second_chunk = authentication_mechanism_response_second_chunk();
 
-    p_xmpp_client_->buffer() += first_chunk;
-    std::stringstream extracted_response = p_sasl_->ExtractAuthenticationMechanismResponse();
+    ptr_xmpp_client_->buffer() += first_chunk;
+    std::stringstream extracted_response = ptr_sasl_->ExtractAuthenticationMechanismResponse();
     EXPECT_TRUE(extracted_response.str().empty());
 
-    p_xmpp_client_->buffer() += second_chunk;
-    extracted_response = p_sasl_->ExtractAuthenticationMechanismResponse();
+    ptr_xmpp_client_->buffer() += second_chunk;
+    extracted_response = ptr_sasl_->ExtractAuthenticationMechanismResponse();
     std::string expected_response = first_chunk + second_chunk;
     EXPECT_STREQ(extracted_response.str().c_str(), expected_response.c_str());
 }
@@ -199,7 +199,7 @@ TEST_F(SASLTest, ParsesAuthenticationMechanisms) {
     std::string md5 = "DIGEST-MD5";
     std::string oauth = "X-OAUTH2";
     std::string sha1 = "SCRAM-SHA-1";
-    std::unordered_set<std::string> authentication_mechanism_set = p_sasl_->ParseAuthenticationMechanisms(ss);
+    std::unordered_set<std::string> authentication_mechanism_set = ptr_sasl_->ParseAuthenticationMechanisms(ss);
     EXPECT_TRUE(authentication_mechanism_set.find(plain) != authentication_mechanism_set.end());
     EXPECT_TRUE(authentication_mechanism_set.find(md5) != authentication_mechanism_set.end());
     EXPECT_TRUE(authentication_mechanism_set.find(oauth) != authentication_mechanism_set.end());
@@ -207,19 +207,19 @@ TEST_F(SASLTest, ParsesAuthenticationMechanisms) {
 }
 
 TEST_F(SASLTest, HandlesStreamInitialization) {
-    EXPECT_EQ(p_sasl_->transaction_state(), SASL::TransactionState::kInitializeStream);
+    EXPECT_EQ(ptr_sasl_->transaction_state(), SASL::TransactionState::kInitializeStream);
 
-    p_sasl_->Update();
-    EXPECT_EQ(p_sasl_->transaction_state(), SASL::TransactionState::kSelectAuthenticationMechanism);
+	ptr_sasl_->Update();
+    EXPECT_EQ(ptr_sasl_->transaction_state(), SASL::TransactionState::kSelectAuthenticationMechanism);
 }
 
 TEST_F(SASLTest, HandlesAuthenticationMeachanismSelection) {
     std::string payload = authentication_mechanism_response();
-    p_sasl_->set_transaction_state(SASL::TransactionState::kSelectAuthenticationMechanism);
+	ptr_sasl_->set_transaction_state(SASL::TransactionState::kSelectAuthenticationMechanism);
 
-    p_xmpp_client_->buffer() += payload;
-    p_sasl_->Update();
-    EXPECT_EQ(p_sasl_->transaction_state(), SASL::TransactionState::kDecodeBase64Challenge);
+    ptr_xmpp_client_->buffer() += payload;
+	ptr_sasl_->Update();
+    EXPECT_EQ(ptr_sasl_->transaction_state(), SASL::TransactionState::kDecodeBase64Challenge);
 }
 
 TEST_F(SASLTest, ParsesBase64Challenge) {
@@ -227,7 +227,7 @@ TEST_F(SASLTest, ParsesBase64Challenge) {
     std::stringstream ss;
     ss << base64_challenge();
 
-    std::string parsed_challenge = p_sasl_->ParseBase64Challenge(ss);
+    std::string parsed_challenge = ptr_sasl_->ParseBase64Challenge(ss);
     EXPECT_STREQ(parsed_challenge.c_str(), expected.c_str());
 }
 
@@ -235,7 +235,7 @@ TEST_F(SASLTest, DecodesBase64) {
     std::string input = "bm9uY2U9IjM0ODE5ODkxNDYyNDY2NTcyMjQiLHFvcD0iYXV0aCIsY2hhcnNldD11dGYtOCxhbGdvcml0aG09bWQ1LXNlc3M=";
     std::string expected = "nonce=\"3481989146246657224\",qop=\"auth\",charset=utf-8,algorithm=md5-sess";
 
-    std::string decoded = p_sasl_->DecodeBase64(input);
+    std::string decoded = ptr_sasl_->DecodeBase64(input);
     EXPECT_STREQ(decoded.c_str(), expected.c_str());
 }
 
@@ -243,24 +243,24 @@ TEST_F(SASLTest, EncodesBase64) {
     std::string input = "nonce=\"3481989146246657224\",qop=\"auth\",charset=utf-8,algorithm=md5-sess";
     std::string expected = "bm9uY2U9IjM0ODE5ODkxNDYyNDY2NTcyMjQiLHFvcD0iYXV0aCIsY2hhcnNldD11dGYtOCxhbGdvcml0aG09bWQ1LXNlc3M=";
 
-    std::string encoded = p_sasl_->EncodeBase64(input);
+    std::string encoded = ptr_sasl_->EncodeBase64(input);
     EXPECT_STREQ(encoded.c_str(), expected.c_str());
 }
 
 TEST_F(SASLTest, InitiateAuthenticationStreamMD5) {
-    std::string authentication_payload = p_sasl_->InitiateAuthenticationStream(SASL::Mechanism::kMD5).str();
+    std::string authentication_payload = ptr_sasl_->InitiateAuthenticationStream(SASL::Mechanism::kMD5).str();
     std::string expected = "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='DIGEST-MD5'/>";
     EXPECT_STREQ(authentication_payload.c_str(), expected.c_str());
 }
 
 TEST_F(SASLTest, InitiateAuthenticationStreamOther) {
-    std::string authentication_payload = p_sasl_->InitiateAuthenticationStream(SASL::Mechanism::kNone).str();
+    std::string authentication_payload = ptr_sasl_->InitiateAuthenticationStream(SASL::Mechanism::kNone).str();
     std::string expected = "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='PLAIN'/>";
     EXPECT_STREQ(authentication_payload.c_str(), expected.c_str());
 }
 
 TEST_F(SASLTest, InitiateAuthenticationStreamSHA1) {
-    std::string authentication_payload = p_sasl_->InitiateAuthenticationStream(SASL::Mechanism::kSHA1).str();
+    std::string authentication_payload = ptr_sasl_->InitiateAuthenticationStream(SASL::Mechanism::kSHA1).str();
     EXPECT_TRUE(authentication_payload.find("SCRAM-SHA-1") != std::string::npos);
 
     size_t initial_message_start = authentication_payload.find('>');

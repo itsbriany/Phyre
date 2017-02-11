@@ -20,15 +20,15 @@ class XMPPClient : public TCPClient {
         // Called each time a boost::asio error occurs
         void OnError(const boost::system::error_code& ec) final;
 
-        void set_state(std::unique_ptr<XMPPState> ptr_state) { m_ptr_state = std::move(ptr_state); }
+        void set_state(std::unique_ptr<XMPPState> ptr_state) { ptr_state_ = std::move(ptr_state); }
 
-        std::string& buffer() { return m_buffer; }
+        std::string& buffer() { return buffer_; }
 
-        std::string host() const { return m_host; }
+        std::string host() const { return host_; }
 
-        std::string username() const { return m_username; }
+        std::string username() const { return username_; }
 
-        std::string password() const { return m_password; }
+        std::string password() const { return password_; }
 
         std::string log() override {
             return "[XMPPClient]";
@@ -36,19 +36,19 @@ class XMPPClient : public TCPClient {
 
     private:
         // All data read from endpoint ends up here
-        std::string m_buffer;
+        std::string buffer_;
 
         // The XMPP host
-        std::string m_host;
+        std::string host_;
 
         // XMPP Username
-        std::string m_username;
+        std::string username_;
 
         // XMPP Password
-        std::string m_password;
+        std::string password_;
 
         // The current state in the lifetime of the XMPP protocol
-        std::unique_ptr<XMPPState> m_ptr_state;
+        std::unique_ptr<XMPPState> ptr_state_;
 };
 
 }

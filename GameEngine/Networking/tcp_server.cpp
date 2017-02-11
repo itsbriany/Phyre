@@ -11,19 +11,19 @@ namespace Networking
     using std::string;
 
     TCPServer::TCPServer(boost::asio::io_service& io_service, uint16_t listen_port, const queue<string>& message_queue):
-        m_acceptor(io_service, tcp::endpoint(tcp::v4(), listen_port)),
-        m_message_queue(message_queue) { }
+        acceptor_(io_service, tcp::endpoint(tcp::v4(), listen_port)),
+        message_queue_(message_queue) { }
 
     // For now, this server is only meant to hold one single connection.
     // It will need tweaking to support multiple simultaneous connections.
     void TCPServer::StartAccept() {
-        m_ptr_connection = TCPServerConnection::Create(m_acceptor.get_io_service(), m_message_queue);
-        if (!m_ptr_connection) {
+        ptr_connection_ = TCPServerConnection::Create(acceptor_.get_io_service(), message_queue_);
+        if (!ptr_connection_) {
             Logging::error("No connection available", *this);
             return;
         }
 
-        m_acceptor.async_accept(m_ptr_connection->socket(),
+        acceptor_.async_accept(ptr_connection_->socket(),
                                boost::bind(&TCPServer::HandleAccept,
                                            this,
                                            boost::asio::placeholders::error));
@@ -32,7 +32,7 @@ namespace Networking
     void TCPServer::HandleAccept(const boost::system::error_code& error) {
         if (!error)
         {
-            m_ptr_connection->Write();
+            ptr_connection_->Write();
             StartAccept();
         }
     }

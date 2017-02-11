@@ -2,7 +2,7 @@
 
 using namespace GameEngine::Logging;
 
-class Foo : public Loggable {
+class Foo : public LoggableInterface {
     public:
         Foo() {
             std::string message = "I am alive!";

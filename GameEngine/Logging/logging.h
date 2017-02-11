@@ -1,5 +1,5 @@
 #pragma once
-#include "loggable.h"
+#include "loggable_interface.h"
 #include "logger.h"
 
 namespace GameEngine
@@ -7,37 +7,37 @@ namespace GameEngine
 namespace Logging
 {
 
-    static void set_log_level(LogLevel log_level = kDebug)
+	inline void set_log_level(LogLevel log_level = kDebug)
     {
         Logger::set_log_level(log_level);
     }
 
-    static void trace(const std::string& message, Loggable& loggable)
+	inline void trace(const std::string& message, LoggableInterface& loggable)
     {
         Logger::trace(message, loggable);
     }
 
-    static void debug(const std::string& message, Loggable& loggable)
+	inline void debug(const std::string& message, LoggableInterface& loggable)
     {
         Logger::debug(message, loggable);
     }
 
-    static void info(const std::string& message, Loggable& loggable)
+	inline void info(const std::string& message, LoggableInterface& loggable)
     {
         Logger::info(message, loggable);
     }
 
-    static void warning(const std::string& message, Loggable& loggable)
+	inline void warning(const std::string& message, LoggableInterface& loggable)
     {
         Logger::warning(message, loggable);
     }
 
-    static void error(const std::string& message, Loggable& loggable)
+	inline void error(const std::string& message, LoggableInterface& loggable)
     {
         Logger::error(message, loggable);
     }
 
-    static void fatal(const std::string& message, Loggable& loggable)
+	inline void fatal(const std::string& message, LoggableInterface& loggable)
     {
         Logger::fatal(message, loggable);
     }

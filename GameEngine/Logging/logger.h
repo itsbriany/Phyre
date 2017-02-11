@@ -1,6 +1,6 @@
 #pragma once
 #include "log_level.h"
-#include "loggable.h"
+#include "loggable_interface.h"
 #include <map>
 #include <boost/log/core.hpp>
 #include <boost/log/utility/setup/common_attributes.hpp>
@@ -18,32 +18,32 @@ namespace Logging
         static void set_log_level(const LogLevel& lvl);
 
 
-        static void trace(const std::string& message, Loggable& loggable)
+        static void trace(const std::string& message, LoggableInterface& loggable)
         {
             BOOST_LOG_TRIVIAL(trace) << loggable.log() << ' ' <<  message;
         }
 
-        static void debug(const std::string& message, Loggable& loggable)
+        static void debug(const std::string& message, LoggableInterface& loggable)
         {
             BOOST_LOG_TRIVIAL(debug) << loggable.log() << ' ' << message;
         }
 
-        static void info(const std::string& message, Loggable& loggable)
+        static void info(const std::string& message, LoggableInterface& loggable)
         {
             BOOST_LOG_TRIVIAL(info) << loggable.log() << ' ' << message;
         }
 
-        static void warning(const std::string& message, Loggable& loggable)
+        static void warning(const std::string& message, LoggableInterface& loggable)
         {
             BOOST_LOG_TRIVIAL(warning) << loggable.log() << ' ' << message;
         }
 
-        static void error(const std::string& message, Loggable& loggable)
+        static void error(const std::string& message, LoggableInterface& loggable)
         {
             BOOST_LOG_TRIVIAL(error) << loggable.log() << ' ' << message;
         }
 
-        static void fatal(const std::string& message, Loggable& loggable)
+        static void fatal(const std::string& message, LoggableInterface& loggable)
         {
             BOOST_LOG_TRIVIAL(fatal) << loggable.log() << ' ' << message;
         }

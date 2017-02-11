@@ -4,10 +4,10 @@
 namespace GameEngine {
 namespace Logging {
 
-    class Loggable {
+    class LoggableInterface {
         public:
             virtual std::string log() = 0;
-            virtual ~Loggable() { }
+            virtual ~LoggableInterface() { }
     };
 
 }

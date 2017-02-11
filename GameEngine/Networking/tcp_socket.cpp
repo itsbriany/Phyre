@@ -12,11 +12,11 @@ namespace Networking
     TCPSocket::TCPSocket(boost::asio::io_service& io_service,
                          OnConnectCallback on_connect_callback,
                          OnReadCallback on_read_callback) :
-        m_socket(io_service),
-        m_buffer(std::array<char, 4096>()),
-        m_on_connect_callback(on_connect_callback),
-        m_on_read_callback(on_read_callback),
-        m_is_connected(false)
+        socket_(io_service),
+        buffer_(std::array<char, 4096>()),
+        on_connect_callback_(on_connect_callback),
+        on_read_callback_(on_read_callback),
+        is_connected_(false)
     {
     }
 
@@ -27,28 +27,28 @@ namespace Networking
     void TCPSocket::Connect(tcp::resolver::iterator it)
     {
         Logging::trace("Opening connection", *this);
-        m_socket.async_connect(*it, boost::bind(&TCPSocket::OnConnect, this, boost::asio::placeholders::error));
+        socket_.async_connect(*it, boost::bind(&TCPSocket::OnConnect, this, boost::asio::placeholders::error));
     }
 
     void TCPSocket::OnConnect(const boost::system::error_code& ec)
     {
-        m_is_connected = true;
-        m_on_connect_callback(ec);
+        is_connected_ = true;
+        on_connect_callback_(ec);
     }
 
     void TCPSocket::Close()
     {
         Logging::debug("Closing TCP connection", *this);
-        m_socket.close();
-        m_is_connected = false;
+        socket_.close();
+        is_connected_ = false;
     }
 
     void TCPSocket::OnRead(const boost::system::error_code& ec, size_t bytes_transferred)
     {
-        if (m_is_connected)
+        if (is_connected_)
         {
-            m_on_read_callback(ec, bytes_transferred);
-            m_socket.async_read_some(boost::asio::buffer(m_buffer),
+            on_read_callback_(ec, bytes_transferred);
+            socket_.async_read_some(boost::asio::buffer(buffer_),
                                     boost::bind(&TCPSocket::OnRead,
                                                 this,
                                                 boost::asio::placeholders::error,
@@ -58,23 +58,23 @@ namespace Networking
 
     void TCPSocket::Write(const std::string& data)
     {
-        if (!m_is_connected)
+        if (!is_connected_)
         {
             Logging::warning("Cannot write to closed socket", *this);
             return;
         }
-        write(m_socket, boost::asio::buffer(data));
+        write(socket_, boost::asio::buffer(data));
         Read();
     }
 
     void TCPSocket::Read()
     {
-        if (!m_is_connected)
+        if (!is_connected_)
         {
             Logging::warning("Cannot read from closed socket", *this);
             return;
         }
-        m_socket.async_read_some(boost::asio::buffer(m_buffer),
+        socket_.async_read_some(boost::asio::buffer(buffer_),
                                 boost::bind(&TCPSocket::OnRead,
                                     this,
                                     boost::asio::placeholders::error,

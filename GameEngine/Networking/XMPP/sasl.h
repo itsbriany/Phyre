@@ -10,7 +10,7 @@
 namespace GameEngine {
 namespace Networking {
 
-class SASL : public XMPPState, public Logging::Loggable {
+class SASL : public XMPPState, public Logging::LoggableInterface {
     public:
         enum TransactionState {
             kInitializeStream,
@@ -47,8 +47,8 @@ class SASL : public XMPPState, public Logging::Loggable {
         std::string EncodeBase64(const std::string& input);
         std::string DecodeBase64(const std::string& input);
         std::ostringstream InitiateAuthenticationStream(Mechanism mechanism);
-        TransactionState transaction_state() const { return m_transaction_state; }
-        void set_transaction_state(TransactionState transaction_state) { m_transaction_state = transaction_state; }
+        TransactionState transaction_state() const { return transaction_state_; }
+        void set_transaction_state(TransactionState transaction_state) { transaction_state_ = transaction_state; }
 
         static std::string GenerateNonce();
 
@@ -71,13 +71,13 @@ class SASL : public XMPPState, public Logging::Loggable {
         static std::unordered_map<Mechanism, std::string> s_digest_map;
 
         // A base64 encoder
-        base64::encoder m_base64_encoder;
+        base64::encoder base64_encoder_;
 
         // A base64 decoder
-        base64::decoder m_base64_decoder;
+        base64::decoder base64_decoder_;
 
         // Internal transactional state
-        TransactionState m_transaction_state;
+        TransactionState transaction_state_;
 };
 
 }

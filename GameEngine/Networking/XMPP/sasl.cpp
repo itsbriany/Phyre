@@ -13,10 +13,10 @@ std::unordered_map<SASL::Mechanism, std::string> SASL::s_digest_map = boost::ass
 (kMD5, "DIGEST-MD5")
 (kNone, "PLAIN");
 
-SASL::SASL(XMPPClient& client): XMPPState(client), m_transaction_state(kInitializeStream) { }
+SASL::SASL(XMPPClient& client): XMPPState(client), transaction_state_(kInitializeStream) { }
 
 void SASL::Update() {
-    switch (m_transaction_state) {
+    switch (transaction_state_) {
         case TransactionState::kInitializeStream:
             HandleInitializeStream();
             break;
@@ -28,14 +28,14 @@ void SASL::Update() {
             break;
         default:
             Logging::error("Unknown Transaction State", *this);
-            m_client.Disconnect();
+            client_.Disconnect();
             return;
     }
 }
 
 void SASL::HandleInitializeStream() {
-    m_client.Write(initiation_stream());
-    m_transaction_state = TransactionState::kSelectAuthenticationMechanism;
+    client_.Write(initiation_stream());
+    transaction_state_ = TransactionState::kSelectAuthenticationMechanism;
 }
 
 void SASL::HandleSelectAuthenticationMechanism() {
@@ -47,12 +47,12 @@ void SASL::HandleSelectAuthenticationMechanism() {
     Mechanism mechanism = SetAuthenticationMechanism(authentication_mechanism_set);
     if (mechanism == kNone) {
         Logging::error("Only SRCAM-SHA1 and MD5 SASL authentication mechanism is supported", *this);
-        m_client.Disconnect();
+        client_.Disconnect();
     }
 
-    m_transaction_state = kDecodeBase64Challenge;
+    transaction_state_ = kDecodeBase64Challenge;
     Logging::debug("Initiating authentication exchange...", *this);
-    m_client.Write(InitiateAuthenticationStream(mechanism));
+    client_.Write(InitiateAuthenticationStream(mechanism));
 }
 
 SASL::Mechanism SASL::SetAuthenticationMechanism(const std::unordered_set<std::string>& authentication_mechanism_set) {
@@ -87,7 +87,7 @@ std::string SASL::ParseBase64Challenge(std::istream& xml_stream) const {
 std::string SASL::EncodeBase64(const std::string& input) {
     std::istringstream iss(input);
     std::ostringstream oss;
-    m_base64_encoder.encode(iss, oss);
+    base64_encoder_.encode(iss, oss);
     std::string encoded_without_linefeed = oss.str();
     boost::erase_all(encoded_without_linefeed, std::string("\n"));
     return encoded_without_linefeed;
@@ -96,7 +96,7 @@ std::string SASL::EncodeBase64(const std::string& input) {
 std::string SASL::DecodeBase64(const std::string& input) {
     std::istringstream iss(input);
     std::ostringstream oss;
-    m_base64_decoder.decode(iss, oss);
+    base64_decoder_.decode(iss, oss);
     return oss.str();
 }
 
@@ -126,19 +126,19 @@ bool SASL::IsSHA1AuthenticationMechanismAvailable(const std::unordered_set<std::
 
 std::stringstream SASL::ExtractXML(const std::string& start_tag, const std::string& end_tag) const {
     std::stringstream extracted_response;
-    size_t found_start = m_client.buffer().find(start_tag);
+    size_t found_start = client_.buffer().find(start_tag);
     if (found_start == std::string::npos) {
         return extracted_response;
     }
 
-    size_t found_end = m_client.buffer().find(end_tag);
+    size_t found_end = client_.buffer().find(end_tag);
     if (found_end == std::string::npos) {
         return extracted_response;
     }
 
     size_t bytes_to_extract = found_end + end_tag.size() - found_start;
-    extracted_response << m_client.buffer().substr(found_start, bytes_to_extract);
-    m_client.buffer() = m_client.buffer().substr(found_end + end_tag.size());
+    extracted_response << client_.buffer().substr(found_start, bytes_to_extract);
+    client_.buffer() = client_.buffer().substr(found_end + end_tag.size());
     return extracted_response;
 }
 
@@ -176,7 +176,7 @@ std::ostringstream SASL::xml_version() {
 std::ostringstream SASL::initiation_stream() const {
     std::ostringstream oss;
     oss << xml_version().str();
-    oss << "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='" << m_client.host() << "' version='1.0'>";
+    oss << "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='" << client_.host() << "' version='1.0'>";
     return oss;
 }
 
@@ -184,7 +184,7 @@ std::string SASL::SHA1AuthenticationPayload() {
     std::ostringstream payload_stream;
     std::string g2s_header = "n,,";
     std::string nonce = GenerateNonce();
-    payload_stream << g2s_header << "n=" << m_client.username() << ",r=" << nonce;
+    payload_stream << g2s_header << "n=" << client_.username() << ",r=" << nonce;
     return EncodeBase64(payload_stream.str());
 }
 

@@ -1,3 +1,4 @@
+#pragma once
 #include <gtest/gtest.h>
 #include <queue>
 #include "logging.h"
@@ -14,7 +15,7 @@ class TCPClientConnect : public TCPClient {
     protected:
         void OnConnect() override {
             Disconnect();
-            m_io_service.stop();
+            io_service_.stop();
         }
 };
 
@@ -25,7 +26,7 @@ class TCPClientHostResolved : public TCPClient {
 
     protected:
         void OnHostResolved() override {
-            m_io_service.stop();
+            io_service_.stop();
         }
 };
 
@@ -52,7 +53,7 @@ class TCPClientRead : public TCPClient {
 
         void OnRead(const std::string& data) override {
             Logging::info(data, *this);
-            m_io_service.stop();
+            io_service_.stop();
         }
 };
 
@@ -75,7 +76,7 @@ class TCPClientReadQueuedMessages : public TCPClient {
 
         void OnRead(const std::string& data) override {
             if (message_queue_.empty()) {
-                m_io_service.stop();
+                io_service_.stop();
                 return;
             }
 
@@ -101,7 +102,7 @@ class TCPClientReadQueuedMessages : public TCPClient {
                 message_queue_.pop();
 
                 if (message_queue_.empty()) {
-                    m_io_service.stop();
+                    io_service_.stop();
                     return;
                 }
                 found = received_data.find(message_queue_.front());
@@ -124,7 +125,7 @@ class TCPClientDisconnect : public TCPClient {
 
         void OnDisconnect() override {
             EXPECT_FALSE(is_connected());
-            m_io_service.stop();
+            io_service_.stop();
         }
 };
 
@@ -139,7 +140,7 @@ class TCPClientError : public TCPClient {
         }
 
         void OnDisconnect() override {
-            m_io_service.stop();
+            io_service_.stop();
         }
 };
 
