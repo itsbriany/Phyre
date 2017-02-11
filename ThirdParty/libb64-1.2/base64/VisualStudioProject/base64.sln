@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "b64", "b64.vcxproj", "{D54C5158-15DD-4E97-AC43-E4B9C24574FE}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "base64", "base64.vcxproj", "{0B094121-DC64-4D74-AFA0-750B83F800D0}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D54C5158-15DD-4E97-AC43-E4B9C24574FE} = {D54C5158-15DD-4E97-AC43-E4B9C24574FE}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

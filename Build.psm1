@@ -3,6 +3,7 @@ function Init-Submodules {
 }
 
 # Copy test resources over to the test runtime directories
+# TODO: This is likely to be unnecessary
 function Copy-Test-Resources {
     cd $env:GAME_ENGINE_ROOT\GameEngine
     $TestResourceDirectories = "*TestResources"
@@ -31,30 +32,44 @@ function Set-VS140-Environment {
     write-host "`nVisual Studio 2015 Command Prompt variables set." -ForegroundColor Yellow
 }
 
-# Build the protobuf compiler
-function Build-Protobuf {
-    cd $env:PROTOBUF_ROOT\cmake
-    cmake -Dprotobuf_BUILD_TESTS=OFF -G "Visual Studio 14"
-    msbuild /m protobuf.sln /p:Configuration=Release /p:Platform="Win32"
-    Copy-Item Release\protoc.exe $env:GAME_ENGINE_ROOT\Tools
+function Prepare-GameEngine-Solution {
+    cd $env:GAME_ENGINE_ROOT\GameEngine
+    mkdir Build -Force
+    cd Build
+    cmake -G "Visual Studio 14" ..
+    cd $env:GAME_ENGINE_ROOT
 }
 
 function Create-Tools {
     mkdir -Force $env:GAME_ENGINE_ROOT\Tools
 }
 
+# Build the protobuf compiler
+function Build-Protobuf {
+    cd $env:PROTOBUF_ROOT\cmake
+    mkdir Build -Force
+    cd Build
+    cmake -Dprotobuf_BUILD_TESTS=OFF -G "Visual Studio 14" ..
+    cmake --build . --target ALL_BUILD --config Release
+    # msbuild /m protobuf.sln /p:Configuration=Release /p:Platform="Win32"
+    Copy-Item Release\protoc.exe $env:GAME_ENGINE_ROOT\Tools
+}
+
 # Compile the protobuf files for target platforms
 function Compile-Protobuf {
     cd $env:GAME_ENGINE_ROOT
-    Tools\protoc --proto_path=GameEngine\Common\GameEngineCommon\ --cpp_out=GameEngine\Common GameEngine\Common\GameEngineCommon\Chat.proto
+    Tools\protoc --proto_path=GameEngine\Build\Common\GameEngineCommon\ --cpp_out=GameEngine\Build\Common GameEngine\Build\Common\GameEngineCommon\Chat.proto
 }
 
 # Build unit testing suite
 function Build-Gtest {
     cd $env:GOOGLE_TEST_DISTRIBUTION
-    cmake -DBUILD_GMOCK:BOOL=ON -DBUILD_GTEST:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -G "Visual Studio 14"
-    msbuild /m googletest-distribution.sln /p:Configuration=Debug /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1
-    msbuild /m googletest-distribution.sln /p:Configuration=Release /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1
+    mkdir Build -Force
+    cd Build
+    cmake -DBUILD_GMOCK:BOOL=ON -DBUILD_GTEST:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -G "Visual Studio 14" ..
+    cmake --build . --target ALL_BUILD
+    # msbuild /m googletest-distribution.sln /p:Configuration=Debug /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1
+    # msbuild /m googletest-distribution.sln /p:Configuration=Release /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1
 }
 
 function Build-Base64 {
@@ -64,24 +79,16 @@ function Build-Base64 {
     mv -Force $env:GAME_ENGINE_ROOT\ThirdParty\libb64-1.2\base64\VisualStudioProject\Release\base64.exe $env:GAME_ENGINE_ROOT\Tools
 }
 
-function Prepare-GameEngine-Solution {
-    cd $env:GAME_ENGINE_ROOT\GameEngine
-    cmake -G "Visual Studio 14"
-    cd $env:GAME_ENGINE_ROOT
-}
-
 function Build-GameEngine([switch]$Debug, [switch] $Release) {
-    cd $env:GAME_ENGINE_ROOT\GameEngine
+    cd $env:GAME_ENGINE_ROOT\GameEngine\Build
     if (!$Debug -and !$Release) {
-        msbuild /m GameEngine.sln /p:Configuration=Debug /p:Platform="Win32"
-        msbuild /m GameEngine.sln /p:Configuration=Release /p:Platform="Win32"
+        cmake --build . --target ALL_BUILD
     }
-
     if ($Debug) {
-        msbuild /m GameEngine.sln /p:Configuration=Debug /p:Platform="Win32"
+        cmake --build . --target ALL_BUILD --config Debug
     }
     if ($Release) {
-         msbuild /m GameEngine.sln /p:Configuration=Release /p:Platform="Win32"
+        cmake --build . --target ALL_BUILD --config Release
     }
     cd $env:GAME_ENGINE_ROOT
 }

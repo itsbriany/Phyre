@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.3)
 
-project(GameEngine)
+project(Phyre)
 
 # Check compiler version
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -33,6 +33,11 @@ if(MSVC)
     message("Setting warning level /W1")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W1")
   endif()
+
+  include(ProcessorCount)
+  ProcessorCount(N)
+  message("Enabling parallel build with ${N} cores")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP${N}")
 endif()
 
 if (WIN32)
@@ -56,14 +61,12 @@ find_package(Boost 1.60 REQUIRED COMPONENTS system log thread random)
 
 
 # Add Gmock & Gtest libraries
-set(GMOCK_ROOT "$ENV{GMOCK_ROOT}")
-set(GMOCK_INCLUDE_DIRS "${GMOCK_ROOT}/include")
-set(GMOCK_LIBRARY_DIRS "${GMOCK_ROOT}")
+set(TEST_ROOT "$ENV{GAME_ENGINE_ROOT}/ThirdParty/googletest")
+set(GMOCK_INCLUDE_DIRS "${TEST_ROOT}/googlemock/include")
+set(GMOCK_LIBRARY_DIRS "${TEST_ROOT}/Build/googlemock")
 
-
-set(GTEST_ROOT "$ENV{GTEST_ROOT}")
-set(GTEST_INCLUDE_DIRS "${GTEST_ROOT}/include")
-set(GTEST_LIBRARY_DIRS "${GMOCK_ROOT}/gtest")
+set(GTEST_INCLUDE_DIRS "${TEST_ROOT}/googletest/include")
+set(GTEST_LIBRARY_DIRS "${GMOCK_LIBRARY_DIRS}/gtest")
 
 
 # Add Protobuf

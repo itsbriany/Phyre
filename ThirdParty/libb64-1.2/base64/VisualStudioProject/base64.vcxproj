@@ -60,6 +60,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -78,11 +79,10 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\cdecode.c" />
-    <ClCompile Include="..\..\src\cencode.c" />
     <ClCompile Include="..\base64.cc" />
   </ItemGroup>
   <ItemGroup>
@@ -90,6 +90,11 @@
     <ClInclude Include="..\..\include\b64\cencode.h" />
     <ClInclude Include="..\..\include\b64\decode.h" />
     <ClInclude Include="..\..\include\b64\encode.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="b64.vcxproj">
+      <Project>{d54c5158-15dd-4e97-ac43-e4b9c24574fe}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

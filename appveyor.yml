@@ -23,7 +23,7 @@ environment:
   PROTOBUF_ROOT: C:\projects\GameEngine\ThirdParty\protobuf
 
 build:
-  parallel: false
+  parallel: true
   project: C:\projects\GameEngine\GameEngine\GameEngine.sln
 
 test_script:
