@@ -1,4 +1,4 @@
-# GameEngine
+# Phyre
 | | |
 |----------|---------------------------------------------------------------------|
 | **TravisCI** 	| [![Build Status](https://travis-ci.org/itsbriany/GameEngine.svg?branch=master)](https://travis-ci.org/itsbriany/GameEngine)|
