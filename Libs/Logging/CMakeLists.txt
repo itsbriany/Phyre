@@ -5,5 +5,3 @@ if(Boost_FOUND)
     add_library(Logging loggable_interface.h log_level.h logging.h logger.h logger.cpp)
     target_link_libraries(Logging ${Boost_LIBRARIES})
 endif()
-
-add_subdirectory(Examples)

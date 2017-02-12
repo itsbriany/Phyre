@@ -1,0 +1,2 @@
+add_subdirectory(LoggingDemos)
+add_subdirectory(NetworkingDemos)

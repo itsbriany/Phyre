@@ -20,5 +20,3 @@ if(Boost_FOUND)
         unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
     endif()
 endif()
-
-add_subdirectory(Examples)

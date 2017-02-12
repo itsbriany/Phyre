@@ -1,19 +1,17 @@
-Import-Module $env:GAME_ENGINE_ROOT\Build.psm1 -Force -DisableNameChecking
+Import-Module $env:PHYRE_ROOT\Build.psm1 -Force -DisableNameChecking
 
-function Install-GameEngine() {
+function Install-Phyre() {
   Init-Submodules
   Set-VS140-Environment
-  Prepare-GameEngine-Solution 
+  Prepare-Phyre-Solution
   Create-Tools
-  Build-Protobuf
-  Compile-Protobuf
-  Build-Base64
-  Build-Gtest
-  Build-GameEngine($env:CONFIGURATION)
+  Build-Base64($env:CONFIGURATION)
+  Build-Gtest($env:CONFIGURATION)
+  Build-Phyre($env:CONFIGURATION)
 }
 
 if ($env:APPVEYOR) {
-  Install-GameEngine 2> $null
+  Install-Phyre 2> $null
 } else {
-  Install-GameEngine
+  Install-Phyre
 }

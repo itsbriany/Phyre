@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.3)
 
 if(Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS} ../Logging)
+    include_directories(${Boost_INCLUDE_DIRS} ${PHYRE_LOGGING})
     add_library(Networking host_resolver.h host_resolver.cpp
         tcp_server.h tcp_server.cpp tcp_socket.h tcp_socket.cpp
         tcp_client.h tcp_client.cpp tcp_server_connection.h
@@ -10,7 +10,7 @@ if(Boost_FOUND)
 
     # The executable must run with gmock.dll in the same directory
     if (WIN32)
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${GMOCK_ROOT})
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${GMOCK_LIBRARY_DIRS})
     endif()
     include_directories(${Boost_INCLUDE_DIRS} ${GMOCK_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS} ${TEST_DEPENDENCY_DIRS})
     link_directories(${GMOCK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} ${GTEST_LIBRARY_DIRS} ${TEST_DEPENDENCY_DIRS})
@@ -21,5 +21,4 @@ if(Boost_FOUND)
     endif()
 endif()
 
-add_subdirectory(Examples)
 add_subdirectory(XMPP)

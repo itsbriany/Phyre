@@ -5,84 +5,83 @@ function Init-Submodules {
 # Copy test resources over to the test runtime directories
 # TODO: This is likely to be unnecessary
 function Copy-Test-Resources {
-    cd $env:GAME_ENGINE_ROOT\GameEngine
+    Set-Location $env:PHYRE_ROOT\Phyre
     $TestResourceDirectories = "*TestResources"
     $TestResources = Get-ChildItem -Recurse $TestResourceDirectories | ?{ $_.PSIsContainer }
     foreach ($TestResource in $TestResources) {
         $TestResourceBaseName = $TestResource.BaseName
         $TestResourceFullName = $TestResource.FullName
-        mkdir -Force $env:GAME_ENGINE_ROOT\ThirdParty\googletest\googlemock\Debug\$TestResourceBaseName > $null
-        mkdir -Force $env:GAME_ENGINE_ROOT\ThirdParty\googletest\googlemock\Release\$TestResourceBaseName > $null
-        Copy-Item -Force $TestResourceFullName\* "$env:GAME_ENGINE_ROOT\ThirdParty\googletest\googlemock\Debug\$TestResourceBaseName"
-        Copy-Item -Force $TestResourceFullName\* "$env:GAME_ENGINE_ROOT\ThirdParty\googletest\googlemock\Release\$TestResourceBaseName"
+        mkdir -Force $env:PHYRE_ROOT\ThirdParty\googletest\googlemock\Debug\$TestResourceBaseName > $null
+        mkdir -Force $env:PHYRE_ROOT\ThirdParty\googletest\googlemock\Release\$TestResourceBaseName > $null
+        Copy-Item -Force $TestResourceFullName\* "$env:PHYRE_ROOT\ThirdParty\googletest\googlemock\Debug\$TestResourceBaseName"
+        Copy-Item -Force $TestResourceFullName\* "$env:PHYRE_ROOT\ThirdParty\googletest\googlemock\Release\$TestResourceBaseName"
     }
-    cd $env:GAME_ENGINE_ROOT
+    Set-Location $env:PHYRE_ROOT
 }
 
 # Sets Visual Studio 2015 environment variables
 function Set-VS140-Environment {
-    pushd "$env:VS140COMNTOOLS"
+    Push-Location "$env:VS140COMNTOOLS"
     cmd /c "vsvars32.bat&set" |
     foreach {
         if ($_ -match "=") {
             $v = $_.split("="); set-item -force -path "ENV:\$($v[0])"  -value "$($v[1])"
         }
     }
-    popd
+    Pop-Location
     write-host "`nVisual Studio 2015 Command Prompt variables set." -ForegroundColor Yellow
 }
 
-function Prepare-GameEngine-Solution {
-    cd $env:GAME_ENGINE_ROOT\GameEngine
+function Prepare-Phyre-Solution {
+    Set-Location $env:PHYRE_ROOT
     mkdir Build -Force
-    cd Build
+    Set-Location Build
     cmake -G "Visual Studio 14" ..
-    cd $env:GAME_ENGINE_ROOT
+    Set-Location $env:PHYRE_ROOT
 }
 
 function Create-Tools {
-    mkdir -Force $env:GAME_ENGINE_ROOT\Tools
+    mkdir -Force $env:PHYRE_ROOT\Tools
 }
 
 # Build the protobuf compiler
 function Build-Protobuf {
-    cd $env:PROTOBUF_ROOT\cmake
+    Set-Location $env:PHYRE_ROOT\ThirdParty\protobuf\cmake
     mkdir Build -Force
-    cd Build
+    Set-Location Build
     cmake -Dprotobuf_BUILD_TESTS=OFF -G "Visual Studio 14" ..
     cmake --build . --target ALL_BUILD --config Release
-    # msbuild /m protobuf.sln /p:Configuration=Release /p:Platform="Win32"
-    Copy-Item Release\protoc.exe $env:GAME_ENGINE_ROOT\Tools
+    Copy-Item Release\protoc.exe $env:PHYRE_ROOT\Tools
 }
 
 # Compile the protobuf files for target platforms
 function Compile-Protobuf {
-    cd $env:GAME_ENGINE_ROOT
-    Tools\protoc --proto_path=GameEngine\Build\Common\GameEngineCommon\ --cpp_out=GameEngine\Build\Common GameEngine\Build\Common\GameEngineCommon\Chat.proto
+    Set-Location $env:PHYRE_ROOT
+    Tools\protoc --proto_path=Phyre\Build\Common\PhyreCommon\ --cpp_out=Phyre\Build\Common Phyre\Build\Common\PhyreCommon\Chat.proto
 }
 
 # Build unit testing suite
 function Build-Gtest {
-    cd $env:GOOGLE_TEST_DISTRIBUTION
+    Set-Location $env:PHYRE_ROOT\ThirdParty\googletest
     mkdir Build -Force
-    cd Build
+    Set-Location Build
     cmake -DBUILD_GMOCK:BOOL=ON -DBUILD_GTEST:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -G "Visual Studio 14" ..
-    cmake --build . --target ALL_BUILD
-    # msbuild /m googletest-distribution.sln /p:Configuration=Debug /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1
-    # msbuild /m googletest-distribution.sln /p:Configuration=Release /p:Platform="Win32" /p:GTEST_CREATE_SHARED_LIBRARY=1
+    cmake --build . --target ALL_BUILD --config Debug
+    cmake --build . --target ALL_BUILD --config Release
 }
 
 function Build-Base64 {
-    cd $env:GAME_ENGINE_ROOT\ThirdParty\libb64-1.2\base64\VisualStudioProject
+    Set-Location $env:PHYRE_ROOT\ThirdParty\libb64-1.2\base64\VisualStudioProject
     msbuild /m base64.sln /p:Configuration=Debug /p:Platform="Win32"
     msbuild /m base64.sln /p:Configuration=Release /p:Platform="Win32"
-    mv -Force $env:GAME_ENGINE_ROOT\ThirdParty\libb64-1.2\base64\VisualStudioProject\Release\base64.exe $env:GAME_ENGINE_ROOT\Tools
+    Move-Item -Force $env:PHYRE_ROOT\ThirdParty\libb64-1.2\base64\VisualStudioProject\Release\base64.exe $env:PHYRE_ROOT\Tools
 }
 
-function Build-GameEngine([switch]$Debug, [switch] $Release) {
-    cd $env:GAME_ENGINE_ROOT\GameEngine\Build
+function Build-Phyre([switch]$Debug, [switch] $Release) {
+    Set-Location $env:PHYRE_ROOT\Build
     if (!$Debug -and !$Release) {
-        cmake --build . --target ALL_BUILD
+        cmake --build . --target ALL_BUILD --config Debug
+        cmake --build . --target ALL_BUILD --config Release
     }
     if ($Debug) {
         cmake --build . --target ALL_BUILD --config Debug
@@ -90,5 +89,5 @@ function Build-GameEngine([switch]$Debug, [switch] $Release) {
     if ($Release) {
         cmake --build . --target ALL_BUILD --config Release
     }
-    cd $env:GAME_ENGINE_ROOT
+    Set-Location $env:PHYRE_ROOT
 }

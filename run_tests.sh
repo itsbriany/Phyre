@@ -7,15 +7,15 @@
 GTEST_FILTER=$1
 export DYLD_LIBRARY_PATH=$BOOST_ROOT/stage/lib
 
-cd $GAME_ENGINE_ROOT
+cd $PHYRE_ROOT
 for TEST_RESOURCE_DIRECTORY in `find $PWD GameEngine -name "*TestResources"`; do
-    cp -r $TEST_RESOURCE_DIRECTORY $GAME_ENGINE_ROOT/GameEngine/GameEngineTesting 2> /dev/null
+    cp -r $TEST_RESOURCE_DIRECTORY $PHYRE_ROOT/GameEngine/GameEngineTesting 2> /dev/null
 done
 
-cd $GAME_ENGINE_ROOT/GameEngine/GameEngineTesting
+cd $PHYRE_ROOT/GameEngine/GameEngineTesting
 if [[ -z "$GTEST_FILTER" ]]; then
     ./GameEngineTests
 else
     ./GameEngineTests --gtest_filter=$GTEST_FILTER
 fi
-cd $GAME_ENGINE_ROOT
+cd $PHYRE_ROOT

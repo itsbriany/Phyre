@@ -61,7 +61,7 @@ find_package(Boost 1.60 REQUIRED COMPONENTS system log thread random)
 
 
 # Add Gmock & Gtest libraries
-set(TEST_ROOT "$ENV{GAME_ENGINE_ROOT}/ThirdParty/googletest")
+set(TEST_ROOT "$ENV{PHYRE_ROOT}/ThirdParty/googletest")
 set(GMOCK_INCLUDE_DIRS "${TEST_ROOT}/googlemock/include")
 set(GMOCK_LIBRARY_DIRS "${TEST_ROOT}/Build/googlemock")
 
@@ -78,7 +78,7 @@ set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 # Add Base64
-set(BASE64_ROOT "$ENV{GAME_ENGINE_ROOT}/ThirdParty/libb64-1.2")
+set(BASE64_ROOT "$ENV{PHYRE_ROOT}/ThirdParty/libb64-1.2")
 set(BASE64_INCLUDE_DIR "${BASE64_ROOT}/include")
 if (MSVC)
     set(BASE64_LIBRARY_DIR "${BASE64_ROOT}/base64/VisualStudioProject")
@@ -86,7 +86,12 @@ else()
     set(BASE64_LIBRARY_DIR "${BASE64_ROOT}/src")
 endif()
 
-add_subdirectory(Common)
-add_subdirectory(Logging)
-add_subdirectory(Networking)
-add_subdirectory(GameEngineTesting)
+# Library paths
+set(PHYRE_LIBS $ENV{PHYRE_ROOT}/Libs)
+set(PHYRE_LOGGING ${PHYRE_LIBS}/Logging)
+set(PHYRE_NETWORKING ${PHYRE_LIBS}/Networking)
+set(PHYRE_XMPP ${PHYRE_NETWORKING}/XMPP)
+
+add_subdirectory(Libs)
+add_subdirectory(Applications)
+add_subdirectory(Testing)

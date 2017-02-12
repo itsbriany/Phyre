@@ -11,23 +11,21 @@ if ($env:CONFIGURATION -eq "Release") {
     $Release = $true
 }
 
-Import-Module $env:GAME_ENGINE_ROOT\Build.psm1 -Force -DisableNameChecking
+Import-Module $env:PHYRE_ROOT\Build.psm1 -Force -DisableNameChecking
 
-$CurrentWorkingDirectory = pwd
-
-# Copy test resources over to the test runtime directories
-Copy-Test-Resources
+$CurrentWorkingDirectory = Get-Location
 
 if ($release) {
-    cd "$env:GAME_ENGINE_ROOT\ThirdParty\googletest\googlemock\Release"
+    Set-Location "$env:PHYRE_ROOT\ThirdParty\googletest\googlemock\Release"
+    Invoke-Expression "$env:PHYRE_ROOT\Phyre\Build\PhyreTesting\Release\PhyreTests.exe"
 } else {
-    cd "$env:GAME_ENGINE_ROOT\ThirdParty\googletest\googlemock\Debug"
+    Set-Location "$env:PHYRE_ROOT\ThirdParty\googletest\googlemock\Debug"
+    Invoke-Expression "$env:PHYRE_ROOT\Phyre\Build\PhyreTesting\Debug\PhyreTests.exe"
 }
 
-if ($gtest_filter) {
-    .\GameEngineTests.exe --gtest_filter=$gtest_filter
-} else {
-    .\GameEngineTests.exe
-}
-cd $CurrentWorkingDirectory.Path
+
+
+ #   .\PhyreTests.exe --gtest_filter=$gtest_filter
+
+Set-Location $CurrentWorkingDirectory.Path
 exit $LASTEXITCODE
