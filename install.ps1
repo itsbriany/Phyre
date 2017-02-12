@@ -5,8 +5,9 @@ function Install-Phyre() {
   Set-VS140-Environment
   Prepare-Phyre-Solution
   Create-Tools
-  Build-Base64($env:CONFIGURATION)
-  Build-Gtest($env:CONFIGURATION)
+  Build-Base64
+  Build-Gtest
+  Copy-Test-Environment
   Build-Phyre($env:CONFIGURATION)
 }
 

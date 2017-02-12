@@ -1,4 +1,5 @@
 #pragma once
+#include <boost/lexical_cast.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <fstream>
@@ -82,7 +83,7 @@ class SASLTest : public ::testing::Test, public Logging::LoggableInterface {
             port_or_service_("1234"),
             username_("admin"),
             password_("password"),
-            tcp_server_(TCPServer(io_service_, std::stoi(port_or_service_))) { }
+            tcp_server_(TCPServer(io_service_, boost::lexical_cast<uint16_t>(port_or_service_))) { }
 
         virtual ~SASLTest() { }
 

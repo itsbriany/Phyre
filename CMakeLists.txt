@@ -86,11 +86,18 @@ else()
     set(BASE64_LIBRARY_DIR "${BASE64_ROOT}/src")
 endif()
 
+# Expected build path
+set(PHYRE_BUILD_PATH $ENV{PHYRE_ROOT}/Build)
+
 # Library paths
 set(PHYRE_LIBS $ENV{PHYRE_ROOT}/Libs)
 set(PHYRE_LOGGING ${PHYRE_LIBS}/Logging)
 set(PHYRE_NETWORKING ${PHYRE_LIBS}/Networking)
 set(PHYRE_XMPP ${PHYRE_NETWORKING}/XMPP)
+
+# Testing paths
+set(PHYRE_TESTING ${PHYRE_BUILD_PATH}/Testing)
+set(PHYRE_TESTING_BIN_DIR ${PHYRE_TESTING}/Bin)
 
 add_subdirectory(Libs)
 add_subdirectory(Applications)

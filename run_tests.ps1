@@ -15,17 +15,20 @@ Import-Module $env:PHYRE_ROOT\Build.psm1 -Force -DisableNameChecking
 
 $CurrentWorkingDirectory = Get-Location
 
+# The tests are expected to be built in the googletest build directory so they can
+# dynamically link to the gmock and gtest libraries.
 if ($release) {
-    Set-Location "$env:PHYRE_ROOT\ThirdParty\googletest\googlemock\Release"
-    Invoke-Expression "$env:PHYRE_ROOT\Phyre\Build\PhyreTesting\Release\PhyreTests.exe"
+    Set-Location "$env:PHYRE_ROOT\Build\Testing\Bin\Release"
 } else {
-    Set-Location "$env:PHYRE_ROOT\ThirdParty\googletest\googlemock\Debug"
-    Invoke-Expression "$env:PHYRE_ROOT\Phyre\Build\PhyreTesting\Debug\PhyreTests.exe"
+    Set-Location "$env:PHYRE_ROOT\Build\Testing\Bin\Debug"
 }
 
-
-
- #   .\PhyreTests.exe --gtest_filter=$gtest_filter
+if ($gtest_filter) {
+    .\PhyreTests.exe --gtest_filter=$gtest_filter
+} else {
+    .\PhyreTests.exe
+}
+ 
 
 Set-Location $CurrentWorkingDirectory.Path
 exit $LASTEXITCODE

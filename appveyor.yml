@@ -22,5 +22,5 @@ build:
   parallel: true
   project: C:\projects\Phyre\Build\Phyre.sln
 
-# test_script:
-#  - ps: .\run_tests.ps1
+test_script:
+  - ps: .\run_tests.ps1

@@ -3,7 +3,7 @@ if(Boost_FOUND)
     set(TEST_DEPENDENCY_DIRS ${PHYRE_NETWORKING} ${PHYRE_XMPP} ${PHYRE_LOGGING})
     # The executable must run with gmock.dll in the same directory
     if (WIN32)
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${GMOCK_LIBRARY_DIRS})
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PHYRE_TESTING_BIN_DIR})
     endif()
     include_directories(${Boost_INCLUDE_DIRS} ${GMOCK_INCLUDE_DIRS}
         ${GTEST_INCLUDE_DIRS} ${TEST_DEPENDENCY_DIRS} ${BASE64_INCLUDE_DIR})

@@ -3,18 +3,23 @@ function Init-Submodules {
 }
 
 # Copy test resources over to the test runtime directories
-# TODO: This is likely to be unnecessary
-function Copy-Test-Resources {
-    Set-Location $env:PHYRE_ROOT\Phyre
-    $TestResourceDirectories = "*TestResources"
-    $TestResources = Get-ChildItem -Recurse $TestResourceDirectories | ?{ $_.PSIsContainer }
-    foreach ($TestResource in $TestResources) {
-        $TestResourceBaseName = $TestResource.BaseName
-        $TestResourceFullName = $TestResource.FullName
-        mkdir -Force $env:PHYRE_ROOT\ThirdParty\googletest\googlemock\Debug\$TestResourceBaseName > $null
-        mkdir -Force $env:PHYRE_ROOT\ThirdParty\googletest\googlemock\Release\$TestResourceBaseName > $null
-        Copy-Item -Force $TestResourceFullName\* "$env:PHYRE_ROOT\ThirdParty\googletest\googlemock\Debug\$TestResourceBaseName"
-        Copy-Item -Force $TestResourceFullName\* "$env:PHYRE_ROOT\ThirdParty\googletest\googlemock\Release\$TestResourceBaseName"
+function Copy-Test-Environment {
+    # We need to dynamically link to the testing libraries
+    Set-Location $env:PHYRE_ROOT\Build\Testing
+    $debugDir = "Bin\Debug"
+    $releaseDir = "Bin\Release"
+    mkdir $debugDir -Force
+    mkdir $releaseDir -Force
+    Copy-Item -Force $env:PHYRE_ROOT\ThirdParty\googletest\Build\googlemock\gtest\Debug\*.dll $debugDir
+    Copy-Item -Force $env:PHYRE_ROOT\ThirdParty\googletest\Build\googlemock\gtest\Release\*.dll $releaseDir
+    Copy-Item -Force $env:PHYRE_ROOT\ThirdParty\googletest\Build\googlemock\Debug\*.dll $debugDir
+    Copy-Item -Force $env:PHYRE_ROOT\ThirdParty\googletest\Build\googlemock\Release\*.dll $releaseDir
+
+    # Some tests require resource files, so we copy them over to each build configuration
+    $TestResourceDirectories = Get-ChildItem $env:PHYRE_ROOT\Testing\Resources
+    foreach ($TestResourceDirectory in $TestResourceDirectories) {
+        Copy-Item -Force -Recurse $TestResourceDirectory.FullName $debugDir
+        Copy-Item -Force -Recurse $TestResourceDirectory.FullName $releaseDir
     }
     Set-Location $env:PHYRE_ROOT
 }
@@ -23,7 +28,7 @@ function Copy-Test-Resources {
 function Set-VS140-Environment {
     Push-Location "$env:VS140COMNTOOLS"
     cmd /c "vsvars32.bat&set" |
-    foreach {
+    ForEach-Object {
         if ($_ -match "=") {
             $v = $_.split("="); set-item -force -path "ENV:\$($v[0])"  -value "$($v[1])"
         }
