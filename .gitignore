@@ -255,8 +255,8 @@ paket-files/
 Tools/
 
 # Common generated code
-GameEngine/GameEngine.Common/*.h
-GameEngine/GameEngine.Common/*.cc
+Phyre/Phyre.Common/*.h
+Phyre/Phyre.Common/*.cc
 
 # Vim
 **/*.swp
@@ -272,3 +272,6 @@ tags
 
 # Example Binaries
 *Demo
+
+# Cmake Build directory
+Build

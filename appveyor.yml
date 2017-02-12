@@ -7,7 +7,7 @@ configuration:
   - Debug
   - Release
 
-clone_folder: C:\projects\GameEngine
+clone_folder: C:\projects\Phyre
 
 install:
   - ps: .\install.ps1
@@ -16,15 +16,11 @@ environment:
   MSVC_DEFAULT_OPTIONS: ON
   BOOST_ROOT: C:\Libraries\boost_1_60_0
   BOOST_LIBRARYDIR: C:\Libraries\boost_1_60_0\lib32-msvc-14.0
-  GAME_ENGINE_ROOT: C:\projects\GameEngine
-  GOOGLE_TEST_DISTRIBUTION: C:\projects\GameEngine\ThirdParty\googletest
-  GTEST_ROOT: C:\projects\GameEngine\ThirdParty\googletest\googletest
-  GMOCK_ROOT: C:\projects\GameEngine\ThirdParty\googletest\googlemock
-  PROTOBUF_ROOT: C:\projects\GameEngine\ThirdParty\protobuf
+  PHYRE_ROOT: C:\projects\Phyre
 
 build:
-  parallel: false
-  project: C:\projects\GameEngine\GameEngine\GameEngine.sln
+  parallel: true
+  project: C:\projects\Phyre\Build\Phyre.sln
 
 test_script:
   - ps: .\run_tests.ps1
