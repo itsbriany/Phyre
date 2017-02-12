@@ -9,7 +9,7 @@ if(Boost_FOUND)
         ${GTEST_INCLUDE_DIRS} ${TEST_DEPENDENCY_DIRS} ${BASE64_INCLUDE_DIR})
     link_directories(${GMOCK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS}
         ${GTEST_LIBRARY_DIRS} ${TEST_DEPENDENCY_DIRS} ${BASE64_LIBRARY_DIR})
-    add_executable(PhyreTests game_engine_tests.cpp)
+    add_executable(PhyreTests phyre_tests.cpp)
     target_link_libraries(PhyreTests ${Boost_LIBRARIES} gmock gtest Networking XMPP)
     if (WIN32)
         unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)

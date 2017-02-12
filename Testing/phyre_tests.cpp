@@ -4,7 +4,7 @@
 #include "logging.h"
 
 int main(int argc, char* argv[]) {
-    GameEngine::Logging::set_log_level(GameEngine::Logging::kError);
+    Phyre::Logging::set_log_level(Phyre::Logging::kError);
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

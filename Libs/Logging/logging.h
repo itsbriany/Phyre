@@ -2,7 +2,7 @@
 #include "loggable_interface.h"
 #include "logger.h"
 
-namespace GameEngine
+namespace Phyre
 {
 namespace Logging
 {

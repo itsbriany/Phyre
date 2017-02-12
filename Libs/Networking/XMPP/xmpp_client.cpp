@@ -2,7 +2,7 @@
 #include "sasl.h"
 #include "xmpp_client.h"
 
-namespace GameEngine {
+namespace Phyre {
 namespace Networking {
 
 XMPPClient::XMPPClient(boost::asio::io_service& io_service,

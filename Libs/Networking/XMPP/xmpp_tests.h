@@ -8,7 +8,7 @@
 #include "tcp_server.h"
 #include "xmpp_client.h"
 
-namespace GameEngine
+namespace Phyre
 {
 namespace Networking
 {

@@ -3,7 +3,7 @@
 #include "logging.h"
 
 
-namespace GameEngine
+namespace Phyre
 {
 namespace Networking
 {
@@ -28,6 +28,6 @@ namespace Networking
 
 int main(int argc, char* argv[])
 {
-    GameEngine::Networking::TCPServerDemo();
+    Phyre::Networking::TCPServerDemo();
     return 0;
 }

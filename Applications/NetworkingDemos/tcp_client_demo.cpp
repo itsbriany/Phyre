@@ -4,7 +4,7 @@
 #include "logging.h"
 
 
-namespace GameEngine {
+namespace Phyre {
 namespace Networking {
 
 class TCPClientDemo : public TCPClient {
@@ -29,9 +29,9 @@ class TCPClientDemo : public TCPClient {
 }
 
 int main(int argc, char* argv[]) {
-    GameEngine::Logging::set_log_level();
+    Phyre::Logging::set_log_level();
     boost::asio::io_service io_service;
-    GameEngine::Networking::TCPClientDemo client(io_service);
+    Phyre::Networking::TCPClientDemo client(io_service);
     client.Start();
     return 0;
 }

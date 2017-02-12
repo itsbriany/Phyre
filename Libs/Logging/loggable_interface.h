@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-namespace GameEngine {
+namespace Phyre {
 namespace Logging {
 
     class LoggableInterface {

@@ -3,7 +3,7 @@
 #include "tcp_client.h"
 #include "xmpp_state.h"
 
-namespace GameEngine {
+namespace Phyre {
 namespace Networking {
 
 class XMPPState;

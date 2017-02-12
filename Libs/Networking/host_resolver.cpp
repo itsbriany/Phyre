@@ -1,7 +1,7 @@
 #include "host_resolver.h"
 #include "logging.h"
 
-namespace GameEngine
+namespace Phyre
 {
 namespace Networking
 {

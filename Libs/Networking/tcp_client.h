@@ -3,7 +3,7 @@
 #include "host_resolver.h"
 #include "tcp_socket.h"
 
-namespace GameEngine
+namespace Phyre
 {
 namespace Networking
 {

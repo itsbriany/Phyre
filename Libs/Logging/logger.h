@@ -6,7 +6,7 @@
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/trivial.hpp>
 
-namespace GameEngine
+namespace Phyre
 {
 namespace Logging
 {

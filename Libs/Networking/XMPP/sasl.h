@@ -7,7 +7,7 @@
 #include "xmpp_state.h"
 #include "logging.h"
 
-namespace GameEngine {
+namespace Phyre {
 namespace Networking {
 
 class SASL : public XMPPState, public Logging::LoggableInterface {

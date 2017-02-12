@@ -5,7 +5,7 @@
 #include <boost/random/uniform_int_distribution.hpp>
 #include "sasl.h"
 
-namespace GameEngine {
+namespace Phyre {
 namespace Networking {
 
 std::unordered_map<SASL::Mechanism, std::string> SASL::s_digest_map = boost::assign::map_list_of

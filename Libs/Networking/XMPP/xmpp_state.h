@@ -1,7 +1,7 @@
 #pragma once
 #include "xmpp_client.h"
 
-namespace GameEngine {
+namespace Phyre {
 namespace Networking {
 
 class XMPPClient;

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace GameEngine {
+namespace Phyre {
 namespace Logging {
     enum LogLevel {
         kTrace,

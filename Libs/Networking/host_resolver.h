@@ -2,7 +2,7 @@
 #include "loggable_interface.h"
 #include <boost/asio.hpp>
 
-namespace GameEngine
+namespace Phyre
 {
 namespace Networking
 {

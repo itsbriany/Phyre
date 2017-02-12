@@ -1,7 +1,7 @@
 #include <boost/bind/bind.hpp>
 #include "tcp_server.h"
 
-namespace GameEngine
+namespace Phyre
 {
 namespace Networking
 {

@@ -2,7 +2,7 @@
 #include <boost/asio.hpp>
 #include "tcp_server_connection.h"
 
-namespace GameEngine
+namespace Phyre
 {
 namespace Networking
 {

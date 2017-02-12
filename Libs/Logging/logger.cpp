@@ -3,7 +3,7 @@
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 
-namespace GameEngine {
+namespace Phyre {
 namespace Logging {
 
 std::map<LogLevel, std::string> Logger::s_string_to_log_level_map = boost::assign::map_list_of

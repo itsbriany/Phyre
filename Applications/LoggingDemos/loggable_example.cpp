@@ -1,6 +1,6 @@
 #include "logging.h"
 
-using namespace GameEngine::Logging;
+using namespace Phyre::Logging;
 
 class Foo : public LoggableInterface {
     public:

@@ -1,6 +1,6 @@
 #include "tcp_server_connection.h"
 
-namespace GameEngine {
+namespace Phyre {
 namespace Networking {
 
     TCPServerConnection::TCPServerConnection(boost::asio::io_service& io_service, const std::queue<std::string>& message_queue):

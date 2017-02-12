@@ -4,7 +4,7 @@
 #include "logging.h"
 
 
-namespace GameEngine
+namespace Phyre
 {
 namespace Networking
 {
@@ -26,7 +26,7 @@ namespace Networking
 
 int main(int argc, char* argv[])
 {
-    GameEngine::Logging::set_log_level();
-    GameEngine::Networking::XMPPClientDemo();
+    Phyre::Logging::set_log_level();
+    Phyre::Networking::XMPPClientDemo();
     return 0;
 }

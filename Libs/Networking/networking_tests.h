@@ -6,7 +6,7 @@
 #include "tcp_client.h"
 #include "tcp_server.h"
 
-namespace GameEngine
+namespace Phyre
 {
 namespace Networking
 {

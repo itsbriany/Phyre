@@ -2,7 +2,7 @@
 #include "tcp_socket.h"
 #include "logging.h"
 
-namespace GameEngine
+namespace Phyre
 {
 namespace Networking
 {

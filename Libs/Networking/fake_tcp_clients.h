@@ -4,7 +4,7 @@
 #include "logging.h"
 #include "tcp_client.h"
 
-namespace GameEngine {
+namespace Phyre {
 namespace Networking {
 
 class FakeTCPClient : public TCPClient {
