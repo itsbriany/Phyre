@@ -145,7 +145,7 @@ class TCPClientError : public FakeTCPClient {
             FakeTCPClient(io_service) { }
 
     protected:
-        void OnError(const boost::system::error_code& ec) {
+        void OnError(const boost::system::error_code& ec) override {
             EXPECT_TRUE(ec);
         }
 

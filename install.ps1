@@ -8,7 +8,6 @@ function Install-Phyre() {
   Build-Base64
   Build-Gtest
   Copy-Test-Environment
-  Build-Phyre($env:CONFIGURATION)
 }
 
 if ($env:APPVEYOR) {
