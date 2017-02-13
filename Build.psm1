@@ -41,7 +41,7 @@ function Prepare-Phyre-Solution {
     Set-Location $env:PHYRE_ROOT
     mkdir Build -Force
     Set-Location Build
-    cmake -G "Visual Studio 14" ..
+    cmake -G "Visual Studio 14 Win64" ..
     Set-Location $env:PHYRE_ROOT
 }
 
@@ -54,7 +54,7 @@ function Build-Protobuf {
     Set-Location $env:PHYRE_ROOT\ThirdParty\protobuf\cmake
     mkdir Build -Force
     Set-Location Build
-    cmake -Dprotobuf_BUILD_TESTS=OFF -G "Visual Studio 14" ..
+    cmake -Dprotobuf_BUILD_TESTS=OFF -G "Visual Studio 14 Win64" ..
     cmake --build . --target ALL_BUILD --config Release
     Copy-Item Release\protoc.exe $env:PHYRE_ROOT\Tools
 }
@@ -70,16 +70,16 @@ function Build-Gtest {
     Set-Location $env:PHYRE_ROOT\ThirdParty\googletest
     mkdir Build -Force
     Set-Location Build
-    cmake -DBUILD_GMOCK:BOOL=ON -DBUILD_GTEST:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -G "Visual Studio 14" ..
+    cmake -DBUILD_GMOCK:BOOL=ON -DBUILD_GTEST:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -G "Visual Studio 14 Win64" ..
     cmake --build . --target ALL_BUILD --config Debug
     cmake --build . --target ALL_BUILD --config Release
 }
 
 function Build-Base64 {
     Set-Location $env:PHYRE_ROOT\ThirdParty\libb64-1.2\base64\VisualStudioProject
-    msbuild /m base64.sln /p:Configuration=Debug /p:Platform="Win32"
-    msbuild /m base64.sln /p:Configuration=Release /p:Platform="Win32"
-    Move-Item -Force $env:PHYRE_ROOT\ThirdParty\libb64-1.2\base64\VisualStudioProject\Release\base64.exe $env:PHYRE_ROOT\Tools
+    msbuild /m base64.sln /p:Configuration=Debug /p:Platform="x64"
+    msbuild /m base64.sln /p:Configuration=Release /p:Platform="x64"
+    Move-Item -Force $env:PHYRE_ROOT\ThirdParty\libb64-1.2\base64\VisualStudioProject\x64\Release\base64.exe $env:PHYRE_ROOT\Tools
 }
 
 function Build-Phyre([switch]$Debug, [switch] $Release) {

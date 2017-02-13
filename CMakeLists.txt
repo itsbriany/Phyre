@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.7)
 
 project(Phyre)
 
@@ -45,9 +45,6 @@ if (WIN32)
 endif()
 set(Boost_USE_MULTITHREADED ON)
 
-set(BOOST_ROOT "$ENV{BOOST_ROOT}")
-set(BOOST_INCLUDE_DIRS "${BOOST_ROOT}")
-
 # For appveyor CI
 if (WIN32)
     set(BOOST_LIBRARY_DIRS "$ENV{BOOST_LIBRARYDIR}")
@@ -59,15 +56,25 @@ endif()
 
 find_package(Boost 1.60 REQUIRED COMPONENTS system log thread random)
 
+if(NOT Boost_FOUND)
+    message(FATAL "Could not find boost")
+endif()
+
+find_package(Vulkan REQUIRED)
+if(NOT Vulkan_FOUND)
+    message(FATAL "Could not find Vulkan")
+endif()
+
+# Where all third party dependencies reside
+set(PHYRE_THIRD_PARTY "$ENV{PHYRE_ROOT}/ThirdParty")
 
 # Add Gmock & Gtest libraries
-set(TEST_ROOT "$ENV{PHYRE_ROOT}/ThirdParty/googletest")
+set(TEST_ROOT "${PHYRE_THIRD_PARTY}/googletest")
 set(GMOCK_INCLUDE_DIRS "${TEST_ROOT}/googlemock/include")
 set(GMOCK_LIBRARY_DIRS "${TEST_ROOT}/Build/googlemock")
 
 set(GTEST_INCLUDE_DIRS "${TEST_ROOT}/googletest/include")
 set(GTEST_LIBRARY_DIRS "${GMOCK_LIBRARY_DIRS}/gtest")
-
 
 # Add Protobuf
 set(PROTOBUF_ROOT "$ENV{PROTOBUF_ROOT}")
@@ -78,26 +85,30 @@ set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 # Add Base64
-set(BASE64_ROOT "$ENV{PHYRE_ROOT}/ThirdParty/libb64-1.2")
+set(BASE64_ROOT "${PHYRE_THIRD_PARTY}/libb64-1.2")
 set(BASE64_INCLUDE_DIR "${BASE64_ROOT}/include")
 if (MSVC)
-    set(BASE64_LIBRARY_DIR "${BASE64_ROOT}/base64/VisualStudioProject")
+    set(BASE64_LIBRARY_DIR "${BASE64_ROOT}/base64/VisualStudioProject/x64")
 else()
     set(BASE64_LIBRARY_DIR "${BASE64_ROOT}/src")
 endif()
 
 # Expected build path
-set(PHYRE_BUILD_PATH $ENV{PHYRE_ROOT}/Build)
+set(PHYRE_BUILD_PATH "$ENV{PHYRE_ROOT}/Build")
 
 # Library paths
-set(PHYRE_LIBS $ENV{PHYRE_ROOT}/Libs)
-set(PHYRE_LOGGING ${PHYRE_LIBS}/Logging)
-set(PHYRE_NETWORKING ${PHYRE_LIBS}/Networking)
-set(PHYRE_XMPP ${PHYRE_NETWORKING}/XMPP)
+set(PHYRE_LIBS "$ENV{PHYRE_ROOT}/Libs")
+set(PHYRE_LOGGING "${PHYRE_LIBS}/Logging")
+set(PHYRE_NETWORKING "${PHYRE_LIBS}/Networking")
+set(PHYRE_XMPP "${PHYRE_NETWORKING}/XMPP")
+set(PHYRE_GRAPHICS "${PHYRE_LIBS}/Graphics")
+
+# Vulkan C++ Bindings
+set(VULKAN_CPP_BINDINGS "${PHYRE_THIRD_PARTY}/Vulkan-Hpp/vulkan")
 
 # Testing paths
-set(PHYRE_TESTING ${PHYRE_BUILD_PATH}/Testing)
-set(PHYRE_TESTING_BIN_DIR ${PHYRE_TESTING}/Bin)
+set(PHYRE_TESTING "${PHYRE_BUILD_PATH}/Testing")
+set(PHYRE_TESTING_BIN_DIR "${PHYRE_TESTING}/Bin")
 
 add_subdirectory(Libs)
 add_subdirectory(Applications)

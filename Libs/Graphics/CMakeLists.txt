@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 3.3)
 
-# Library
-include_directories(${Boost_INCLUDE_DIRS} ${BASE64_INCLUDE_DIR} ${PHYRE_NETWORKING})
-link_directories(${BASE64_LIBRARY_DIR})
-add_library(XMPP xmpp_client.h xmpp_client.cpp xmpp_state.h sasl.h
-    sasl.cpp xmpp_tests.h)
-target_link_libraries(XMPP ${Boost_LIBRARIES} Networking b64)
+# Build the graphics library
+include_directories(${Boost_INCLUDE_DIRS} ${PHYRE_LOGGING} ${Vulkan_INCLUDE_DIRS} ${VULKAN_CPP_BINDINGS})
+add_library(Graphics rendering_system.h rendering_system.cpp)
+target_link_libraries(Graphics ${Boost_LIBRARIES} ${Vulkan_LIBRARIES} Logging)
 
 # The executable must run with gmock.dll in the same directory
 if (WIN32)
@@ -13,8 +11,8 @@ if (WIN32)
 endif()
 include_directories(${Boost_INCLUDE_DIRS} ${GMOCK_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS} ${TEST_DEPENDENCY_DIRS})
 link_directories(${GMOCK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} ${GTEST_LIBRARY_DIRS} ${TEST_DEPENDENCY_DIRS})
-add_executable(XMPPTests xmpp_tests.h xmpp_test_runner.cpp)
-target_link_libraries(XMPPTests ${Boost_LIBRARIES} gmock gtest XMPP)
+add_executable(GraphicsTests graphics_tests.h graphics_test_runner.cpp)
+target_link_libraries(GraphicsTests ${Boost_LIBRARIES} ${Vulkan_LIBRARIES} gmock gtest Graphics)
 if (WIN32)
     unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 endif()
