@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.3)
 
 # Build the graphics library
 include_directories(${Boost_INCLUDE_DIRS} ${PHYRE_LOGGING} ${Vulkan_INCLUDE_DIRS} ${VULKAN_CPP_BINDINGS})
-add_library(Graphics rendering_system.h rendering_system.cpp)
+add_library(Graphics rendering_system_interface.h vulkan_rendering_system.h vulkan_rendering_system.cpp)
 target_link_libraries(Graphics ${Boost_LIBRARIES} ${Vulkan_LIBRARIES} Logging)
 
 # The executable must run with gmock.dll in the same directory
