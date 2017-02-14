@@ -7,3 +7,6 @@
 [submodule "ThirdParty/Vulkan-Hpp"]
 	path = ThirdParty/Vulkan-Hpp
 	url = git@github.com:KhronosGroup/Vulkan-Hpp.git
+[submodule "ThirdParty/glfw"]
+	path = ThirdParty/glfw
+	url = git@github.com:glfw/glfw.git

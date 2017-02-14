@@ -82,6 +82,15 @@ function Build-Base64 {
     Move-Item -Force $env:PHYRE_ROOT\ThirdParty\libb64-1.2\base64\VisualStudioProject\x64\Release\base64.exe $env:PHYRE_ROOT\Tools
 }
 
+function Build-GLFW {
+    Set-Location $env:PHYRE_ROOT\ThirdParty\glfw
+    mkdir Build -Force
+    Set-Location Build
+    cmake -G "Visual Studio 14 Win64" ..
+    cmake --build . --target ALL_BUILD --config Debug
+    cmake --build . --target ALL_BUILD --config Release
+}
+
 function Build-Phyre([switch]$Debug, [switch] $Release) {
     Set-Location $env:PHYRE_ROOT\Build
     if (!$Debug -and !$Release) {

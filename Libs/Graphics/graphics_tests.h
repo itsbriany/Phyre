@@ -5,6 +5,7 @@
 namespace Phyre {
 namespace Graphics {
 
+// Warning: These integration tests consume at leat 100MB of memory!
 class VulkanRenderingSystemTest : public testing::Test {
 protected:
     // Prevents resource leak
@@ -23,12 +24,17 @@ TEST_F(VulkanRenderingSystemTest, CanEnumerateDevices) {
 }
 
 TEST_F(VulkanRenderingSystemTest, SupportsGraphics) {
-    EXPECT_TRUE(rendering_system_.CheckGraphicsCapability().first);
+    EXPECT_GT(rendering_system_.InitializeSupportedQueueIndices().queueCount, 0);
 }
 
 TEST_F(VulkanRenderingSystemTest, InitializesLogicalDevice) {
     EXPECT_TRUE(rendering_system_.InitializeLogicalDevice());
 }
+
+TEST_F(VulkanRenderingSystemTest, InitializesCommandBuffers) {
+    EXPECT_TRUE(rendering_system_.InitializeCommandBuffers());
+}
+
 
 }
 }

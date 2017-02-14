@@ -18,7 +18,7 @@ endif()
 set(BASE64_DEFINITIONS "-DBUFFERSIZE=16777216")
 
 if (WIN32)
-    add_definitions(-D_WIN32_WINNT=0x601 -DGTEST_LINKED_AS_SHARED_LIBRARY=1 -D_SCL_SECURE_NO_WARNINGS ${BASE64_DEFINITIONS})
+    add_definitions(-D_WIN32_WINNT=0x601 -DGTEST_LINKED_AS_SHARED_LIBRARY=1 -D_SCL_SECURE_NO_WARNINGS -DVK_USE_PLATFORM_WIN32_KHR ${BASE64_DEFINITIONS})
 else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${BASE64_DEFINITIONS} -DBOOST_LOG_DYN_LINK -g -Wall -Wno-unused-function -Wno-deprecated-declarations -Wno-inconsistent-missing-override -std=c++14")
 endif (WIN32)
@@ -92,6 +92,11 @@ if (MSVC)
 else()
     set(BASE64_LIBRARY_DIR "${BASE64_ROOT}/src")
 endif()
+
+# Add GLFW
+set(GLFW_ROOT "${PHYRE_THIRD_PARTY}/glfw")
+set(GLFW_INCLUDE_DIR "${GLFW_ROOT}/include")
+set(GLFW_LIBRARY_DIR "${GLFW_ROOT}/Build/src")
 
 # Expected build path
 set(PHYRE_BUILD_PATH "$ENV{PHYRE_ROOT}/Build")

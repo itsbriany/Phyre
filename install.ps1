@@ -7,6 +7,7 @@ function Install-Phyre() {
   Create-Tools
   Build-Base64
   Build-Gtest
+  Build-GLFW
   Copy-Test-Environment
 }
 
