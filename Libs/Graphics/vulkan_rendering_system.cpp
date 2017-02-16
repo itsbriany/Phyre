@@ -1,11 +1,23 @@
-#include <vulkan/vulkan.h>
-#include <GLFW/glfw3.h>
-
 #include "vulkan_rendering_system.h"
-#include "logging.h"
+#include <GLFW/glfw3.h>
+#include "vulkan_errors.h"
 
-
-Phyre::Graphics::VulkanRenderingSystem::VulkanRenderingSystem() {
+Phyre::Graphics::VulkanRenderingSystem::VulkanRenderingSystem() : 
+instance_extension_names_({
+    VK_KHR_SURFACE_EXTENSION_NAME,
+#ifdef _WIN32
+    VK_KHR_WIN32_SURFACE_EXTENSION_NAME
+#elif __ANDROID__
+    VK_KHR_ANDROID_SURFACE_EXTENSION_NAME
+#else 
+    VK_KHR_XCB_SURFACE_EXTENSION_NAME
+#endif
+}),
+device_extension_names_({
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+}),
+p_debugger_(new VulkanDebugger)
+{
     if (!InitializeGLFW()) {
         std::string error_message = "Could not initialize GLFW!";
         Logging::fatal(error_message, *this);
@@ -22,6 +34,9 @@ Phyre::Graphics::VulkanRenderingSystem::VulkanRenderingSystem() {
         std::string error_message = "Could not initialize presentation surface!";
         Logging::fatal(error_message, *this);
         throw std::runtime_error(error_message);
+    }
+    if (kDebugging) {
+        InitializeDebugExtensionsAndLayers();
     }
     Logging::debug("Initialized Vulkan surface", *this);
     if (!InitializePhysicalDevices()) {
@@ -45,13 +60,14 @@ Phyre::Graphics::VulkanRenderingSystem::VulkanRenderingSystem() {
 }
 
 Phyre::Graphics::VulkanRenderingSystem::~VulkanRenderingSystem() {
+    delete p_debugger_;
     device_.destroy();
     vk_instance_.destroy();
 }
 
 bool
 Phyre::Graphics::VulkanRenderingSystem::InitializeVulkanInstance() {
-    if (kEnableValidationLayers && !CheckValidationLayerSupport()) {
+    if (kDebugging && !CheckValidationLayerSupport()) {
         throw std::runtime_error("Requested validation layers, but could not find any");
     }
 
@@ -65,29 +81,25 @@ Phyre::Graphics::VulkanRenderingSystem::InitializeVulkanInstance() {
 
     // Initialize the VkInstanceCreateInfo structure
     vk::InstanceCreateInfo instance_create_info;
-    std::vector<const char*> extension_names(InstanceExtensionNames());
-    std::vector<const char*> layer_names(InstanceLayerNames());
-    instance_create_info.setPpEnabledExtensionNames(extension_names.data());
-    instance_create_info.setEnabledExtensionCount(extension_names.size());
-    instance_create_info.setPApplicationInfo(&application_info);
-    if (kEnableValidationLayers) {
-        instance_create_info.setPpEnabledLayerNames(layer_names.data());
-        instance_create_info.setEnabledLayerCount(layer_names.size());
+    if (kDebugging) {
+        InitializeDebugExtensionsAndLayers();
     }
+    instance_create_info.setPpEnabledLayerNames(instance_layer_names_.data());
+    instance_create_info.setEnabledLayerCount(instance_layer_names_.size());
+    instance_create_info.setPpEnabledExtensionNames(instance_extension_names_.data());
+    instance_create_info.setEnabledExtensionCount(instance_extension_names_.size());
+    instance_create_info.setPApplicationInfo(&application_info);
+    
     
 	// Are we successful in initializing the Vulkan instance?
 	vk::Result result = vk::createInstance(&instance_create_info, nullptr, &vk_instance_);
-
-	if (result == vk::Result::eSuccess) {
+    if (ErrorCheck(result, log())) {
+        if (kDebugging) {
+           return p_debugger_->InitializeDebugReport(&vk_instance_);
+        }
         return true;
-	}
-    std::string who = "[VulkanRenderingSystem::CreateVulkanInstance]";
-	if (result == vk::Result::eErrorIncompatibleDriver) {
-		Logging::fatal("Could not find a Vulkan compatible driver", *this);
-		exit(EXIT_FAILURE);
-	}
-	Logging::fatal("Unknown error when creating vulkan instance", *this);
-	exit(EXIT_FAILURE);
+    }
+    return false;
 }
 
 bool
@@ -99,7 +111,7 @@ Phyre::Graphics::VulkanRenderingSystem::InitializePhysicalDevices() {
         oss << "Found device: " << properties.deviceName;
 		Logging::info(oss.str(), *this);
 	}
-    physical_devices_ = results;
+    gpus_ = results;
     return results.size();
 }
 
@@ -112,11 +124,11 @@ Phyre::Graphics::VulkanRenderingSystem::InitializeSupportedQueueIndices() {
 	 * that only represent the queue families we are interested in.
 	 */
     vk::DeviceQueueCreateInfo device_queue_create_info;
-    if (physical_devices_.empty()) {
+    if (gpus_.empty()) {
         Logging::error("Could not find any physical devices!", *this);
         return device_queue_create_info;
     }
-    for (const auto& physical_device : physical_devices_) {
+    for (const auto& physical_device : gpus_) {
 
         // Initialize a vector letting us know which queues currently support surface presentation
         std::vector<vk::Bool32> surface_support_vector(physical_device.getQueueFamilyProperties().size());
@@ -165,19 +177,15 @@ bool Phyre::Graphics::VulkanRenderingSystem::InitializeLogicalDevice() {
 	}
 
     vk::DeviceCreateInfo device_create_info;
-    std::vector<const char*> extension_names(DeviceExtensionNames());
-    device_create_info.setPpEnabledExtensionNames(extension_names.data());
-    device_create_info.setEnabledExtensionCount(extension_names.size());
+    device_create_info.setPpEnabledExtensionNames(device_extension_names_.data());
+    device_create_info.setEnabledExtensionCount(device_extension_names_.size());
+    device_create_info.setPpEnabledLayerNames(device_layer_names_.data());
+    device_create_info.setEnabledLayerCount(device_layer_names_.size());
     device_create_info.setQueueCreateInfoCount(1); // We only use one queue create info
     device_create_info.setPQueueCreateInfos(&device_queue_create_info);
     
     vk::Result result = p_active_physical_device_->createDevice(&device_create_info, nullptr, &device_);
-    if (result == vk::Result::eSuccess) {
-        return true;
-    }
-	    
-    Logging::error("Could not create logical device", *this);
-    return false;
+    return ErrorCheck(result, log());
 }
 
 bool 
@@ -204,9 +212,6 @@ Phyre::Graphics::VulkanRenderingSystem::InitializeCommandBuffers() {
         return false;
     }
 
-    std::ostringstream oss;
-    oss << "Allocated " << command_buffers_.size() << " command buffers";
-    Logging::debug(oss.str(), *this);
     return true;
 }
 
@@ -269,40 +274,23 @@ bool Phyre::Graphics::VulkanRenderingSystem::CheckValidationLayerSupport() {
     std::sort(available_layer_names.begin(), available_layer_names.end());
 
     // The layer names we are providing
-    std::vector<const char*> instance_layer_names = InstanceLayerNames();
-    std::sort(instance_layer_names.begin(), instance_layer_names.end());
+    std::sort(instance_layer_names_.begin(), instance_layer_names_.end());
 
     // Check if the layers we provided are a subset of the layers provided by the SDK
     return std::includes(available_layer_names.begin(), available_layer_names.end(),
-                         instance_layer_names.begin(), instance_layer_names.end(), [](const char* available_layer, const char* using_layer) {
+                         instance_layer_names_.begin(), instance_layer_names_.end(), [](const char* available_layer, const char* using_layer) {
         return strcmp(available_layer, using_layer) == 0;
     });
+}
+
+void Phyre::Graphics::VulkanRenderingSystem::InitializeDebugExtensionsAndLayers() {
+    const char* kLunarGStandardValidation = "VK_LAYER_LUNARG_standard_validation";
+    instance_extension_names_.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+    instance_layer_names_.push_back(kLunarGStandardValidation);
+    device_layer_names_.push_back(kLunarGStandardValidation);
 }
 
 bool
 Phyre::Graphics::VulkanRenderingSystem::InitializeGLFW() {
     return glfwInit();
-}
-
-std::vector<const char*>
-Phyre::Graphics::VulkanRenderingSystem::InstanceExtensionNames() {
-    return std::vector<const char*> {
-        VK_KHR_SURFACE_EXTENSION_NAME,
-#ifdef _WIN32
-        VK_KHR_WIN32_SURFACE_EXTENSION_NAME
-#elif __ANDROID__
-        VK_KHR_ANDROID_SURFACE_EXTENSION_NAME
-#else 
-      VK_KHR_XCB_SURFACE_EXTENSION_NAME
-#endif
-    };    
-}
-
-std::vector<const char*> 
-Phyre::Graphics::VulkanRenderingSystem::DeviceExtensionNames() {
-    return std::vector<const char*> { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-}
-
-std::vector<const char*> Phyre::Graphics::VulkanRenderingSystem::InstanceLayerNames() {    
-    return std::vector<const char*> { "VK_LAYER_LUNARG_standard_validation" };
 }

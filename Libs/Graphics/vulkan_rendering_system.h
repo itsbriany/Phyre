@@ -1,7 +1,7 @@
 #pragma once
-#include <vulkan.hpp>
 #include "rendering_system_interface.h"
 #include "loggable_interface.h"
+#include "vulkan_debugger.h"
 
 namespace Phyre {
 namespace Graphics {
@@ -53,29 +53,33 @@ public:
 
 private:
     // Returns true if we have validation layer support
-    static bool CheckValidationLayerSupport();
+    bool CheckValidationLayerSupport();
+
+    void InitializeDebugExtensionsAndLayers();
 
     // Returns true if GLFW was initialized
     static bool InitializeGLFW();
 
     // According to the Vulkan 1.0 spec, we need to enable the following extensions:
     // WSI (Window System Integration): For presenting to surfaces
-    static std::vector<const char*> InstanceExtensionNames();
-    
-    // We can add the swapchain extension here since which is a device extension
-    static std::vector<const char*> DeviceExtensionNames();
+    std::vector<const char*> instance_extension_names_;
+    std::vector<const char*> device_extension_names_;
 
     // Specifies all of the validiation layers we wish to use.
     // All validation layers are used by default, but you can check
     // https://vulkan.lunarg.com/doc/sdk/1.0.39.1/windows/validation_layer_details.html
     // for more information on this
-    static std::vector<const char*> InstanceLayerNames();
+    std::vector<const char*> instance_layer_names_;
+    std::vector<const char*> device_layer_names_;
 
     // Our context
     vk::Instance vk_instance_;
 
+    // Our debugger
+    VulkanDebugger* p_debugger_;
+
     // The Vulkan Physical devices
-    PhysicalDeviceVector physical_devices_;
+    PhysicalDeviceVector gpus_;
 
     // Points to the Vulkan Physical device we are currently using
     const vk::PhysicalDevice* p_active_physical_device_ = nullptr;
@@ -101,9 +105,9 @@ private:
 
 
     #ifdef NDEBUG
-        const static bool kEnableValidationLayers = false;
+        const static bool kDebugging = false;
     #else
-        const static bool kEnableValidationLayers = true;
+        const static bool kDebugging = true;
     #endif
 };
 
