@@ -6,6 +6,8 @@ namespace Graphics {
 
 class VulkanDebugger {
 public:
+    explicit VulkanDebugger(const vk::Instance* instance);
+
     // For cleaning up the callback
     ~VulkanDebugger();
 
@@ -26,7 +28,10 @@ private:
     const vk::Instance* p_vk_instance_;
 
     // The glue that Vulkan uses to call back to us
-    vk::DebugReportCallbackEXT debug_report_callback_;
+    vk::DebugReportCallbackEXT debug_report_callback_; \
+
+    // For logging
+    static const std::string kWho;
 };
 
 }
