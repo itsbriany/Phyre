@@ -20,6 +20,9 @@ public:
     // Destroys all the allocated vulkan objects
     virtual ~VulkanRenderingSystem();
 
+    // Destroys the SurfaceKHR
+    void DestroySurface();
+
     // Returns true if the vulkan instance was instantiated
     bool InitializeVulkanInstance();
 

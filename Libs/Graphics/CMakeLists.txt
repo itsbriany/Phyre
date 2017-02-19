@@ -4,7 +4,8 @@ cmake_minimum_required(VERSION 3.3)
 include_directories(${Boost_INCLUDE_DIRS} ${PHYRE_LOGGING} ${Vulkan_INCLUDE_DIRS} ${VULKAN_CPP_BINDINGS}
                     ${GLFW_INCLUDE_DIR})
 link_directories(${GLFW_LIBRARY_DIR})
-add_library(Graphics rendering_system_interface.h vulkan_errors.h vulkan_errors.cpp vulkan_debugger.h vulkan_debugger.cpp vulkan_rendering_system.h vulkan_rendering_system.cpp)
+add_library(Graphics rendering_system_interface.h vulkan_errors.h vulkan_errors.cpp vulkan_debugger.h vulkan_debugger.cpp
+            vulkan_rendering_system.h vulkan_rendering_system.cpp)
 target_link_libraries(Graphics ${Boost_LIBRARIES} ${Vulkan_LIBRARIES} glfw3 Logging)
 
 # The executable must run with gmock.dll in the same directory

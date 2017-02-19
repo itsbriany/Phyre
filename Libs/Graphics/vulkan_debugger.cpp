@@ -6,19 +6,20 @@ static PFN_vkCreateDebugReportCallbackEXT s_create_debug_report_callback_proxy =
 static PFN_vkDestroyDebugReportCallbackEXT s_destroy_debug_report_callback_proxy = nullptr;
 
 // This function is declared on some vulkan header file, but we must define it.
-
 VKAPI_ATTR VkResult VKAPI_CALL vkCreateDebugReportCallbackEXT(
     VkInstance                                  instance,
-    const VkDebugReportCallbackCreateInfoEXT*   pCreateInfo,
-    const VkAllocationCallbacks*                pAllocator,
-    VkDebugReportCallbackEXT*                   pCallback) {
+    const VkDebugReportCallbackCreateInfoEXT*   p_create_info_info,
+    const VkAllocationCallbacks*                p_allocator,
+    VkDebugReportCallbackEXT*                   p_callback) {
     s_create_debug_report_callback_proxy = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT"));
     s_destroy_debug_report_callback_proxy = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT"));
     if (s_create_debug_report_callback_proxy && s_destroy_debug_report_callback_proxy) {
-        return s_create_debug_report_callback_proxy(instance, pCreateInfo, pAllocator, pCallback);
+        return s_create_debug_report_callback_proxy(instance, p_create_info_info, p_allocator, p_callback);
     }
     return VK_ERROR_EXTENSION_NOT_PRESENT;
 }
+
+Phyre::Graphics::VulkanDebugger::VulkanDebugger() : p_vk_instance_(nullptr), debug_report_callback_(nullptr) {}
 
 // Comment out this definition to see if the debugger works.
 // Rationale: Vulkan validation layers will scream at you if you do not free the debug report callback.

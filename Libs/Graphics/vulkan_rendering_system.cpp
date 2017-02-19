@@ -2,6 +2,9 @@
 #include <GLFW/glfw3.h>
 #include "vulkan_errors.h"
 
+// Dynamically loaded functions
+static PFN_vkDestroySurfaceKHR  s_destroy_surface_khr_ = nullptr;
+
 Phyre::Graphics::VulkanRenderingSystem::VulkanRenderingSystem() : 
 instance_extension_names_({
     VK_KHR_SURFACE_EXTENSION_NAME,
@@ -61,8 +64,18 @@ p_debugger_(new VulkanDebugger)
 
 Phyre::Graphics::VulkanRenderingSystem::~VulkanRenderingSystem() {
     delete p_debugger_;
+    DestroySurface();
     device_.destroy();
     vk_instance_.destroy();
+}
+
+void Phyre::Graphics::VulkanRenderingSystem::DestroySurface() {
+    s_destroy_surface_khr_ = reinterpret_cast<PFN_vkDestroySurfaceKHR>(vkGetInstanceProcAddr(vk_instance_, "vkDestroySurfaceKHR"));
+    if (s_destroy_surface_khr_) {
+        s_destroy_surface_khr_(vk_instance_, surface_, nullptr);
+    } else {
+        Logging::warning("Could not delete surface", *this);
+    }
 }
 
 bool
@@ -177,11 +190,12 @@ bool Phyre::Graphics::VulkanRenderingSystem::InitializeLogicalDevice() {
 	}
 
     vk::DeviceCreateInfo device_create_info;
+    uint32_t queue_create_info_count = 1U;
     device_create_info.setPpEnabledExtensionNames(device_extension_names_.data());
     device_create_info.setEnabledExtensionCount(device_extension_names_.size());
     device_create_info.setPpEnabledLayerNames(device_layer_names_.data());
     device_create_info.setEnabledLayerCount(device_layer_names_.size());
-    device_create_info.setQueueCreateInfoCount(1); // We only use one queue create info
+    device_create_info.setQueueCreateInfoCount(queue_create_info_count); // We only use one queue create info 
     device_create_info.setPQueueCreateInfos(&device_queue_create_info);
     
     vk::Result result = p_active_physical_device_->createDevice(&device_create_info, nullptr, &device_);

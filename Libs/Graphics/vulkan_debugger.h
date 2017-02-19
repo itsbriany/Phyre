@@ -6,6 +6,8 @@ namespace Graphics {
 
 class VulkanDebugger {
 public:
+    VulkanDebugger();
+
     // For cleaning up the callback
     ~VulkanDebugger();
 
