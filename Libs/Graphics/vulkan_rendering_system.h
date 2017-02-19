@@ -2,9 +2,16 @@
 #include "rendering_system_interface.h"
 #include "loggable_interface.h"
 #include "vulkan_debugger.h"
+#include "vulkan_window.h"
 
 namespace Phyre {
 namespace Graphics {
+
+#ifdef NDEBUG
+    const static bool kDebugging = false;
+#else
+    const static bool kDebugging = true;
+#endif
 
 class VulkanRenderingSystem : public RenderingSystemInterface, public Logging::LoggableInterface {
 public:
@@ -19,9 +26,6 @@ public:
 
     // Destroys all the allocated vulkan objects
     virtual ~VulkanRenderingSystem();
-
-    // Destroys the SurfaceKHR
-    void DestroySurface();
 
     // Returns true if the vulkan instance was instantiated
     bool InitializeVulkanInstance();
@@ -39,19 +43,13 @@ public:
     // Returns true if a command buffer could be created from the logical device
     bool InitializeCommandBuffers();
 
-    // Returns true if a surface was instantiated
-    bool InitializeSurface();
-
-    // Returns true if a swap chain was instantiated
-    bool InitializeSwapchain();
-
     // Loggable interface overrides
     std::string log() override {
         return "[RenderingSystem]";
     }
 
     // Get a reference to the Vulkan instance
-    const vk::Instance& instance() const { return vk_instance_; }
+    const vk::Instance& instance() const { return instance_; }
 
 
 private:
@@ -59,9 +57,6 @@ private:
     bool CheckValidationLayerSupport();
 
     void InitializeDebugExtensionsAndLayers();
-
-    // Returns true if GLFW was initialized
-    static bool InitializeGLFW();
 
     // According to the Vulkan 1.0 spec, we need to enable the following extensions:
     // WSI (Window System Integration): For presenting to surfaces
@@ -76,7 +71,7 @@ private:
     std::vector<const char*> device_layer_names_;
 
     // Our context
-    vk::Instance vk_instance_;
+    vk::Instance instance_;
 
     // Our debugger
     VulkanDebugger* p_debugger_;
@@ -102,16 +97,8 @@ private:
     // The command buffer to which we send Vulkan commands to
     CommandBufferVector command_buffers_;
 
-    // The surface we are using to render images
-    // TODO: This eventually needs to be destroyed
-    vk::SurfaceKHR surface_;
-
-
-    #ifdef NDEBUG
-        const static bool kDebugging = false;
-    #else
-        const static bool kDebugging = true;
-    #endif
+    // Where rendering operations involving a window are handled
+    VulkanWindow window_;
 };
 
 }

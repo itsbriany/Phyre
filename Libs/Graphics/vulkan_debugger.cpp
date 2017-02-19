@@ -1,4 +1,3 @@
-#pragma once
 #include "vulkan_debugger.h"
 #include "vulkan_errors.h"
 

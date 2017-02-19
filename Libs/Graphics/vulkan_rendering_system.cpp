@@ -2,9 +2,6 @@
 #include <GLFW/glfw3.h>
 #include "vulkan_errors.h"
 
-// Dynamically loaded functions
-static PFN_vkDestroySurfaceKHR  s_destroy_surface_khr_ = nullptr;
-
 Phyre::Graphics::VulkanRenderingSystem::VulkanRenderingSystem() : 
 instance_extension_names_({
     VK_KHR_SURFACE_EXTENSION_NAME,
@@ -19,29 +16,24 @@ instance_extension_names_({
 device_extension_names_({
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 }),
+window_(instance_),
 p_debugger_(new VulkanDebugger)
 {
-    if (!InitializeGLFW()) {
-        std::string error_message = "Could not initialize GLFW!";
-        Logging::fatal(error_message, *this);
-        throw std::runtime_error(error_message);
-    }
-    Logging::debug("Initialized GLFW", *this);
     if (!InitializeVulkanInstance()) {
         std::string error_message = "Could not initialize Vulkan instance!";
         Logging::fatal(error_message, *this);
         throw std::runtime_error(error_message);
     }
     Logging::debug("Initialized Vulkan instance", *this);
-    if (!InitializeSurface()) {
+    if (!window_.InitializeSurface()) {
         std::string error_message = "Could not initialize presentation surface!";
         Logging::fatal(error_message, *this);
         throw std::runtime_error(error_message);
     }
+    Logging::debug("Initialized Vulkan surface", *this);
     if (kDebugging) {
         InitializeDebugExtensionsAndLayers();
     }
-    Logging::debug("Initialized Vulkan surface", *this);
     if (!InitializePhysicalDevices()) {
         std::string error_message = "Could not initialize physical devices!";
         Logging::fatal(error_message, *this);
@@ -54,7 +46,7 @@ p_debugger_(new VulkanDebugger)
         throw std::runtime_error(error_message);
     }
     Logging::debug("Initialized Vulkan logical device", *this);
-    if (!InitializeSwapchain()) {
+    if (!window_.InitializeSwapchain()) {
         std::string error_message = "Could not initialize swapchain!";
         Logging::fatal(error_message, *this);
         throw std::runtime_error(error_message);
@@ -64,18 +56,9 @@ p_debugger_(new VulkanDebugger)
 
 Phyre::Graphics::VulkanRenderingSystem::~VulkanRenderingSystem() {
     delete p_debugger_;
-    DestroySurface();
+    window_.DestroySurface();
     device_.destroy();
-    vk_instance_.destroy();
-}
-
-void Phyre::Graphics::VulkanRenderingSystem::DestroySurface() {
-    s_destroy_surface_khr_ = reinterpret_cast<PFN_vkDestroySurfaceKHR>(vkGetInstanceProcAddr(vk_instance_, "vkDestroySurfaceKHR"));
-    if (s_destroy_surface_khr_) {
-        s_destroy_surface_khr_(vk_instance_, surface_, nullptr);
-    } else {
-        Logging::warning("Could not delete surface", *this);
-    }
+    instance_.destroy();
 }
 
 bool
@@ -105,10 +88,10 @@ Phyre::Graphics::VulkanRenderingSystem::InitializeVulkanInstance() {
     
     
 	// Are we successful in initializing the Vulkan instance?
-	vk::Result result = vk::createInstance(&instance_create_info, nullptr, &vk_instance_);
+	vk::Result result = vk::createInstance(&instance_create_info, nullptr, &instance_);
     if (ErrorCheck(result, log())) {
         if (kDebugging) {
-           return p_debugger_->InitializeDebugReport(&vk_instance_);
+           return p_debugger_->InitializeDebugReport(&instance_);
         }
         return true;
     }
@@ -117,7 +100,7 @@ Phyre::Graphics::VulkanRenderingSystem::InitializeVulkanInstance() {
 
 bool
 Phyre::Graphics::VulkanRenderingSystem::InitializePhysicalDevices() {
-	PhysicalDeviceVector results = vk_instance_.enumeratePhysicalDevices();
+	PhysicalDeviceVector results = instance_.enumeratePhysicalDevices();
 	for (const auto& result : results) {
 		const vk::PhysicalDeviceProperties properties = result.getProperties();
 		std::ostringstream oss;
@@ -146,7 +129,7 @@ Phyre::Graphics::VulkanRenderingSystem::InitializeSupportedQueueIndices() {
         // Initialize a vector letting us know which queues currently support surface presentation
         std::vector<vk::Bool32> surface_support_vector(physical_device.getQueueFamilyProperties().size());
         for (uint32_t queue_family_index = 0; queue_family_index < physical_device.getQueueFamilyProperties().size(); ++queue_family_index) {
-            physical_device.getSurfaceSupportKHR(queue_family_index, surface_, &surface_support_vector.data()[queue_family_index]);
+            physical_device.getSurfaceSupportKHR(queue_family_index, window_.GetSurfaceReference(), &surface_support_vector.data()[queue_family_index]);
         }
 
         std::vector<vk::QueueFamilyProperties> queue_family_properties_vector = physical_device.getQueueFamilyProperties();
@@ -182,7 +165,8 @@ Phyre::Graphics::VulkanRenderingSystem::InitializeSupportedQueueIndices() {
     return device_queue_create_info;
 }
 
-bool Phyre::Graphics::VulkanRenderingSystem::InitializeLogicalDevice() {
+bool 
+Phyre::Graphics::VulkanRenderingSystem::InitializeLogicalDevice() {
     vk::DeviceQueueCreateInfo device_queue_create_info = InitializeSupportedQueueIndices();
 	if (!p_active_physical_device_) {
         Logging::error("Could not find a device which supports graphics", *this);
@@ -229,50 +213,8 @@ Phyre::Graphics::VulkanRenderingSystem::InitializeCommandBuffers() {
     return true;
 }
 
-bool
-Phyre::Graphics::VulkanRenderingSystem::InitializeSurface() {
-    // Cross platform window handle
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    const char window_title[] = "Phyre";
-    GLFWwindow* window = glfwCreateWindow(640, 480, window_title, nullptr, nullptr);
-
-    // The surface where we render our output 
-    // Underneath the covers, this calls the appropriate Vk<PLATFORM>SurfaceCreateInfoKHR
-    // TODO: This surface must be destroyed before destrying the VkInstance
-    VkSurfaceKHR surface;
-    VkResult error = glfwCreateWindowSurface(vk_instance_, window, nullptr, &surface);
-    if (error == VK_ERROR_EXTENSION_NOT_PRESENT) {
-        Logging::error("Failed to instantiate vulkan surface: Instance WSI extensions not present", *this);
-        return false;
-    }
-    if (error != VK_SUCCESS) {
-        Logging::error("Failed to instantiate vulkan surface", *this);
-        return false;
-    }
-
-    surface_ = surface;
-    return true;
-}
-
-bool
-Phyre::Graphics::VulkanRenderingSystem::InitializeSwapchain() {
-    if (!surface_) {
-        Logging::error("No surface to create swapchain for", *this);
-        return false;
-    }
-
-    vk::SwapchainCreateInfoKHR swapchain_create_info;
-    swapchain_create_info.setSurface(surface_);
-    swapchain_create_info.setImageFormat(vk::Format::eB8G8R8A8Unorm);  // This pixel format will do for now
-    //swapchain_create_info.setMinImageCount(); // TODO: Fill these
-    //swapchain_create_info.setImageExtent();
-    //swapchain_create_info.setPreTransform();
-    //swapchain_create_info.setPresentMode();
-
-    return true;
-}
-
-bool Phyre::Graphics::VulkanRenderingSystem::CheckValidationLayerSupport() {
+bool 
+Phyre::Graphics::VulkanRenderingSystem::CheckValidationLayerSupport() {
     // Figure out how many layer properties we need to allocate
     uint32_t layer_count;
     vk::enumerateInstanceLayerProperties(&layer_count, nullptr);
@@ -297,14 +239,10 @@ bool Phyre::Graphics::VulkanRenderingSystem::CheckValidationLayerSupport() {
     });
 }
 
-void Phyre::Graphics::VulkanRenderingSystem::InitializeDebugExtensionsAndLayers() {
+void 
+Phyre::Graphics::VulkanRenderingSystem::InitializeDebugExtensionsAndLayers() {
     const char* kLunarGStandardValidation = "VK_LAYER_LUNARG_standard_validation";
     instance_extension_names_.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
     instance_layer_names_.push_back(kLunarGStandardValidation);
     device_layer_names_.push_back(kLunarGStandardValidation);
-}
-
-bool
-Phyre::Graphics::VulkanRenderingSystem::InitializeGLFW() {
-    return glfwInit();
 }
