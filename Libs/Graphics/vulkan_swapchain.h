@@ -9,11 +9,12 @@ class VulkanDevice;
 class VulkanWindow;
 class VulkanSwapchain {
 public:
-    struct DepthImage {
-        DepthImage(const vk::Image& image, const vk::ImageView& image_view,
-                   const vk::Format& format, const vk::DeviceMemory& device_memory) :
-            image(image), image_view(image_view), format(format), device_memory(device_memory) { }
+    struct SwapchainImage {
+        vk::Image image;
+        vk::ImageView image_view;
+    };
 
+    struct DepthImage {
         vk::Image image;
         vk::ImageView image_view;
         vk::Format format;
@@ -30,7 +31,7 @@ public:
 private:
     // --------------- Type definitions -----------------
     typedef std::vector<vk::PresentModeKHR> PresentModes;
-    typedef std::vector<vk::Image> ImageVector;
+    typedef std::vector<SwapchainImage> SwapchainImageVector;
     typedef std::vector<vk::ImageView> ImageViewVector;
 
 
@@ -71,7 +72,7 @@ private:
                                                 uint32_t presentation_queue_family_index);
 
     // Throws a runtime exception if the swapchain images failed to instantiate
-    static ImageVector InitializeSwapchainImages(const vk::Device& device, const vk::SwapchainKHR& swapchain);
+    static SwapchainImageVector InitializeSwapchainImages(const vk::Device& device, const vk::SwapchainKHR& swapchain, const vk::Format& format);
 
     // Returns true if we can find a proper memory type from the gpu's memory properties
     static bool CanFindMemoryTypeFromProperties(const vk::PhysicalDeviceMemoryProperties& memory_properties,
@@ -81,9 +82,6 @@ private:
 
     // Throws a runtime exception if the depth buffer image failed to instantiate
     static DepthImage VulkanSwapchain::InitializeDepthImage(const VulkanGPU& gpu, const vk::Device& device, uint32_t width, uint32_t height);
-
-    // Throws a runtime exception if the image view failed to instantiate
-    static ImageViewVector InitializeImageViews(const vk::Device& device, const ImageVector& swapchain_images, const vk::Format& format);
 
     // -------------------Data members -----------------
 
@@ -121,13 +119,10 @@ private:
     vk::SwapchainKHR swapchain_;
 
     // The images we swap
-    ImageVector swapchain_images_;
+    SwapchainImageVector swapchain_images_;
 
     // The depth image
     DepthImage depth_image_;
-
-    // The image view
-    ImageViewVector image_views_;
 };
 
 }

@@ -30,7 +30,7 @@ Phyre::Graphics::VulkanSwapchain::VulkanSwapchain(const VulkanWindow& window,
                                    preferred_surface_present_mode_,
                                    graphics_queue_family_index,
                                    presentation_family_index)),
-    swapchain_images_(InitializeSwapchainImages(device_, swapchain_)),
+    swapchain_images_(InitializeSwapchainImages(device_, swapchain_, preferred_surface_format_.format)),
     depth_image_(InitializeDepthImage(gpu_, device_, window.width(), window.height())) {
     Logging::debug("Instantiated", kWho);
 }
@@ -39,6 +39,9 @@ Phyre::Graphics::VulkanSwapchain::~VulkanSwapchain() {
     device_.destroyImage(depth_image_.image);
     device_.destroyImageView(depth_image_.image_view);
     device_.freeMemory(depth_image_.device_memory);
+    for (const auto& swapchain_image : swapchain_images_) {
+        device_.destroyImageView(swapchain_image.image_view);
+    }
     device_.destroySwapchainKHR(swapchain_, nullptr);
 }
 
@@ -193,18 +196,64 @@ vk::SwapchainKHR Phyre::Graphics::VulkanSwapchain::InitializeSwapchain(const vk:
     throw std::runtime_error(error_message);
 }
 
-Phyre::Graphics::VulkanSwapchain::ImageVector Phyre::Graphics::VulkanSwapchain::InitializeSwapchainImages(const vk::Device& device, const vk::SwapchainKHR& swapchain) {
+Phyre::Graphics::VulkanSwapchain::SwapchainImageVector Phyre::Graphics::VulkanSwapchain::InitializeSwapchainImages(const vk::Device& device,
+                                                                                                                   const vk::SwapchainKHR& swapchain,
+                                                                                                                   const vk::Format& format) {
     uint32_t swapchain_image_count = 0;
     device.getSwapchainImagesKHR(swapchain, &swapchain_image_count, nullptr);
 
-    ImageVector swapchain_images(swapchain_image_count);
-    vk::Result result = device.getSwapchainImagesKHR(swapchain, &swapchain_image_count, swapchain_images.data());
-    if (ErrorCheck(result, kWho)) {
-        return swapchain_images;
+    std::vector<vk::Image> image_buffers(swapchain_image_count);
+    vk::Result result = device.getSwapchainImagesKHR(swapchain, &swapchain_image_count, image_buffers.data());
+    if (!ErrorCheck(result, kWho)) {
+        std::string error_message = "Could not initialize swapchain images";
+        Logging::fatal(error_message, kWho);
+        throw std::runtime_error(error_message);
     }
-    std::string error_message = "Could not initialize swapchain images";
-    Logging::fatal(error_message, kWho);
-    throw std::runtime_error(error_message);
+
+    ImageViewVector image_views;
+    for (const vk::Image& image : image_buffers) {
+        vk::ImageViewCreateInfo color_image_view_create_info;
+
+        color_image_view_create_info.setImage(image);
+        color_image_view_create_info.setViewType(vk::ImageViewType::e2D);
+        color_image_view_create_info.setFormat(format);
+
+        // RGBA
+        vk::ComponentMapping component_mapping;
+        component_mapping.setR(vk::ComponentSwizzle::eR);
+        component_mapping.setG(vk::ComponentSwizzle::eG);
+        component_mapping.setB(vk::ComponentSwizzle::eB);
+        component_mapping.setA(vk::ComponentSwizzle::eA);
+        color_image_view_create_info.setComponents(component_mapping);
+
+        // Subresourcerange
+        vk::ImageSubresourceRange image_subresource_range;
+        image_subresource_range.setAspectMask(vk::ImageAspectFlagBits::eColor);
+        image_subresource_range.setBaseMipLevel(0);
+        image_subresource_range.setLevelCount(1);
+        image_subresource_range.setBaseArrayLayer(0);
+        image_subresource_range.setLayerCount(1);
+        color_image_view_create_info.setSubresourceRange(image_subresource_range);
+
+        vk::ImageView image_view;
+        result = device.createImageView(&color_image_view_create_info, nullptr, &image_view);
+        if (!ErrorCheck(result, kWho)) {
+            std::string error_message = "Failed to create image view";
+            Logging::fatal(error_message, kWho);
+            throw std::runtime_error(error_message);
+        }
+       
+        image_views.emplace_back(image_view);
+    }
+
+    SwapchainImageVector swapchain_images;
+    for (uint32_t i = 0; i < swapchain_image_count; ++i) {
+        SwapchainImage swapchain_image;
+        swapchain_image.image = image_buffers[i];
+        swapchain_image.image_view = image_views[i];
+        swapchain_images.emplace_back(swapchain_image);
+    }
+    return swapchain_images;
 }
 
 bool Phyre::Graphics::VulkanSwapchain::CanFindMemoryTypeFromProperties(const vk::PhysicalDeviceMemoryProperties& memory_properties,
@@ -332,45 +381,10 @@ Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::I
         throw std::runtime_error(error_message);
     }
 
-    return DepthImage(depth_image, depth_image_view, depth_format, device_memory);
-}
-
-Phyre::Graphics::VulkanSwapchain::ImageViewVector 
-Phyre::Graphics::VulkanSwapchain::InitializeImageViews(const vk::Device& device, const ImageVector& swapchain_images, const vk::Format& format) {
-    ImageViewVector image_views;
-    for (const vk::Image& image : swapchain_images) {
-        vk::ImageViewCreateInfo color_image_view_create_info;
-        
-        color_image_view_create_info.setImage(image);
-        color_image_view_create_info.setViewType(vk::ImageViewType::e2D);
-        color_image_view_create_info.setFormat(format);
-
-        // RGBA
-        vk::ComponentMapping component_mapping;
-        component_mapping.setR(vk::ComponentSwizzle::eR);
-        component_mapping.setG(vk::ComponentSwizzle::eG);
-        component_mapping.setB(vk::ComponentSwizzle::eB);
-        component_mapping.setA(vk::ComponentSwizzle::eA);
-        color_image_view_create_info.setComponents(component_mapping);
-
-        // Subresourcerange
-        vk::ImageSubresourceRange image_subresource_range;
-        image_subresource_range.setAspectMask(vk::ImageAspectFlagBits::eColor);
-        image_subresource_range.setBaseMipLevel(0);
-        image_subresource_range.setLevelCount(1);
-        image_subresource_range.setBaseArrayLayer(0);
-        image_subresource_range.setLayerCount(1);
-        color_image_view_create_info.setSubresourceRange(image_subresource_range);
-        
-        vk::ImageView image_view;
-        vk::Result result = device.createImageView(&color_image_view_create_info, nullptr, &image_view);
-        if (ErrorCheck(result, kWho)) {
-            image_views.emplace_back(image_view);
-            continue;
-        }
-        std::string error_message = "Failed to create image view";
-        Logging::fatal(error_message, kWho);
-        throw std::runtime_error(error_message);
-    }
-    return image_views;
+    DepthImage resulting_depth_image;
+    resulting_depth_image.image = depth_image;
+    resulting_depth_image.image_view = depth_image_view;
+    resulting_depth_image.format = depth_format;
+    resulting_depth_image.device_memory = device_memory;
+    return resulting_depth_image;
 }
