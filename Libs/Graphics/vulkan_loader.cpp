@@ -25,20 +25,21 @@ const std::vector<const char*> Phyre::Graphics::VulkanLoader::kInstanceExtension
 const std::string Phyre::Graphics::VulkanLoader::kWho = "[VulkanLoader]";
 
 // Initialization pipeline
-Phyre::Graphics::VulkanLoader::VulkanLoader() : 
+Phyre::Graphics::VulkanLoader::VulkanLoader() :
     instance_(LoadVulkanInstance()),
-    p_debugger_(new VulkanDebugger(&instance_)),
-    gpus_(LoadPhysicalDevices(instance_)),
+    p_debugger_(std::make_unique<VulkanDebugger>(&instance_)),
+    gpus_(LoadGPUs(instance_)),
     active_gpu_(gpus_.front()),
     p_window_(std::make_unique<VulkanWindow>(instance_)),
-    p_device_(std::make_shared<VulkanDevice>(active_gpu_, p_window_->GetSurfaceReference())) {
+    p_device_(std::make_unique<VulkanDevice>(active_gpu_, *p_window_))
+{
     Logging::debug("Instantiated", kWho);
 }
 
 Phyre::Graphics::VulkanLoader::~VulkanLoader() {
-    p_window_.reset();
     p_device_.reset();
-    delete p_debugger_;
+    p_window_.reset();
+    p_debugger_.reset();
     instance_.destroy();
 }
 
@@ -79,19 +80,22 @@ vk::Instance Phyre::Graphics::VulkanLoader::LoadVulkanInstance() {
     throw std::runtime_error(error_message);
 }
 
-Phyre::Graphics::VulkanLoader::PhysicalDeviceVector Phyre::Graphics::VulkanLoader::LoadPhysicalDevices(const vk::Instance& instance) {
-	PhysicalDeviceVector gpus = instance.enumeratePhysicalDevices();
-	for (const auto& result : gpus) {
-		const vk::PhysicalDeviceProperties properties = result.getProperties();
+Phyre::Graphics::VulkanLoader::GPUVector Phyre::Graphics::VulkanLoader::LoadGPUs(const vk::Instance& instance) {
+    GPUVector gpus;
+    std::vector<vk::PhysicalDevice> physical_device_vector = instance.enumeratePhysicalDevices();
+	for (const vk::PhysicalDevice& physical_device : physical_device_vector) {
+		const vk::PhysicalDeviceProperties properties = physical_device.getProperties();
 		std::ostringstream oss;
         oss << "Found device: " << properties.deviceName;
 		Logging::info(oss.str(), kWho);
+        gpus.emplace_back(VulkanGPU(physical_device));
 	}
     if (gpus.empty()) {
         std::string error_message = "Could not locate any GPUs";
         Logging::fatal(error_message, kWho);
         throw std::runtime_error(error_message);
     }
+
     return gpus;
 }
 

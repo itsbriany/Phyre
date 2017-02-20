@@ -6,15 +6,20 @@
 const std::string Phyre::Graphics::VulkanSwapchain::kWho = "[VulkanSwapchain]";
 
 // Initialization pipeline
-Phyre::Graphics::VulkanSwapchain::VulkanSwapchain(const VulkanWindow& window, const VulkanDevice& device) :
+Phyre::Graphics::VulkanSwapchain::VulkanSwapchain(const VulkanWindow& window,
+                                                  const VulkanGPU& gpu,
+                                                  const vk::Device& device, 
+                                                  uint32_t graphics_queue_family_index, 
+                                                  uint32_t presentation_family_index) :
     surface_(window.GetSurfaceReference()),
+    gpu_(gpu),
     device_(device),
-    surface_formats_(InitializeSurfaceFormats(surface_, device.GpuReference())),
+    surface_formats_(InitializeSurfaceFormats(surface_, gpu_.PhysicalDeviceReference())),
     preferred_surface_format_(InitializePreferredSurfaceFormat(surface_formats_)),
-    surface_capabilities_(InitializeSurfaceCapabilities(surface_, device.GpuReference())),
+    surface_capabilities_(InitializeSurfaceCapabilities(surface_, gpu_.PhysicalDeviceReference())),
     swapchain_extent_(InitializeSwapchainExtent(window.width(), window.height(), surface_capabilities_)),
     pre_transform_(InitializePreTransform(surface_capabilities_)),
-    surface_present_modes_(InitializeSurfacePresentModes(surface_, device.GpuReference())),
+    surface_present_modes_(InitializeSurfacePresentModes(surface_, gpu_.PhysicalDeviceReference())),
     preferred_surface_present_mode_(InitializePreferredPresentMode(surface_present_modes_)),
     swapchain_(InitializeSwapchain(device,
                                    surface_,
@@ -22,8 +27,20 @@ Phyre::Graphics::VulkanSwapchain::VulkanSwapchain(const VulkanWindow& window, co
                                    preferred_surface_format_,
                                    swapchain_extent_,
                                    pre_transform_,
-                                   preferred_surface_present_mode_))
-{}
+                                   preferred_surface_present_mode_,
+                                   graphics_queue_family_index,
+                                   presentation_family_index)),
+    swapchain_images_(InitializeSwapchainImages(device_, swapchain_)),
+    depth_image_(InitializeDepthImage(gpu_, device_, window.width(), window.height())) {
+    Logging::debug("Instantiated", kWho);
+}
+
+Phyre::Graphics::VulkanSwapchain::~VulkanSwapchain() {
+    device_.destroyImage(depth_image_.image);
+    device_.destroyImageView(depth_image_.image_view);
+    device_.freeMemory(depth_image_.device_memory);
+    device_.destroySwapchainKHR(swapchain_, nullptr);
+}
 
 std::vector<vk::SurfaceFormatKHR> Phyre::Graphics::VulkanSwapchain::InitializeSurfaceFormats(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& gpu) {
     uint32_t surface_format_count = 0;
@@ -129,13 +146,15 @@ vk::PresentModeKHR Phyre::Graphics::VulkanSwapchain::InitializePreferredPresentM
     return vk::PresentModeKHR::eImmediate;
 }
 
-vk::SwapchainKHR Phyre::Graphics::VulkanSwapchain::InitializeSwapchain(const VulkanDevice& device, 
+vk::SwapchainKHR Phyre::Graphics::VulkanSwapchain::InitializeSwapchain(const vk::Device& device, 
                                                                        const vk::SurfaceKHR& surface, 
                                                                        const vk::SurfaceCapabilitiesKHR& surface_capabilities,
                                                                        const vk::SurfaceFormatKHR& surface_format,
                                                                        const vk::Extent2D& swapchain_extent,
                                                                        const vk::SurfaceTransformFlagBitsKHR& pre_transform,
-                                                                       const vk::PresentModeKHR& surface_present_mode) {
+                                                                       const vk::PresentModeKHR& surface_present_mode,
+                                                                       uint32_t graphics_queue_family_index,
+                                                                       uint32_t presentation_queue_family_index) {
     vk::SwapchainCreateInfoKHR swapchain_create_info;
     swapchain_create_info.setSurface(surface);
     swapchain_create_info.setMinImageCount(surface_capabilities.minImageCount); // Minimum is generally double buffering
@@ -153,18 +172,18 @@ vk::SwapchainKHR Phyre::Graphics::VulkanSwapchain::InitializeSwapchain(const Vul
     swapchain_create_info.setClipped(true); // We are allowd to discard rendering operations affecting regions of the surface which are not visible
     swapchain_create_info.setOldSwapchain(nullptr);
 
-    if (device.graphics_queue_family_index() != device.presentation_queue_family_index()) {
+    if (graphics_queue_family_index != presentation_queue_family_index) {
         // When the graphics and present queues are from different queue families,
         // we either have to explicitly transfer ownership of images between
         // the queues, or we have to share image resources between them
-        std::array<uint32_t, 2> queueFamilyIndices = { device.graphics_queue_family_index(), device.presentation_queue_family_index() };
+        std::array<uint32_t, 2> queueFamilyIndices = { graphics_queue_family_index, presentation_queue_family_index };
         swapchain_create_info.imageSharingMode = vk::SharingMode::eConcurrent;
         swapchain_create_info.queueFamilyIndexCount = queueFamilyIndices.size();
         swapchain_create_info.pQueueFamilyIndices = queueFamilyIndices.data();
     }
     
     vk::SwapchainKHR swapchain;
-    vk::Result result = device.DeviceReference().createSwapchainKHR(&swapchain_create_info, nullptr, &swapchain);
+    vk::Result result = device.createSwapchainKHR(&swapchain_create_info, nullptr, &swapchain);
     if (ErrorCheck(result, kWho)) {
         return swapchain;
     }
@@ -172,4 +191,186 @@ vk::SwapchainKHR Phyre::Graphics::VulkanSwapchain::InitializeSwapchain(const Vul
     std::string error_message = "Failed to initialize swapchain";
     Logging::fatal(error_message, kWho);
     throw std::runtime_error(error_message);
+}
+
+Phyre::Graphics::VulkanSwapchain::ImageVector Phyre::Graphics::VulkanSwapchain::InitializeSwapchainImages(const vk::Device& device, const vk::SwapchainKHR& swapchain) {
+    uint32_t swapchain_image_count = 0;
+    device.getSwapchainImagesKHR(swapchain, &swapchain_image_count, nullptr);
+
+    ImageVector swapchain_images(swapchain_image_count);
+    vk::Result result = device.getSwapchainImagesKHR(swapchain, &swapchain_image_count, swapchain_images.data());
+    if (ErrorCheck(result, kWho)) {
+        return swapchain_images;
+    }
+    std::string error_message = "Could not initialize swapchain images";
+    Logging::fatal(error_message, kWho);
+    throw std::runtime_error(error_message);
+}
+
+bool Phyre::Graphics::VulkanSwapchain::CanFindMemoryTypeFromProperties(const vk::PhysicalDeviceMemoryProperties& memory_properties,
+                                                                       uint32_t type_bits,
+                                                                       vk::MemoryPropertyFlagBits requirements_mask,
+                                                                       uint32_t& type_index) {
+    // Search memtypes to find first index with those properties
+    for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++) {
+        if ((type_bits & uint32_t(vk::MemoryPropertyFlagBits::eDeviceLocal)) == 1) {
+            // Type is available, does it match user properties?
+            if ((memory_properties.memoryTypes[i].propertyFlags & requirements_mask) == requirements_mask) {
+                type_index = i;
+                return true;
+            }
+        }
+        type_bits >>= 1;
+    }
+    // No memory types matched, return failure
+    return false;
+}
+
+Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::InitializeDepthImage(const VulkanGPU& gpu, const vk::Device& device, uint32_t width, uint32_t height) {
+    // Create a depth buffer image so that we can eventually have 3D rendering.
+    vk::ImageCreateInfo image_create_info;
+    vk::Format depth_format = vk::Format::eD16Unorm;
+    vk::FormatProperties format_properties;
+    gpu.PhysicalDeviceReference().getFormatProperties(depth_format, &format_properties);
+
+    // Make sure the GPU supports depth
+    if (format_properties.linearTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment) {
+        image_create_info.setTiling(vk::ImageTiling::eLinear);
+    } else if (format_properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment) {
+        image_create_info.setTiling(vk::ImageTiling::eOptimal);
+    } else {
+        /* Try other depth formats? */
+        std::string error_message = "VK_FORMAT_D16_UNORM Unsupported";
+        Logging::fatal(error_message, kWho);
+        throw std::runtime_error(error_message);
+    }
+
+    image_create_info.setImageType(vk::ImageType::e2D);
+    image_create_info.setFormat(depth_format);
+
+    vk::Extent3D extent;
+    extent.setWidth(width);
+    extent.setHeight(height);
+    extent.setDepth(1);
+    image_create_info.setExtent(extent);
+
+    image_create_info.setMipLevels(1);
+    image_create_info.setArrayLayers(1);
+    image_create_info.setSamples(vk::SampleCountFlagBits::e1);
+    image_create_info.setInitialLayout(vk::ImageLayout::eUndefined);
+    image_create_info.setUsage(vk::ImageUsageFlagBits::eDepthStencilAttachment);
+    image_create_info.setQueueFamilyIndexCount(0);
+    image_create_info.setPQueueFamilyIndices(nullptr);
+    image_create_info.setSharingMode(vk::SharingMode::eExclusive);
+
+    vk::Image depth_image;
+    vk::Result result = device.createImage(&image_create_info, nullptr, &depth_image);
+    if (!ErrorCheck(result, kWho)) {
+        std::string error_message = "Could not create image";
+        Logging::fatal(error_message, kWho);
+        throw std::runtime_error(error_message);
+    }
+
+    // Gather memory allocation requirements for non-sparse images
+    // We do this because we still need to figure out how much memory to allocate.
+    // There may be alignment constraints placed by the GPU hardware, so we need to be aware of this.
+    vk::MemoryRequirements memory_requirements;
+    device.getImageMemoryRequirements(depth_image, &memory_requirements);
+    
+    // Now that we know about the memory constraints, we can now allocate memory for our image
+    /* Use the memory properties to determine the type of memory required */
+    vk::MemoryAllocateInfo memory_allocate_info;
+    vk::MemoryPropertyFlagBits requirements_mask = vk::MemoryPropertyFlagBits::eDeviceLocal;
+    if(!CanFindMemoryTypeFromProperties(gpu.MemoryPropertiesReference(), memory_requirements.memoryTypeBits, requirements_mask, memory_allocate_info.memoryTypeIndex)) {
+        std::string error_message = "Could not satisfy memory requirements for image";
+        Logging::fatal(error_message, kWho);
+        throw std::runtime_error(error_message);
+    }
+    
+    memory_allocate_info.setAllocationSize(memory_requirements.size);
+    memory_allocate_info.setMemoryTypeIndex(memory_allocate_info.memoryTypeIndex);
+
+    vk::DeviceMemory device_memory;
+    result = device.allocateMemory(&memory_allocate_info, nullptr, &device_memory);
+    if (!ErrorCheck(result, kWho)) {
+        std::string error_message = "Failed to allocate device memory for image";
+        Logging::fatal(error_message, kWho);
+        throw std::runtime_error(error_message);
+    }
+
+    // Finally, we may bind the memory to our depth image buffer
+    device.bindImageMemory(depth_image, device_memory, 0);
+
+    // Give it a view
+    vk::ImageViewCreateInfo depth_image_view_create_info;
+    depth_image_view_create_info.setImage(depth_image);
+    depth_image_view_create_info.setFormat(depth_format);
+    
+    // RGBA
+    vk::ComponentMapping component_mapping;
+    component_mapping.setR(vk::ComponentSwizzle::eR);
+    component_mapping.setG(vk::ComponentSwizzle::eG);
+    component_mapping.setB(vk::ComponentSwizzle::eB);
+    component_mapping.setA(vk::ComponentSwizzle::eA);
+    depth_image_view_create_info.setComponents(component_mapping);
+
+    // Subresources
+    vk::ImageSubresourceRange image_subresource_range;
+    image_subresource_range.setAspectMask(vk::ImageAspectFlagBits::eDepth); // TODO Might want add stencil as well?
+    image_subresource_range.setBaseMipLevel(0);
+    image_subresource_range.setLevelCount(1);
+    image_subresource_range.setBaseArrayLayer(0);
+    image_subresource_range.setLayerCount(1);
+    depth_image_view_create_info.setSubresourceRange(image_subresource_range);
+    depth_image_view_create_info.setViewType(vk::ImageViewType::e2D);
+
+    vk::ImageView depth_image_view;
+    result = device.createImageView(&depth_image_view_create_info, nullptr, &depth_image_view);
+    if (!ErrorCheck(result, kWho)) {
+        std::string error_message = "Failed to initialize depth image view";
+        Logging::fatal(error_message, kWho);
+        throw std::runtime_error(error_message);
+    }
+
+    return DepthImage(depth_image, depth_image_view, depth_format, device_memory);
+}
+
+Phyre::Graphics::VulkanSwapchain::ImageViewVector 
+Phyre::Graphics::VulkanSwapchain::InitializeImageViews(const vk::Device& device, const ImageVector& swapchain_images, const vk::Format& format) {
+    ImageViewVector image_views;
+    for (const vk::Image& image : swapchain_images) {
+        vk::ImageViewCreateInfo color_image_view_create_info;
+        
+        color_image_view_create_info.setImage(image);
+        color_image_view_create_info.setViewType(vk::ImageViewType::e2D);
+        color_image_view_create_info.setFormat(format);
+
+        // RGBA
+        vk::ComponentMapping component_mapping;
+        component_mapping.setR(vk::ComponentSwizzle::eR);
+        component_mapping.setG(vk::ComponentSwizzle::eG);
+        component_mapping.setB(vk::ComponentSwizzle::eB);
+        component_mapping.setA(vk::ComponentSwizzle::eA);
+        color_image_view_create_info.setComponents(component_mapping);
+
+        // Subresourcerange
+        vk::ImageSubresourceRange image_subresource_range;
+        image_subresource_range.setAspectMask(vk::ImageAspectFlagBits::eColor);
+        image_subresource_range.setBaseMipLevel(0);
+        image_subresource_range.setLevelCount(1);
+        image_subresource_range.setBaseArrayLayer(0);
+        image_subresource_range.setLayerCount(1);
+        color_image_view_create_info.setSubresourceRange(image_subresource_range);
+        
+        vk::ImageView image_view;
+        vk::Result result = device.createImageView(&color_image_view_create_info, nullptr, &image_view);
+        if (ErrorCheck(result, kWho)) {
+            image_views.emplace_back(image_view);
+            continue;
+        }
+        std::string error_message = "Failed to create image view";
+        Logging::fatal(error_message, kWho);
+        throw std::runtime_error(error_message);
+    }
+    return image_views;
 }

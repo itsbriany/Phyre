@@ -2,6 +2,7 @@
 #include "vulkan_debugger.h"
 #include "vulkan_window.h"
 #include "vulkan_device.h"
+#include "vulkan_gpu.h"
 
 namespace Phyre {
 namespace Graphics {
@@ -18,8 +19,7 @@ public:
     static const char* kLunarGStandardValidation;
 
     // Type definitions
-    typedef std::shared_ptr<vk::PhysicalDevice> PtrPhysicalDevice;
-    typedef std::vector<vk::PhysicalDevice> PhysicalDeviceVector;
+    typedef std::vector<VulkanGPU> GPUVector;
     typedef std::vector<vk::DeviceQueueCreateInfo> DeviceQueueCreateInfoVector;
 
     // Construction and destruction
@@ -40,25 +40,25 @@ private:
     static vk::Instance LoadVulkanInstance();
 
     // Throws a runtime exception if physical devices could be initialized
-    static PhysicalDeviceVector LoadPhysicalDevices(const vk::Instance& instance);
+    static GPUVector LoadGPUs(const vk::Instance& instance);
 
     // Our debugger
-    VulkanDebugger* p_debugger_;
+    std::unique_ptr<VulkanDebugger> p_debugger_;
 
     // Our context
     vk::Instance instance_;
 
     // The Vulkan Physical devices
-    PhysicalDeviceVector gpus_;
+    GPUVector gpus_;
 
     // A reference to the Vulkan Physical device we are currently using
-    const vk::PhysicalDevice& active_gpu_;
+    const VulkanGPU& active_gpu_;
 
     // Where rendering operations involving a window are handled
     std::unique_ptr<VulkanWindow> p_window_;
 
     // Points to the logical device currently in use
-    std::shared_ptr<VulkanDevice> p_device_;
+    std::unique_ptr<VulkanDevice> p_device_;
 
     static const std::vector<const char*> kInstanceLayerNames;
     static const std::vector<const char*> kInstanceExtensionNames;

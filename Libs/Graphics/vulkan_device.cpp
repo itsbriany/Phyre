@@ -4,23 +4,27 @@
 
 const std::string Phyre::Graphics::VulkanDevice::kWho = "[VulkanDevice]";
 
-Phyre::Graphics::VulkanDevice::VulkanDevice(const vk::PhysicalDevice& gpu, const vk::SurfaceKHR& surface) :
+Phyre::Graphics::VulkanDevice::VulkanDevice(const VulkanGPU& gpu, const VulkanWindow& window) :
     gpu_(gpu),
-    graphics_queue_family_index_(InitializeGraphicsQueueIndex(gpu_)),
-    presentation_queue_family_index_(InitializePresentationQueueIndex(gpu_, surface, graphics_queue_family_index_)),
-    device_(InitializeLogicalDevice(gpu_)),
+    graphics_queue_family_index_(InitializeGraphicsQueueIndex(gpu_.PhysicalDeviceReference())),
+    presentation_queue_family_index_(InitializePresentationQueueIndex(gpu_.PhysicalDeviceReference(), window.GetSurfaceReference(), graphics_queue_family_index_)),
+    device_(InitializeLogicalDevice(gpu_.PhysicalDeviceReference())),
     command_pool_(InitializeCommandPool(device_, graphics_queue_family_index_)),
-    command_buffers_(InitializeCommandBuffers(device_, command_pool_))
-{}
+    command_buffers_(InitializeCommandBuffers(device_, command_pool_)),
+    p_swapchain_(std::make_unique<VulkanSwapchain>(window, gpu_, device_, graphics_queue_family_index_, presentation_queue_family_index_)) {
+    Logging::debug("Instantiated", kWho);
+}
 
 Phyre::Graphics::VulkanDevice::~VulkanDevice() {
+    p_swapchain_.reset();
     device_.destroyCommandPool(command_pool_, nullptr);
     device_.destroy();
 }
 
 vk::Device Phyre::Graphics::VulkanDevice::InitializeLogicalDevice(const vk::PhysicalDevice& gpu) {
     std::vector<float> queue_priorities;
-    std::vector<vk::DeviceQueueCreateInfo> device_queue_create_infos(1, PrepareGraphicsQueueInfo(gpu, queue_priorities));
+    uint32_t max_queue_count = 1; // Let's only use one queue for now
+    std::vector<vk::DeviceQueueCreateInfo> device_queue_create_infos(1, PrepareGraphicsQueueInfo(gpu, queue_priorities, max_queue_count));
     
     vk::DeviceCreateInfo device_create_info;
     std::vector<const char*> device_extension_names = DeviceExtentionNames();
@@ -80,7 +84,7 @@ Phyre::Graphics::VulkanDevice::CommandBufferVector Phyre::Graphics::VulkanDevice
     return command_buffers;
 }
 
-vk::DeviceQueueCreateInfo Phyre::Graphics::VulkanDevice::PrepareGraphicsQueueInfo(const vk::PhysicalDevice& gpu, std::vector<float>& queue_priorities) {
+vk::DeviceQueueCreateInfo Phyre::Graphics::VulkanDevice::PrepareGraphicsQueueInfo(const vk::PhysicalDevice& gpu, std::vector<float>& queue_priorities, uint32_t max_queue_count) {
     /**
     * Queues are categorized into families. We can think of families as GPU capabilities
     * such as Graphics, Compute, performing pixel block copies (blits), etc...
@@ -95,8 +99,16 @@ vk::DeviceQueueCreateInfo Phyre::Graphics::VulkanDevice::PrepareGraphicsQueueInf
                 // Index the queues to point to the graphics family and balance the load between them
                 // by assigning them all the same queue priority level.
                 device_queue_create_info.setQueueFamilyIndex(queue_index);
-                device_queue_create_info.setQueueCount(queue_family_properties.queueCount);
-                queue_priorities = std::vector<float>(queue_family_properties.queueCount, 1.0);
+                
+                // More queues means that we will need to use more memory
+                if (max_queue_count >= queue_family_properties.queueCount) {
+                     device_queue_create_info.setQueueCount(queue_family_properties.queueCount);
+                     queue_priorities = std::vector<float>(queue_family_properties.queueCount, 1.0);
+                } else {
+                    device_queue_create_info.setQueueCount(max_queue_count);
+                    queue_priorities = std::vector<float>(max_queue_count, 1.0);
+                }
+                 
                 device_queue_create_info.setPQueuePriorities(queue_priorities.data());
                 return device_queue_create_info;
             }
