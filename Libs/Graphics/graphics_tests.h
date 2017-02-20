@@ -5,10 +5,9 @@
 namespace Phyre {
 namespace Graphics {
 
-// TODO: Perhaps instead of crashing, throw exception?
 TEST(VulkanRenderingSystemTest, Instantiates) {
     VulkanRenderingSystem rendering_system_;
-    EXPECT_TRUE(true);
+    rendering_system_.Start();
 }
 
 }

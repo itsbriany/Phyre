@@ -6,7 +6,9 @@ namespace Graphics {
 class RenderingSystemInterface {
 public:
     virtual ~RenderingSystemInterface() { }
-    // TODO: Higher level actions that can be accomplished using any graphic library
+    
+    // Throws a runtime exception if the rendering system failed to start correctly
+    virtual void Start() = 0;
 };
 
 }

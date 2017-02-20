@@ -18,7 +18,11 @@ VKAPI_ATTR VkResult VKAPI_CALL vkCreateDebugReportCallbackEXT(
     return VK_ERROR_EXTENSION_NOT_PRESENT;
 }
 
-Phyre::Graphics::VulkanDebugger::VulkanDebugger() : p_vk_instance_(nullptr), debug_report_callback_(nullptr) {}
+const std::string Phyre::Graphics::VulkanDebugger::kWho = "[VulkanDebugger]";
+
+Phyre::Graphics::VulkanDebugger::VulkanDebugger(const vk::Instance* instance) : p_vk_instance_(instance), debug_report_callback_(nullptr) {
+    Logging::debug("Intantiated", kWho);
+}
 
 // Comment out this definition to see if the debugger works.
 // Rationale: Vulkan validation layers will scream at you if you do not free the debug report callback.
@@ -29,9 +33,8 @@ Phyre::Graphics::VulkanDebugger::~VulkanDebugger() {
 }
 
 bool Phyre::Graphics::VulkanDebugger::InitializeDebugReport(const vk::Instance* instance) {
-    static const std::string who = "[VulkanDebugger]";
     if (!instance) {
-        Logging::error("Cannot initialize debug report when vulkan instance is nullptr", who);
+        Logging::error("Cannot initialize debug report when vulkan instance is nullptr", kWho);
         return false;
     }
 
@@ -42,7 +45,7 @@ bool Phyre::Graphics::VulkanDebugger::InitializeDebugReport(const vk::Instance* 
     debug_report_info.pUserData = reinterpret_cast<void *>(this);
 
     vk::Result result = instance->createDebugReportCallbackEXT(&debug_report_info, nullptr, &debug_report_callback_);
-    return ErrorCheck(result, who);
+    return ErrorCheck(result, kWho);
 }
 
 vk::Bool32 Phyre::Graphics::VulkanDebugger::Callback(VkDebugReportFlagsEXT flags,

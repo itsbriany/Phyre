@@ -2,65 +2,59 @@
 #include "logging.h"
 #include <GLFW/glfw3.h>
 
+const std::string Phyre::Graphics::VulkanWindow::kWho = "[VulkanWindow]";
+
 // Dynamically loaded functions
 static PFN_vkDestroySurfaceKHR  s_destroy_surface_khr_ = nullptr;
 
-Phyre::Graphics::VulkanWindow::VulkanWindow(const vk::Instance& instance) : instance_(instance) { }
+Phyre::Graphics::VulkanWindow::VulkanWindow(const vk::Instance& instance) :
+    instance_(instance),
+    width_(640),
+    height_(480),
+    surface_(InitializeSurface(width_, height_, instance_)) {
+    Logging::debug("Instantiated", kWho);
+}
 
-void 
-Phyre::Graphics::VulkanWindow::DestroySurface() {
+Phyre::Graphics::VulkanWindow::~VulkanWindow() {
+    DestroySurface();
+}
+
+void Phyre::Graphics::VulkanWindow::DestroySurface() const {
     s_destroy_surface_khr_ = reinterpret_cast<PFN_vkDestroySurfaceKHR>(vkGetInstanceProcAddr(instance_, "vkDestroySurfaceKHR"));
     if (s_destroy_surface_khr_) {
         s_destroy_surface_khr_(instance_, surface_, nullptr);
     } else {
-        Logging::warning("Could not delete surface", *this);
+        Logging::warning("Could not delete surface", kWho);
     }
 }
 
-bool 
-Phyre::Graphics::VulkanWindow::InitializeSurface() {
+vk::SurfaceKHR Phyre::Graphics::VulkanWindow::InitializeSurface(uint32_t width, uint32_t height, const vk::Instance& instance) {
+    std::string error_message;
     if (!glfwInit()) {
-        const std::string error_message = "Could not initialize GLFW!";
-        Logging::error(error_message, *this);
-        return false;
+        error_message = "Could not initialize GLFW!";
+        Logging::error(error_message, kWho);
+        throw std::runtime_error(error_message);
     }
 
     // Cross platform window handle
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     const char window_title[] = "Phyre";
-    GLFWwindow* window = glfwCreateWindow(640, 480, window_title, nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(width, height, window_title, nullptr, nullptr);
 
     // The surface where we render our output 
     // Underneath the covers, this calls the appropriate Vk<PLATFORM>SurfaceCreateInfoKHR
     VkSurfaceKHR surface;
-    VkResult error = glfwCreateWindowSurface(instance_, window, nullptr, &surface);
+    VkResult error = glfwCreateWindowSurface(instance, window, nullptr, &surface);
     if (error == VK_ERROR_EXTENSION_NOT_PRESENT) {
-        Logging::error("Failed to instantiate vulkan surface: Instance WSI extensions not present", *this);
-        return false;
+        error_message = "Failed to instantiate vulkan surface: Instance WSI extensions not present";
+        Logging::error(error_message, kWho);
+        throw std::runtime_error(error_message);
     }
     if (error != VK_SUCCESS) {
-        Logging::error("Failed to instantiate vulkan surface", *this);
-        return false;
+        error_message = "Failed to instantiate vulkan surface";
+        Logging::error(error_message, kWho);
+        throw std::runtime_error(error_message);
     }
 
-    surface_ = surface;
-    return true;
-}
-
-bool
-Phyre::Graphics::VulkanWindow::InitializeSwapchain() {
-    if (!surface_) {
-        Logging::error("No surface to create swapchain for", *this);
-        return false;
-    }
-
-    vk::SwapchainCreateInfoKHR swapchain_create_info;
-    swapchain_create_info.setSurface(surface_);
-    swapchain_create_info.setImageFormat(vk::Format::eB8G8R8A8Unorm);  // This pixel format will do for now
-                                                                       //swapchain_create_info.setMinImageCount(); // TODO: Fill these
-                                                                       //swapchain_create_info.setImageExtent();
-                                                                       //swapchain_create_info.setPreTransform();
-                                                                       //swapchain_create_info.setPresentMode();
-
-    return true;
+    return surface;
 }
