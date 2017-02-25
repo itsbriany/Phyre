@@ -9,6 +9,7 @@ function Install-Phyre() {
   Build-Gtest
   Build-GLFW
   Copy-Test-Environment
+  Spirv-Compile
 }
 
 if ($env:APPVEYOR) {

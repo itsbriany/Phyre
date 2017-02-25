@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.8)
 
 # Build the graphics library 
 include_directories(${Boost_INCLUDE_DIRS} ${PHYRE_LOGGING} ${Vulkan_INCLUDE_DIRS} ${VULKAN_CPP_BINDINGS}
@@ -12,8 +12,8 @@ add_library(Graphics rendering_system_interface.h vulkan_errors.h vulkan_errors.
             vulkan_render_pass.h vulkan_render_pass.cpp)
 target_link_libraries(Graphics ${Boost_LIBRARIES} ${Vulkan_LIBRARIES} glfw3 Logging)
 
-# The executable must run with gmock.dll in the same directory
 if (WIN32)
+    # The executable must run with gmock.dll in the same directory
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PHYRE_TESTING_BIN_DIR})
 endif()
 include_directories(${Boost_INCLUDE_DIRS} ${GMOCK_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS} ${TEST_DEPENDENCY_DIRS})
@@ -21,5 +21,6 @@ link_directories(${GMOCK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} ${GTEST_LIBRARY_DIR
 add_executable(GraphicsTests graphics_tests.h graphics_test_runner.cpp)
 target_link_libraries(GraphicsTests ${Boost_LIBRARIES} ${Vulkan_LIBRARIES} gmock gtest Graphics)
 if (WIN32)
+    set_target_properties(GraphicsTests PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PHYRE_TESTING_BIN_DIR}")
     unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 endif()

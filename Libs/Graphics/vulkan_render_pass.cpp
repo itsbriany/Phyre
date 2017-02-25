@@ -2,16 +2,22 @@
 #include "logging.h"
 #include "vulkan_errors.h"
 #include "swapchain_manager.h"
+#include <fstream>
+
 
 const std::string Phyre::Graphics::VulkanRenderPass::kWho = "[VulkanRenderPass]";
 
 Phyre::Graphics::VulkanRenderPass::VulkanRenderPass(const vk::Device& device, const SwapchainManager& swapchain_manager) :
     device_(device),
-    render_pass_(InitializeRenderPass(device_, swapchain_manager.samples(), swapchain_manager.image_format(), swapchain_manager.depth_format())) {
+    render_pass_(InitializeRenderPass(device_, swapchain_manager.samples(), swapchain_manager.image_format(), swapchain_manager.depth_format())),
+    shader_modules_(InitializeShaderModules(device_)) {
     Logging::trace("Initialized", kWho);
 }
 
 Phyre::Graphics::VulkanRenderPass::~VulkanRenderPass() {
+    for (const vk::ShaderModule& shader_module : shader_modules_) {
+        device_.destroyShaderModule(shader_module);
+    }
     device_.destroyRenderPass(render_pass_);
     Logging::trace("Destroyed", kWho);
 }
@@ -80,4 +86,75 @@ vk::RenderPass Phyre::Graphics::VulkanRenderPass::InitializeRenderPass(const vk:
         Logging::fatal("Failed to create render pass", kWho);
     }
     return render_pass;
+}
+
+Phyre::Graphics::VulkanRenderPass::ShaderModuleVector Phyre::Graphics::VulkanRenderPass::InitializeShaderModules(const vk::Device& device) {
+    // This is where the SPIR-V intermediate bytecode is located
+    std::string resource_directory("GraphicsTestResources/");
+    std::string vertex_file_name(resource_directory + "vertices.spv");
+    std::vector<uint32_t> vertex_shader_bytecode(ReadSpirV(vertex_file_name));
+
+    std::string fragment_file_name(resource_directory + "fragments.spv");
+    std::vector<uint32_t> fragment_shader_bytecode(ReadSpirV(fragment_file_name));
+
+    // We will be creating two pipeline shader stages: One for vertices, and one for fragments
+    // Create the vertex shader module
+    uint32_t shader_module_count = 2;
+    std::vector<vk::PipelineShaderStageCreateInfo> shader_stage_create_infos(shader_module_count, vk::PipelineShaderStageCreateInfo());
+    shader_stage_create_infos[0].setPSpecializationInfo(nullptr);
+    shader_stage_create_infos[0].setStage(vk::ShaderStageFlagBits::eVertex);
+    shader_stage_create_infos[0].setPName("main");
+
+    vk::ShaderModuleCreateInfo vertex_shader_module_create_info;
+    vertex_shader_module_create_info.setCodeSize(vertex_shader_bytecode.size() * sizeof(uint32_t));
+    vertex_shader_module_create_info.setPCode(vertex_shader_bytecode.data());
+    
+    vk::Result result = device.createShaderModule(&vertex_shader_module_create_info, nullptr, &shader_stage_create_infos[0].module);
+    if (!ErrorCheck(result, kWho)) {
+        Logging::fatal("Failed to create vertex shader module!", kWho); 
+    }
+
+    // Create the fragment shader module
+    shader_stage_create_infos[1].setPSpecializationInfo(nullptr);
+    shader_stage_create_infos[1].setStage(vk::ShaderStageFlagBits::eFragment);
+    shader_stage_create_infos[1].setPName("main");
+
+    vk::ShaderModuleCreateInfo fragment_shader_module_create_info;
+    fragment_shader_module_create_info.setCodeSize(fragment_shader_bytecode.size() * sizeof(uint32_t));
+    fragment_shader_module_create_info.setPCode(fragment_shader_bytecode.data());
+
+    result = device.createShaderModule(&fragment_shader_module_create_info, nullptr, &shader_stage_create_infos[1].module);
+    if (!ErrorCheck(result, kWho)) {
+        Logging::fatal("Failed to create fragment shader module!", kWho);
+    }
+
+    ShaderModuleVector shader_modules(shader_stage_create_infos.size());
+    std::transform(shader_stage_create_infos.begin(), shader_stage_create_infos.end(), shader_modules.begin(), [](const vk::PipelineShaderStageCreateInfo& info)
+    {
+        return info.module;
+    });
+    return shader_modules;
+}
+
+std::vector<uint32_t> Phyre::Graphics::VulkanRenderPass::ReadSpirV(const std::string spirv_shader_file_name) {
+    std::ifstream shader_file(spirv_shader_file_name, std::ios::binary);
+    if (!shader_file) {
+        std::ostringstream oss;
+        oss << "Could not open " << spirv_shader_file_name;
+        Logging::error(oss.str(), kWho);
+    }
+    // get length of file:
+    shader_file.seekg(0, shader_file.end);
+    size_t length = shader_file.tellg();
+    shader_file.seekg(0, shader_file.beg);
+
+    // Spir-V byte alignment should represent the size of a uint32_t
+    std::vector<uint32_t> vertex_shader_bytecode(length / sizeof(uint32_t));
+    shader_file.read(reinterpret_cast<char*>(vertex_shader_bytecode.data()), length);
+    std::ostringstream oss;
+    oss << "Read " << vertex_shader_bytecode.size() << " SPIR-V data blocks";
+    Logging::debug(oss.str(), kWho);
+    shader_file.close();
+
+    return vertex_shader_bytecode;
 }

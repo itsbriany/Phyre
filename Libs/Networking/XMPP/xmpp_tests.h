@@ -116,7 +116,7 @@ class SASLTest : public ::testing::Test, public Logging::LoggableInterface {
             std::ifstream input(file_name);
             std::ostringstream oss;
             if (!input) {
-                Logging::warning("Could not read file!", *this);
+                Logging::error("Could not read file!", *this);
                 return "";
             }
 

@@ -16,5 +16,6 @@ link_directories(${GMOCK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} ${GTEST_LIBRARY_DIR
 add_executable(XMPPTests xmpp_tests.h xmpp_test_runner.cpp)
 target_link_libraries(XMPPTests ${Boost_LIBRARIES} gmock gtest XMPP)
 if (WIN32)
+    set_target_properties(XMPPTests PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PHYRE_TESTING_BIN_DIR}")
     unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 endif()

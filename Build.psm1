@@ -105,3 +105,8 @@ function Build-Phyre([switch]$Debug, [switch] $Release) {
     }
     Set-Location $env:PHYRE_ROOT
 }
+
+function Spirv-Compile {
+    Set-Location $env:PHYRE_ROOT
+    .\spirv_compile.ps1
+}
