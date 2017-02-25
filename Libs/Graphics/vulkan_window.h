@@ -1,11 +1,11 @@
 #pragma once
 #include <vulkan.hpp>
-#include "vulkan_swapchain.h"
+#include "swapchain_manager.h"
 
 namespace Phyre {
 namespace Graphics {
 
-class VulkanDevice;
+class DeviceManager;
 class VulkanWindow {
 public:
     explicit VulkanWindow(const vk::Instance& instance);

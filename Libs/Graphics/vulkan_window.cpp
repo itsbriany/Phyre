@@ -12,11 +12,12 @@ Phyre::Graphics::VulkanWindow::VulkanWindow(const vk::Instance& instance) :
     width_(640),
     height_(480),
     surface_(InitializeSurface(width_, height_, instance_)) {
-    Logging::debug("Instantiated", kWho);
+    Logging::trace("Instantiated", kWho);
 }
 
 Phyre::Graphics::VulkanWindow::~VulkanWindow() {
     DestroySurface();
+    Logging::trace("Destroyed", kWho);
 }
 
 void Phyre::Graphics::VulkanWindow::DestroySurface() const {

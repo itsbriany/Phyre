@@ -98,6 +98,10 @@ set(GLFW_ROOT "${PHYRE_THIRD_PARTY}/glfw")
 set(GLFW_INCLUDE_DIR "${GLFW_ROOT}/include")
 set(GLFW_LIBRARY_DIR "${GLFW_ROOT}/Build/src")
 
+# Add GLM
+set(GLM_ROOT "${PHYRE_THIRD_PARTY}/glm")
+set(GLM_INCLUDE_DIR "${GLM_ROOT}")
+
 # Expected build path
 set(PHYRE_BUILD_PATH "$ENV{PHYRE_ROOT}/Build")
 

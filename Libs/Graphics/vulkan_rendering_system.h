@@ -18,6 +18,8 @@ public:
 private:
     // Loads the system and used to access various components
     VulkanLoader loader_;
+
+    static const std::string kWho;
 };
 
 }

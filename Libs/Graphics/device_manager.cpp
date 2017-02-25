@@ -1,27 +1,33 @@
-#include "vulkan_device.h"
+#include "device_manager.h"
 #include "vulkan_errors.h"
 #include "vulkan_loader.h"
 
-const std::string Phyre::Graphics::VulkanDevice::kWho = "[VulkanDevice]";
+const std::string Phyre::Graphics::DeviceManager::kWho = "[DeviceManager]";
 
-Phyre::Graphics::VulkanDevice::VulkanDevice(const VulkanGPU& gpu, const VulkanWindow& window) :
+Phyre::Graphics::DeviceManager::DeviceManager(const VulkanGPU& gpu, const VulkanWindow& window) :
     gpu_(gpu),
-    graphics_queue_family_index_(InitializeGraphicsQueueIndex(gpu_.PhysicalDeviceReference())),
-    presentation_queue_family_index_(InitializePresentationQueueIndex(gpu_.PhysicalDeviceReference(), window.GetSurfaceReference(), graphics_queue_family_index_)),
-    device_(InitializeLogicalDevice(gpu_.PhysicalDeviceReference())),
-    command_pool_(InitializeCommandPool(device_, graphics_queue_family_index_)),
-    command_buffers_(InitializeCommandBuffers(device_, command_pool_)),
-    p_swapchain_(std::make_unique<VulkanSwapchain>(window, gpu_, device_, graphics_queue_family_index_, presentation_queue_family_index_)) {
-    Logging::debug("Instantiated", kWho);
+    graphics_queue_family_index_(InitializeGraphicsQueueIndex(gpu_.physical_device())),
+    presentation_queue_family_index_(InitializePresentationQueueIndex(gpu_.physical_device(), window.GetSurfaceReference(), graphics_queue_family_index_)),
+    device_(InitializeLogicalDevice(gpu_.physical_device())),
+    memory_manager_(gpu_, device_),
+    p_command_buffer_manager_(new CommandBufferManager(*this)),
+    p_swapchain_(std::make_unique<SwapchainManager>(memory_manager_, window, gpu_, device_, graphics_queue_family_index_, presentation_queue_family_index_)),
+    p_pipeline_(std::make_unique<VulkanPipeline>(device_)),
+    p_render_pass_(std::make_unique<VulkanRenderPass>(device_, *p_swapchain_))
+{
+    Logging::trace("Instantiated", kWho);
 }
 
-Phyre::Graphics::VulkanDevice::~VulkanDevice() {
+Phyre::Graphics::DeviceManager::~DeviceManager() {
+    p_render_pass_.reset();
+    p_pipeline_.reset();
     p_swapchain_.reset();
-    device_.destroyCommandPool(command_pool_, nullptr);
+    delete p_command_buffer_manager_;
     device_.destroy();
+    Logging::trace("Destroyed", kWho);
 }
 
-vk::Device Phyre::Graphics::VulkanDevice::InitializeLogicalDevice(const vk::PhysicalDevice& gpu) {
+vk::Device Phyre::Graphics::DeviceManager::InitializeLogicalDevice(const vk::PhysicalDevice& gpu) {
     std::vector<float> queue_priorities;
     uint32_t max_queue_count = 1; // Let's only use one queue for now
     std::vector<vk::DeviceQueueCreateInfo> device_queue_create_infos(1, PrepareGraphicsQueueInfo(gpu, queue_priorities, max_queue_count));
@@ -52,39 +58,7 @@ vk::Device Phyre::Graphics::VulkanDevice::InitializeLogicalDevice(const vk::Phys
     throw std::runtime_error(error_message);
 }
 
-vk::CommandPool Phyre::Graphics::VulkanDevice::InitializeCommandPool(const vk::Device& device, uint32_t graphics_queue_family_index) {
-    /**
-    * Command buffers reside in command buffer pools.
-    * This is necessary for allocating command buffers
-    * because memory is coarsly allocated in large chunks between the CPU and GPU.
-    */
-    vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlags(), graphics_queue_family_index);
-    vk::CommandPool command_pool;
-    vk::Result create_command_pool_result = device.createCommandPool(&command_pool_create_info, nullptr, &command_pool);
-
-    if (create_command_pool_result != vk::Result::eSuccess) {
-        std::string error_message = "Could not initialize command pool from logical device";
-        Logging::fatal(error_message, kWho);
-        throw std::runtime_error(error_message);
-    }
-    return command_pool;
-}
-
-Phyre::Graphics::VulkanDevice::CommandBufferVector Phyre::Graphics::VulkanDevice::InitializeCommandBuffers(const vk::Device& device, const vk::CommandPool& command_pool) {
-    // Allocate the command buffers
-    uint32_t command_buffer_count = 1; // Only allocate one command buffer for now
-    vk::CommandBufferAllocateInfo command_buffer_allocate_info(command_pool, vk::CommandBufferLevel::ePrimary, command_buffer_count);
-    CommandBufferVector command_buffers = device.allocateCommandBuffers(command_buffer_allocate_info);
-    if (command_buffers.empty()) {
-        std::string error_message = "Failed to allocate command buffers";
-        Logging::fatal(error_message, kWho);
-        throw std::runtime_error(error_message);
-    }
-
-    return command_buffers;
-}
-
-vk::DeviceQueueCreateInfo Phyre::Graphics::VulkanDevice::PrepareGraphicsQueueInfo(const vk::PhysicalDevice& gpu, std::vector<float>& queue_priorities, uint32_t max_queue_count) {
+vk::DeviceQueueCreateInfo Phyre::Graphics::DeviceManager::PrepareGraphicsQueueInfo(const vk::PhysicalDevice& gpu, std::vector<float>& queue_priorities, uint32_t max_queue_count) {
     /**
     * Queues are categorized into families. We can think of families as GPU capabilities
     * such as Graphics, Compute, performing pixel block copies (blits), etc...
@@ -118,13 +92,13 @@ vk::DeviceQueueCreateInfo Phyre::Graphics::VulkanDevice::PrepareGraphicsQueueInf
     return device_queue_create_info;
 }
 
-std::vector<const char*> Phyre::Graphics::VulkanDevice::DeviceExtentionNames() {
+std::vector<const char*> Phyre::Graphics::DeviceManager::DeviceExtentionNames() {
     return std::vector<const char*> {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 }
 
-uint32_t Phyre::Graphics::VulkanDevice::InitializeGraphicsQueueIndex(const vk::PhysicalDevice& gpu) {
+uint32_t Phyre::Graphics::DeviceManager::InitializeGraphicsQueueIndex(const vk::PhysicalDevice& gpu) {
     std::vector<vk::QueueFamilyProperties> queue_family_properties_vector = gpu.getQueueFamilyProperties();
     for (const auto& queue_family_properties : queue_family_properties_vector) {
         for (uint32_t queue_index = 0; queue_index < queue_family_properties.queueCount; ++queue_index) {
@@ -139,7 +113,7 @@ uint32_t Phyre::Graphics::VulkanDevice::InitializeGraphicsQueueIndex(const vk::P
     return UINT32_MAX;
 }
 
-uint32_t Phyre::Graphics::VulkanDevice::InitializePresentationQueueIndex(const vk::PhysicalDevice& gpu, const vk::SurfaceKHR& surface, uint32_t graphics_queue_index) {
+uint32_t Phyre::Graphics::DeviceManager::InitializePresentationQueueIndex(const vk::PhysicalDevice& gpu, const vk::SurfaceKHR& surface, uint32_t graphics_queue_index) {
     uint32_t presentation_queue_index = UINT32_MAX;
 
     // Initialize a vector letting us know which queues currently support surface presentation

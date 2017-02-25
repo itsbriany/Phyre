@@ -1,26 +1,27 @@
 #pragma once
 #include <vulkan.hpp>
-#include "vulkan_swapchain.h"
+#include "swapchain_manager.h"
 #include "vulkan_gpu.h"
+#include "command_buffer_manager.h"
+#include "vulkan_memory_manager.h"
+#include "vulkan_pipeline.h"
+#include "vulkan_render_pass.h"
 
 namespace Phyre {
 namespace Graphics {
 
-class VulkanDevice {
+class DeviceManager {
 public:
-    // Type definitions
-    typedef std::vector<vk::CommandBuffer> CommandBufferVector;
-
-    explicit VulkanDevice(const VulkanGPU& gpu, const VulkanWindow& window);
+    explicit DeviceManager(const VulkanGPU& gpu, const VulkanWindow& window);
 
     // Clean up allocated resources
-    ~VulkanDevice();
+    ~DeviceManager();
 
     // Get a handle to the physical device
     const VulkanGPU& GpuReference() const { return gpu_; }
 
     // Get a handle to the logical device
-    const vk::Device& DeviceReference() const { return device_; }
+    const vk::Device& device() const { return device_; }
 
     // Getters
     uint32_t graphics_queue_family_index() const { return graphics_queue_family_index_; }
@@ -37,12 +38,6 @@ private:
 
     // Throws a runtime exception if the logical device failed to instantiate
     static vk::Device InitializeLogicalDevice(const vk::PhysicalDevice& gpu);
-
-    // Throws a runtime exception if the command pool failed to instantiate
-    static vk::CommandPool InitializeCommandPool(const vk::Device& device, uint32_t graphics_queue_family_index);
-
-    // Returns true if a command buffer could be created from the logical device
-    static CommandBufferVector InitializeCommandBuffers(const vk::Device& device, const vk::CommandPool& command_pool);
 
     // Returns the index from the gpu's queue family with a queue which is capable of graphics and presentation
     static uint32_t InitializePresentationQueueIndex(const vk::PhysicalDevice& gpu, const vk::SurfaceKHR& surface, uint32_t graphics_queue_index);
@@ -62,14 +57,20 @@ private:
     // VkInstance's physical devices
     vk::Device device_;
 
-    // The command pool from which we create command buffers
-    vk::CommandPool command_pool_;
+    // Manages memory and allocates buffers
+    VulkanMemoryManager memory_manager_;
 
-    // The command buffer to which we send Vulkan commands to
-    CommandBufferVector command_buffers_;
+    // Manages the command pools and buffers
+    CommandBufferManager* p_command_buffer_manager_;
 
     // Points the the swapchain for image handling
-    std::unique_ptr<VulkanSwapchain> p_swapchain_;
+    std::unique_ptr<SwapchainManager> p_swapchain_;
+
+    // A pointer to the Vulkan Pipeline
+    std::unique_ptr<VulkanPipeline> p_pipeline_;
+
+    // A pointer to the Vulkan render pass
+    std::unique_ptr<VulkanRenderPass> p_render_pass_;
 
     // For logging
     static const std::string kWho;

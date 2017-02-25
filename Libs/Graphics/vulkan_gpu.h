@@ -7,10 +7,10 @@ namespace Graphics {
 class VulkanGPU {
 public:
     explicit VulkanGPU(const vk::PhysicalDevice& physical_device);
-
-    const vk::PhysicalDevice& PhysicalDeviceReference() const { return physical_device_; }
-    const vk::PhysicalDeviceProperties& PropertiesReference() const { return properties_; }
-    const vk::PhysicalDeviceMemoryProperties& MemoryPropertiesReference() const { return memory_properties_; }
+    ~VulkanGPU();
+    const vk::PhysicalDevice& physical_device() const { return physical_device_; }
+    const vk::PhysicalDeviceProperties& properties() const { return properties_; }
+    const vk::PhysicalDeviceMemoryProperties& memory_properties() const { return memory_properties_; }
     
 private:
     static vk::PhysicalDeviceProperties InitializePhysicalDeviceProperties(const vk::PhysicalDevice& physical_device);

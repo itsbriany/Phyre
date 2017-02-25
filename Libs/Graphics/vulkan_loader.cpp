@@ -31,16 +31,17 @@ Phyre::Graphics::VulkanLoader::VulkanLoader() :
     gpus_(LoadGPUs(instance_)),
     active_gpu_(gpus_.front()),
     p_window_(std::make_unique<VulkanWindow>(instance_)),
-    p_device_(std::make_unique<VulkanDevice>(active_gpu_, *p_window_))
+    p_device_manager_(std::make_unique<DeviceManager>(active_gpu_, *p_window_))
 {
-    Logging::debug("Instantiated", kWho);
+    Logging::trace("Instantiated", kWho);
 }
 
 Phyre::Graphics::VulkanLoader::~VulkanLoader() {
-    p_device_.reset();
+    p_device_manager_.reset();
     p_window_.reset();
     p_debugger_.reset();
     instance_.destroy();
+    Logging::trace("Destroyed", kWho);
 }
 
 vk::Instance Phyre::Graphics::VulkanLoader::LoadVulkanInstance() {

@@ -21,7 +21,7 @@ VKAPI_ATTR VkResult VKAPI_CALL vkCreateDebugReportCallbackEXT(
 const std::string Phyre::Graphics::VulkanDebugger::kWho = "[VulkanDebugger]";
 
 Phyre::Graphics::VulkanDebugger::VulkanDebugger(const vk::Instance* instance) : p_vk_instance_(instance), debug_report_callback_(nullptr) {
-    Logging::debug("Intantiated", kWho);
+    Logging::trace("Intantiated", kWho);
 }
 
 // Comment out this definition to see if the debugger works.
@@ -30,6 +30,7 @@ Phyre::Graphics::VulkanDebugger::~VulkanDebugger() {
     if (s_destroy_debug_report_callback_proxy) {
         s_destroy_debug_report_callback_proxy(*p_vk_instance_, debug_report_callback_, nullptr);
     }
+    Logging::trace("Destoryed", kWho);
 }
 
 bool Phyre::Graphics::VulkanDebugger::InitializeDebugReport(const vk::Instance* instance) {

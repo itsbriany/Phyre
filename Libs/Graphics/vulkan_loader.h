@@ -1,8 +1,9 @@
 #pragma once
 #include "vulkan_debugger.h"
 #include "vulkan_window.h"
-#include "vulkan_device.h"
+#include "device_manager.h"
 #include "vulkan_gpu.h"
+#include "vulkan_pipeline.h"
 
 namespace Phyre {
 namespace Graphics {
@@ -35,11 +36,7 @@ public:
 private:
     // Returns true if we have validation layer support
     static bool CheckValidationLayerSupport();
-
-    // Throws a runtime exception if the vulkan instance was instantiated
     static vk::Instance LoadVulkanInstance();
-
-    // Throws a runtime exception if physical devices could be initialized
     static GPUVector LoadGPUs(const vk::Instance& instance);
 
     // Our debugger
@@ -58,7 +55,7 @@ private:
     std::unique_ptr<VulkanWindow> p_window_;
 
     // Points to the logical device currently in use
-    std::unique_ptr<VulkanDevice> p_device_;
+    std::unique_ptr<DeviceManager> p_device_manager_;
 
     static const std::vector<const char*> kInstanceLayerNames;
     static const std::vector<const char*> kInstanceExtensionNames;

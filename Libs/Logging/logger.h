@@ -55,10 +55,12 @@ public:
 
     static void fatal(const std::string& message, LoggableInterface& loggable) {
         BOOST_LOG_TRIVIAL(fatal) << loggable.log() << ' ' << message;
+        throw std::runtime_error(message);
     }
 
     static void fatal(const std::string& message, const std::string& who) {
         BOOST_LOG_TRIVIAL(fatal) << who << ' ' << message;
+        throw std::runtime_error(message);
     }
 
     static std::map<LogLevel, std::string> s_string_to_log_level_map;

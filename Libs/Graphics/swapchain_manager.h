@@ -4,10 +4,11 @@
 
 namespace Phyre {
 namespace Graphics {
-class VulkanDevice;
+class VulkanMemoryManager;
+class DeviceManager;
 
 class VulkanWindow;
-class VulkanSwapchain {
+class SwapchainManager {
 public:
     struct SwapchainImage {
         vk::Image image;
@@ -21,12 +22,18 @@ public:
         vk::DeviceMemory device_memory;
     };
 
-    explicit VulkanSwapchain(const VulkanWindow& window,
-                             const VulkanGPU& gpu,
-                             const vk::Device& device, 
-                             uint32_t graphics_queue_family_index,
-                             uint32_t presentation_family_index);
-    ~VulkanSwapchain();
+    explicit SwapchainManager(const VulkanMemoryManager& memory_manager,
+                              const VulkanWindow& window,
+                              const VulkanGPU& gpu,
+                              const vk::Device& device, 
+                              uint32_t graphics_queue_family_index,
+                              uint32_t presentation_family_index);
+
+    vk::Format image_format() const { return preferred_surface_format_.format; }
+    vk::Format depth_format() const { return depth_image_.format; }
+    vk::SampleCountFlagBits samples() const { return samples_; }
+
+    ~SwapchainManager();
 
 private:
     // --------------- Type definitions -----------------
@@ -74,16 +81,18 @@ private:
     // Throws a runtime exception if the swapchain images failed to instantiate
     static SwapchainImageVector InitializeSwapchainImages(const vk::Device& device, const vk::SwapchainKHR& swapchain, const vk::Format& format);
 
-    // Returns true if we can find a proper memory type from the gpu's memory properties
-    static bool CanFindMemoryTypeFromProperties(const vk::PhysicalDeviceMemoryProperties& memory_properties,
-                                                uint32_t type_bits,
-                                                vk::MemoryPropertyFlagBits requirements_mask,
-                                                uint32_t& type_index);
-
     // Throws a runtime exception if the depth buffer image failed to instantiate
-    static DepthImage VulkanSwapchain::InitializeDepthImage(const VulkanGPU& gpu, const vk::Device& device, uint32_t width, uint32_t height);
+    static DepthImage SwapchainManager::InitializeDepthImage(const VulkanMemoryManager& memory_manager, 
+                                                             const VulkanGPU& gpu,
+                                                             const vk::Device& device,
+                                                             uint32_t width, 
+                                                             uint32_t height,
+                                                             vk::SampleCountFlagBits samples);
 
     // -------------------Data members -----------------
+
+    // A reference to the memory manager
+    const VulkanMemoryManager& memory_manager_;
 
     // A reference to the surface we want to send images to
     const vk::SurfaceKHR& surface_;
@@ -120,6 +129,9 @@ private:
 
     // The images we swap
     SwapchainImageVector swapchain_images_;
+
+    // How many image samples we are using
+    vk::SampleCountFlagBits samples_;
 
     // The depth image
     DepthImage depth_image_;
