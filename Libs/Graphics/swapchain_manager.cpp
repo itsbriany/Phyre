@@ -14,6 +14,8 @@ Phyre::Graphics::SwapchainManager::SwapchainManager(const VulkanMemoryManager& m
                                                     uint32_t presentation_family_index) :
     memory_manager_(memory_manager),
     surface_(window.GetSurfaceReference()),
+    image_width_(window.width()),
+    image_height_(window.height()),
     gpu_(gpu),
     device_(device),
     surface_formats_(InitializeSurfaceFormats(surface_, gpu_.physical_device())),

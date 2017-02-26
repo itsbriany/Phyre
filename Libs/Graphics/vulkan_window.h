@@ -17,8 +17,8 @@ public:
     const vk::SurfaceKHR& GetSurfaceReference() const { return surface_; }
 
     // Getters
-    uint32_t width() const { return width_; }
-    uint32_t height() const { return height_; }
+    const uint32_t& width() const { return width_; }
+    const uint32_t& height() const { return height_; }
 
 private:
     // Throws a runtime exception if the surface could not properly be initialized

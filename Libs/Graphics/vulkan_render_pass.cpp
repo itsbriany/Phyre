@@ -10,11 +10,20 @@ const std::string Phyre::Graphics::VulkanRenderPass::kWho = "[VulkanRenderPass]"
 Phyre::Graphics::VulkanRenderPass::VulkanRenderPass(const vk::Device& device, const SwapchainManager& swapchain_manager) :
     device_(device),
     render_pass_(InitializeRenderPass(device_, swapchain_manager.samples(), swapchain_manager.image_format(), swapchain_manager.depth_format())),
-    shader_modules_(InitializeShaderModules(device_)) {
+    shader_modules_(InitializeShaderModules(device_)),
+    framebuffers_ (InitializeFramebuffers(device_,
+                                           swapchain_manager.depth_image().image_view,
+                                           render_pass_,
+                                           swapchain_manager.image_width(),
+                                           swapchain_manager.image_height(),
+                                           swapchain_manager.swapchain_images())) {
     Logging::trace("Initialized", kWho);
 }
 
 Phyre::Graphics::VulkanRenderPass::~VulkanRenderPass() {
+    for (const vk::Framebuffer& framebuffer : framebuffers_) {
+        device_.destroyFramebuffer(framebuffer);
+    }
     for (const vk::ShaderModule& shader_module : shader_modules_) {
         device_.destroyShaderModule(shader_module);
     }
@@ -134,6 +143,38 @@ Phyre::Graphics::VulkanRenderPass::ShaderModuleVector Phyre::Graphics::VulkanRen
         return info.module;
     });
     return shader_modules;
+}
+
+Phyre::Graphics::VulkanRenderPass::FramebufferVector Phyre::Graphics::VulkanRenderPass::InitializeFramebuffers(const vk::Device& device,
+                                                                                                               const vk::ImageView& depth_image_view,
+                                                                                                               const vk::RenderPass& render_pass,
+                                                                                                               const uint32_t width,
+                                                                                                               const uint32_t height,
+                                                                                                               const SwapchainManager::SwapchainImageVector& swapchain_imges) {
+    uint32_t color_index = 0;
+    uint32_t depth_index = 1;
+    std::array<vk::ImageView, 2> attachments;
+    attachments[depth_index] = depth_image_view;
+
+    vk::FramebufferCreateInfo create_info;
+    create_info.setRenderPass(render_pass);
+    create_info.setAttachmentCount(attachments.size());
+    create_info.setPAttachments(attachments.data());
+    create_info.setWidth(width);
+    create_info.setHeight(height);
+    create_info.setLayers(1);
+
+    // The number of swapchain buffers are determined at runtime
+    FramebufferVector framebuffers(swapchain_imges.size());
+    for (uint32_t i = 0; i < swapchain_imges.size(); ++i) {
+        // We set the color image buffers into the swapchain since the depth image view will remain the same
+        attachments[color_index] = swapchain_imges[i].image_view;
+        vk::Result result = device.createFramebuffer(&create_info, nullptr, &framebuffers[i]);
+        if (!ErrorCheck(result, kWho)) {
+            Logging::fatal("Failed to create framebuffer", kWho);
+        }
+    }
+    return framebuffers;
 }
 
 std::vector<uint32_t> Phyre::Graphics::VulkanRenderPass::ReadSpirV(const std::string spirv_shader_file_name) {

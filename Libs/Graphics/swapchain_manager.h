@@ -4,10 +4,9 @@
 
 namespace Phyre {
 namespace Graphics {
-class VulkanMemoryManager;
-class DeviceManager;
-
 class VulkanWindow;
+class VulkanMemoryManager;
+
 class SwapchainManager {
 public:
     struct SwapchainImage {
@@ -22,6 +21,8 @@ public:
         vk::DeviceMemory device_memory;
     };
 
+    typedef std::vector<SwapchainImage> SwapchainImageVector;
+
     explicit SwapchainManager(const VulkanMemoryManager& memory_manager,
                               const VulkanWindow& window,
                               const VulkanGPU& gpu,
@@ -29,16 +30,19 @@ public:
                               uint32_t graphics_queue_family_index,
                               uint32_t presentation_family_index);
 
+    const SwapchainImageVector& swapchain_images() const { return swapchain_images_; }
     vk::Format image_format() const { return preferred_surface_format_.format; }
     vk::Format depth_format() const { return depth_image_.format; }
     vk::SampleCountFlagBits samples() const { return samples_; }
+    uint32_t image_width() const { return image_width_; }
+    uint32_t image_height() const { return image_height_; }
+    const DepthImage& depth_image() const { return depth_image_; }
 
     ~SwapchainManager();
 
 private:
     // --------------- Type definitions -----------------
     typedef std::vector<vk::PresentModeKHR> PresentModes;
-    typedef std::vector<SwapchainImage> SwapchainImageVector;
     typedef std::vector<vk::ImageView> ImageViewVector;
 
 
@@ -96,6 +100,12 @@ private:
 
     // A reference to the surface we want to send images to
     const vk::SurfaceKHR& surface_;
+    
+    // A reference to the window's width
+    const uint32_t& image_width_;
+
+    // A reference to the window's height
+    const uint32_t& image_height_;
 
     // A reference to the GPU
     const VulkanGPU& gpu_;

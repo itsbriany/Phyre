@@ -1,5 +1,6 @@
 #pragma once
 #include <vulkan.hpp>
+#include "swapchain_manager.h"
 
 namespace Phyre {
 namespace Graphics {
@@ -12,9 +13,16 @@ public:
 
 private:
     typedef std::vector<vk::ShaderModule> ShaderModuleVector;
+    typedef std::vector<vk::Framebuffer> FramebufferVector;
 
     static vk::RenderPass InitializeRenderPass(const vk::Device& device, vk::SampleCountFlagBits num_samples, vk::Format image_format, vk::Format depth_format);
     static ShaderModuleVector InitializeShaderModules(const vk::Device& device);
+    static FramebufferVector InitializeFramebuffers(const vk::Device& device,
+                                                    const vk::ImageView& depth_image_view,
+                                                    const vk::RenderPass& render_pass,
+                                                    const uint32_t width,
+                                                    const uint32_t height,
+                                                    const SwapchainManager::SwapchainImageVector& swapchain_imge);
 
     // Reads the Spir-V bytecode into memory with proper data alignment
     static std::vector<uint32_t> ReadSpirV(const std::string file_name);
@@ -27,6 +35,9 @@ private:
 
     // The shader module we will use in the render pass
     ShaderModuleVector shader_modules_;
+
+    // The framebuffers we will use in the render pass
+    FramebufferVector framebuffers_;
 
     // For logging
     static const std::string kWho;
