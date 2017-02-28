@@ -9,19 +9,19 @@ Phyre::Graphics::DeviceManager::DeviceManager(const VulkanGPU& gpu, const Vulkan
     graphics_queue_family_index_(InitializeGraphicsQueueIndex(gpu_.physical_device())),
     presentation_queue_family_index_(InitializePresentationQueueIndex(gpu_.physical_device(), window.GetSurfaceReference(), graphics_queue_family_index_)),
     device_(InitializeLogicalDevice(gpu_.physical_device())),
+    graphics_queue_(InitializeGraphicsQueue(device_, graphics_queue_family_index_)),
+    presentation_queue_(InitializePresentationQueue(device_, graphics_queue_, graphics_queue_family_index_, presentation_queue_family_index_)),
     memory_manager_(gpu_, device_),
     p_command_buffer_manager_(new CommandBufferManager(*this)),
-    p_swapchain_(std::make_unique<SwapchainManager>(memory_manager_, window, gpu_, device_, graphics_queue_family_index_, presentation_queue_family_index_)),
-    p_pipeline_(std::make_unique<VulkanPipeline>(device_)),
-    p_render_pass_(std::make_unique<VulkanRenderPass>(device_, *p_swapchain_))
+    p_swapchain_(new SwapchainManager(memory_manager_, window, gpu_, device_, graphics_queue_family_index_, presentation_queue_family_index_)),
+    p_pipeline_(std::make_unique<VulkanPipeline>(device_, *p_swapchain_, memory_manager_, *p_command_buffer_manager_, graphics_queue_, presentation_queue_))
 {
     Logging::trace("Instantiated", kWho);
 }
 
 Phyre::Graphics::DeviceManager::~DeviceManager() {
-    p_render_pass_.reset();
     p_pipeline_.reset();
-    p_swapchain_.reset();
+    delete p_swapchain_;
     delete p_command_buffer_manager_;
     device_.destroy();
     Logging::trace("Destroyed", kWho);
@@ -148,4 +148,20 @@ uint32_t Phyre::Graphics::DeviceManager::InitializePresentationQueueIndex(const 
     // Not found
     Logging::warning("Could not find a presentation queue index", kWho);
     return presentation_queue_index;
+}
+
+vk::Queue Phyre::Graphics::DeviceManager::InitializeGraphicsQueue(vk::Device& device, uint32_t graphics_queue_family_index) {
+    uint32_t queue_index = 0; // The first graphics queue index
+    return device.getQueue(graphics_queue_family_index, queue_index);
+}
+
+vk::Queue Phyre::Graphics::DeviceManager::InitializePresentationQueue(vk::Device& device,
+                                                                      const vk::Queue& graphics_queue, 
+                                                                      uint32_t graphics_queue_family_index,
+                                                                      uint32_t presentation_queue_family_index) {
+    if (graphics_queue_family_index == presentation_queue_family_index) {
+        return graphics_queue;
+    }
+    uint32_t queue_index = 0;
+    return device.getQueue(presentation_queue_family_index, queue_index);
 }

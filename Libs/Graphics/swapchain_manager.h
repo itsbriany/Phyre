@@ -1,6 +1,7 @@
 #pragma once
 #include <vulkan.hpp>
 #include "vulkan_gpu.h"
+#include <iostream>
 
 namespace Phyre {
 namespace Graphics {
@@ -13,8 +14,12 @@ public:
         vk::Image image;
         vk::ImageView image_view;
     };
-
     struct DepthImage {
+        DepthImage(const vk::Image& image, const vk::ImageView& image_view, vk::Format format, const vk::DeviceMemory& device_memory) :
+            image(image), image_view(image_view), format(format), device_memory(device_memory) {
+            std::cout << "Depth image initialized" << std::endl;
+        }
+        ~DepthImage() { std::cout << "Depth image destoryed" << std::endl; }
         vk::Image image;
         vk::ImageView image_view;
         vk::Format format;
@@ -37,6 +42,7 @@ public:
     uint32_t image_width() const { return image_width_; }
     uint32_t image_height() const { return image_height_; }
     const DepthImage& depth_image() const { return depth_image_; }
+    const vk::SwapchainKHR& swapchain() const { return swapchain_; }
 
     ~SwapchainManager();
 

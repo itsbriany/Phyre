@@ -17,6 +17,8 @@ public:
     CommandBufferManager(const DeviceManager& device);
     ~CommandBufferManager();
 
+    const vk::CommandBuffer& command_buffer() const { return command_buffers_[0]; }
+
 private:
     // --------------------------- Initialization ------------------------
     // Throws a runtime exception if the command pool failed to instantiate

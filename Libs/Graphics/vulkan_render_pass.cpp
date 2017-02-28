@@ -2,25 +2,36 @@
 #include "logging.h"
 #include "vulkan_errors.h"
 #include "swapchain_manager.h"
+#include "geometry.h"
 #include <fstream>
-
+#include "vulkan_pipeline.h"
 
 const std::string Phyre::Graphics::VulkanRenderPass::kWho = "[VulkanRenderPass]";
 
-Phyre::Graphics::VulkanRenderPass::VulkanRenderPass(const vk::Device& device, const SwapchainManager& swapchain_manager) :
+Phyre::Graphics::VulkanRenderPass::VulkanRenderPass(const vk::Device& device, const SwapchainManager& swapchain_manager, const VulkanMemoryManager& memory_manager) :
     device_(device),
+    swapchain_manager_(swapchain_manager),
     render_pass_(InitializeRenderPass(device_, swapchain_manager.samples(), swapchain_manager.image_format(), swapchain_manager.depth_format())),
-    shader_modules_(InitializeShaderModules(device_)),
+    pipeline_shader_stages_(InitializeShaderStages(device_)),
+    shader_modules_(InitializeShaderModules(pipeline_shader_stages_)),
     framebuffers_ (InitializeFramebuffers(device_,
-                                           swapchain_manager.depth_image().image_view,
-                                           render_pass_,
-                                           swapchain_manager.image_width(),
-                                           swapchain_manager.image_height(),
-                                           swapchain_manager.swapchain_images())) {
+                                          swapchain_manager.depth_image().image_view,
+                                          render_pass_,
+                                          swapchain_manager.image_width(),
+                                          swapchain_manager.image_height(),
+                                          swapchain_manager.swapchain_images())),
+    vertex_buffer_(InitializeVertexBuffer(device, memory_manager.gpu())),
+    vertex_input_binding_description_(InitializeVertexInputBindingDescription()),
+    vertex_input_attribute_descriptions_(InitializeVertexInputAttributeDescriptions()),
+    image_acquired_semaphore_(InitializeImageAcquiredSemaphore(device_)),
+    current_swapchain_image_index_(InitializeCurrentSwapchainImageIndex(device, swapchain_manager.swapchain(), image_acquired_semaphore_)){
     Logging::trace("Initialized", kWho);
 }
 
 Phyre::Graphics::VulkanRenderPass::~VulkanRenderPass() {
+    device_.destroySemaphore(image_acquired_semaphore_);
+    device_.freeMemory(vertex_buffer_.device_memory);
+    device_.destroyBuffer(vertex_buffer_.buffer);
     for (const vk::Framebuffer& framebuffer : framebuffers_) {
         device_.destroyFramebuffer(framebuffer);
     }
@@ -48,6 +59,7 @@ vk::RenderPass Phyre::Graphics::VulkanRenderPass::InitializeRenderPass(const vk:
     attachments[0].setInitialLayout(vk::ImageLayout::eUndefined); // This is where the attachment image subresource will be in when a render pass instance begins
                                                                   // Starting as undefined means the GPU has to do less work while running its image layout algorithms
     attachments[0].setFinalLayout(vk::ImageLayout::ePresentSrcKHR); // This is where the attachment image subresource will be in when a render pass instance ends
+                                                                    // It is the optimal layout for the display hardware to read the rendered GPU images
 
     // Depth attachment
     attachments[1].setFormat(depth_format);
@@ -97,7 +109,7 @@ vk::RenderPass Phyre::Graphics::VulkanRenderPass::InitializeRenderPass(const vk:
     return render_pass;
 }
 
-Phyre::Graphics::VulkanRenderPass::ShaderModuleVector Phyre::Graphics::VulkanRenderPass::InitializeShaderModules(const vk::Device& device) {
+Phyre::Graphics::VulkanRenderPass::PipelineShaderStages Phyre::Graphics::VulkanRenderPass::InitializeShaderStages(const vk::Device& device) {
     // This is where the SPIR-V intermediate bytecode is located
     std::string resource_directory("GraphicsTestResources/");
     std::string vertex_file_name(resource_directory + "vertices.spv");
@@ -109,7 +121,7 @@ Phyre::Graphics::VulkanRenderPass::ShaderModuleVector Phyre::Graphics::VulkanRen
     // We will be creating two pipeline shader stages: One for vertices, and one for fragments
     // Create the vertex shader module
     uint32_t shader_module_count = 2;
-    std::vector<vk::PipelineShaderStageCreateInfo> shader_stage_create_infos(shader_module_count, vk::PipelineShaderStageCreateInfo());
+    PipelineShaderStages shader_stage_create_infos(shader_module_count, vk::PipelineShaderStageCreateInfo());
     shader_stage_create_infos[0].setPSpecializationInfo(nullptr);
     shader_stage_create_infos[0].setStage(vk::ShaderStageFlagBits::eVertex);
     shader_stage_create_infos[0].setPName("main");
@@ -117,10 +129,10 @@ Phyre::Graphics::VulkanRenderPass::ShaderModuleVector Phyre::Graphics::VulkanRen
     vk::ShaderModuleCreateInfo vertex_shader_module_create_info;
     vertex_shader_module_create_info.setCodeSize(vertex_shader_bytecode.size() * sizeof(uint32_t));
     vertex_shader_module_create_info.setPCode(vertex_shader_bytecode.data());
-    
+
     vk::Result result = device.createShaderModule(&vertex_shader_module_create_info, nullptr, &shader_stage_create_infos[0].module);
     if (!ErrorCheck(result, kWho)) {
-        Logging::fatal("Failed to create vertex shader module!", kWho); 
+        Logging::fatal("Failed to create vertex shader module!", kWho);
     }
 
     // Create the fragment shader module
@@ -136,9 +148,12 @@ Phyre::Graphics::VulkanRenderPass::ShaderModuleVector Phyre::Graphics::VulkanRen
     if (!ErrorCheck(result, kWho)) {
         Logging::fatal("Failed to create fragment shader module!", kWho);
     }
+    return shader_stage_create_infos;
+}
 
-    ShaderModuleVector shader_modules(shader_stage_create_infos.size());
-    std::transform(shader_stage_create_infos.begin(), shader_stage_create_infos.end(), shader_modules.begin(), [](const vk::PipelineShaderStageCreateInfo& info)
+Phyre::Graphics::VulkanRenderPass::ShaderModuleVector Phyre::Graphics::VulkanRenderPass::InitializeShaderModules(const PipelineShaderStages& shader_stages) {
+    ShaderModuleVector shader_modules(shader_stages.size());
+    std::transform(shader_stages.begin(), shader_stages.end(), shader_modules.begin(), [](const vk::PipelineShaderStageCreateInfo& info)
     {
         return info.module;
     });
@@ -177,6 +192,94 @@ Phyre::Graphics::VulkanRenderPass::FramebufferVector Phyre::Graphics::VulkanRend
     return framebuffers;
 }
 
+Phyre::Graphics::VulkanRenderPass::VertexBuffer
+Phyre::Graphics::VulkanRenderPass::InitializeVertexBuffer(const vk::Device& device, const VulkanGPU& gpu) {
+    vk::BufferCreateInfo create_info;
+    create_info.setUsage(vk::BufferUsageFlagBits::eVertexBuffer);
+    create_info.setSize(sizeof(Geometry::kVertexBufferSolidFaceColorData));
+    create_info.setQueueFamilyIndexCount(0);
+    create_info.setPQueueFamilyIndices(nullptr);
+    create_info.setSharingMode(vk::SharingMode::eExclusive);
+    
+    vk::Buffer buffer;
+    vk::Result result = device.createBuffer(&create_info, nullptr, &buffer);
+    if (!ErrorCheck(result, kWho)) {
+        Logging::fatal("Failed to create vertex buffer", kWho);
+    }
+
+    // Follow the same procedure for allocating memory just like with a uniform buffer
+    vk::MemoryRequirements memory_requirements;
+    device.getBufferMemoryRequirements(buffer, &memory_requirements);
+
+    vk::MemoryAllocateInfo memory_allocate_info;
+    memory_allocate_info.setAllocationSize(memory_requirements.size);
+    vk::MemoryPropertyFlags requirements_mask(vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+    if (!VulkanMemoryManager::CanFindMemoryTypeFromProperties(gpu, memory_requirements.memoryTypeBits, requirements_mask, memory_allocate_info.memoryTypeIndex)) {
+        Logging::fatal("Failed to satisfy memory allocation requirements for creating vertex buffer. The memory could not be mapped.", kWho);
+    }
+
+    vk::DeviceMemory device_memory;
+    result = device.allocateMemory(&memory_allocate_info, nullptr, &device_memory);
+    if (!ErrorCheck(result, kWho)) {
+        Logging::fatal("Failed to allocate device memory for creating vertex buffer", kWho);
+    }
+
+    // Temporarily give the CPU access to this memory
+    vk::MemoryMapFlags flags;
+    void* p_data;
+    result = device.mapMemory(device_memory, 0, memory_requirements.size, flags, static_cast<void**>(&p_data));
+    if (!ErrorCheck(result, kWho)) {
+        Logging::fatal("Failed to map data to memory on physical device for creating vertex buffer", kWho);
+    }
+
+    memcpy(p_data, Geometry::kVertexBufferSolidFaceColorData, sizeof(Geometry::kVertexBufferSolidFaceColorData));
+
+    // Immediately unmap the memory because the page tables are limited in size for memory visible to
+    // both CPU and GPU
+    device.unmapMemory(device_memory);
+    device.bindBufferMemory(buffer, device_memory, 0);
+
+    VertexBuffer vertex_buffer;
+    vertex_buffer.buffer = buffer;
+    vertex_buffer.device_memory = device_memory;
+    return vertex_buffer;
+}
+
+vk::VertexInputBindingDescription Phyre::Graphics::VulkanRenderPass::InitializeVertexInputBindingDescription() {
+    vk::VertexInputBindingDescription binding_description;
+    binding_description.setBinding(0); // Refers to its respective values in the GLSL shader code
+    binding_description.setInputRate(vk::VertexInputRate::eVertex);
+    binding_description.setStride(sizeof(Geometry::kVertexBufferSolidFaceColorData)); // The size needed to add to a pointer in order to reach the next vertex
+    return binding_description;
+}
+
+Phyre::Graphics::VulkanRenderPass::VertexInputAttributeDescriptions Phyre::Graphics::VulkanRenderPass::InitializeVertexInputAttributeDescriptions() {
+    VertexInputAttributeDescriptions attribute_descriptions;
+    attribute_descriptions[0].setBinding(0); // Refers to its respective values in the GLSL shader code
+    attribute_descriptions[0].setLocation(0); // Refers to its respective values in the GLSL shader code
+    attribute_descriptions[0].setFormat(vk::Format::eR32G32B32A32Sfloat);
+    attribute_descriptions[0].setOffset(0);
+    attribute_descriptions[1].setBinding(0);
+    attribute_descriptions[1].setLocation(1);
+    attribute_descriptions[1].setFormat(vk::Format::eR32G32B32A32Sfloat);
+    attribute_descriptions[1].setOffset(16);
+    return attribute_descriptions;
+}
+
+uint32_t Phyre::Graphics::VulkanRenderPass::InitializeCurrentSwapchainImageIndex(const vk::Device& device, const vk::SwapchainKHR& swapchain, const vk::Semaphore& image_acquired_semaphore) {
+    // Get the index of the next available swapchain image
+    vk::ResultValue<uint32_t> current_swapchain_image_index = device.acquireNextImageKHR(swapchain, UINT64_MAX, image_acquired_semaphore, nullptr);
+    return current_swapchain_image_index.value;
+}
+
+vk::Semaphore Phyre::Graphics::VulkanRenderPass::InitializeImageAcquiredSemaphore(const vk::Device& device) {
+    // We need to get an image from the swapchain in order to draw anything
+    // Semaphores are used to ensure that all images in the swapchain are currently available
+    vk::SemaphoreCreateInfo semaphore_create_info;
+    vk::Semaphore image_acquired_semaphore = device.createSemaphore(semaphore_create_info);
+    return image_acquired_semaphore;
+}
+
 std::vector<uint32_t> Phyre::Graphics::VulkanRenderPass::ReadSpirV(const std::string spirv_shader_file_name) {
     std::ifstream shader_file(spirv_shader_file_name, std::ios::binary);
     if (!shader_file) {
@@ -198,4 +301,151 @@ std::vector<uint32_t> Phyre::Graphics::VulkanRenderPass::ReadSpirV(const std::st
     shader_file.close();
 
     return vertex_shader_bytecode;
+}
+
+void Phyre::Graphics::VulkanRenderPass::ExecuteBeginCommandBuffer(const vk::CommandBuffer& command_buffer) {
+    vk::CommandBufferBeginInfo info;
+    command_buffer.begin(info);
+}
+
+// TODO: Name this as Begin (member method) and call it in the pipeline's constructor
+// This is because we are going to need to initialize a command buffer which should bind everything to the pipeline
+void Phyre::Graphics::VulkanRenderPass::BeginRenderPass(const vk::CommandBuffer& command_buffer,
+                                                        const VulkanPipeline& pipeline,
+                                                        const vk::Queue& graphics_queue,
+                                                        const vk::Queue& presentation_queue) const {
+    // We cannot bind the vertex buffer until we begin a renderpass
+    std::array<vk::ClearValue, 2> clear_values;
+    vk::ClearColorValue color;
+    color.setFloat32({ 0.2f, 0.2f, 0.2f, 0.2f });
+    clear_values[0].setColor(color);
+
+    vk::ClearDepthStencilValue depth_stencil;
+    depth_stencil.setDepth(1.0f);
+    depth_stencil.setStencil(0);
+    clear_values[1].setDepthStencil(depth_stencil);
+
+    // Prepare the begin render pass
+    vk::RenderPassBeginInfo begin_info;
+    begin_info.setRenderPass(render_pass_);
+    begin_info.setFramebuffer(framebuffers_[current_swapchain_image_index_]);
+    
+    vk::Offset2D offset;
+    vk::Extent2D extent(swapchain_manager_.image_width(), swapchain_manager_.image_height());
+    vk::Rect2D render_area(offset, extent);
+    begin_info.setRenderArea(render_area);
+
+    begin_info.setClearValueCount(clear_values.size());
+    begin_info.setPClearValues(clear_values.data());
+
+    // We can only connect vertex buffers between the begin and end stages of a render pass
+    // Begin the render pass stage
+    ExecuteBeginCommandBuffer(command_buffer);
+    command_buffer.beginRenderPass(&begin_info, vk::SubpassContents::eInline);
+    
+    // Bind vertex buffers
+    uint32_t start_binding = 0; // We will start our binding at offset 0
+    uint32_t binding_count = 1; // We only have one vertex buffer
+    std::array<vk::DeviceSize, 1> offsets = {0};
+    command_buffer.bindVertexBuffers(start_binding, binding_count, &vertex_buffer_.buffer, offsets.data());
+
+    // Bind graphics pipeline
+    // Note that it is also possible to create multiple graphics pipelines and switch between them with a single
+    // command buffer
+    command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.pipeline());
+
+    // Bind the descriptor sets
+    // Now the pipeline will know how to find its input data like the MVP transform
+    uint32_t first_set = 0;
+    command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline.pipeline_layout(), first_set, 1, &pipeline.descriptor_set(), 0, nullptr);
+    // command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline.pipeline_layout(), first_set, pipeline.descriptor_set(), nullptr);
+
+    // We bind the viewports and scissors dynamically because earlier we specified that they would be dynamically
+    // loaded from a command buffer.
+    // A reason to keep these dynamic is becuase most applications need to update these values if the window size
+    // changes during execution. This avoids having to rebuild the pipeline when the window size changes.
+    // Bind the viewports
+    vk::Viewport viewport;
+    viewport.setHeight(swapchain_manager_.image_height());
+    viewport.setWidth(swapchain_manager_.image_width());
+    viewport.setMinDepth(0.0f);
+    viewport.setMaxDepth(1.0f);
+    viewport.setX(0);
+    viewport.setY(0);
+    
+    uint32_t first_viewport = 0;
+    command_buffer.setViewport(first_viewport, viewport);
+
+    // Bind the scissors
+    vk::Rect2D scissor;
+    vk::Extent2D scissor_extent;
+    scissor_extent.setWidth(swapchain_manager_.image_width());
+    scissor_extent.setHeight(swapchain_manager_.image_height());
+
+    vk::Offset2D scissor_offset;
+    scissor_offset.setX(0);
+    scissor_offset.setY(0);
+    
+    scissor.setExtent(scissor_extent);
+    scissor.setOffset(scissor_offset);
+    
+    uint32_t first_scissor = 0;
+    command_buffer.setScissor(first_scissor, scissor);
+
+    // Issue a draw command to tell the GPU to send the vertices into the pipeline
+    // and finish the render pass
+    uint32_t vertex_count = 12 * 3; // 36 vertices because we have 12 triangles for this example
+    uint32_t instance_count = 1;
+    uint32_t first_vertex = 0;
+    uint32_t first_instance = 0;
+    command_buffer.draw(vertex_count, instance_count, first_vertex, first_instance);
+
+    // End render pass
+    command_buffer.endRenderPass();
+
+    // End command buffer
+    command_buffer.end();
+
+    // Create a fence which we can use to know when the GPU is done rendering
+    // This is so that we can be guaranteed to display fully rendered images
+    vk::FenceCreateInfo fence_create_info;
+    vk::Fence fence = device_.createFence(fence_create_info);
+
+    // Finally, submit the command buffer
+    std::array<vk::CommandBuffer, 1> command_buffers { command_buffer };
+    vk::PipelineStageFlags pipeline_stage_flags(vk::PipelineStageFlagBits::eBottomOfPipe); // The final stage in the pipeline where the commands finish execution
+    
+    vk::SubmitInfo submit_info;
+    submit_info.setWaitSemaphoreCount(1);
+    submit_info.setPWaitSemaphores(&image_acquired_semaphore_); // This forces a wait until the image is ready before drawing so that we know when the swapchain image is available
+                                                                // When the GPU is done executing commands, it signals the fence to indicate that the drawing is complete
+    submit_info.setPWaitDstStageMask(&pipeline_stage_flags);
+    submit_info.setCommandBufferCount(command_buffers.size());
+    submit_info.setPCommandBuffers(command_buffers.data());
+    submit_info.setSignalSemaphoreCount(0);
+    submit_info.setPSignalSemaphores(nullptr);
+
+    // Submit to the queue
+    graphics_queue.submit(1, &submit_info, fence);
+
+    // Now present the image to the window
+    vk::PresentInfoKHR present_info;
+    present_info.setSwapchainCount(1);
+    present_info.setPSwapchains(&swapchain_manager_.swapchain());
+    present_info.setPImageIndices(&current_swapchain_image_index_);
+    present_info.setWaitSemaphoreCount(0);
+    present_info.setPWaitSemaphores(nullptr);
+    present_info.setPResults(nullptr);
+
+    // Make sure the command buffer finished before presenting
+    vk::Result result = vk::Result::eTimeout;
+    do {
+        bool wait_all = true;
+        uint64_t timeout = 100000000; // The amount of time in nanoseconds for a command buffer to complete
+        result = device_.waitForFences(1, &fence, wait_all, timeout);
+    } while (result == vk::Result::eTimeout);
+
+
+    presentation_queue.presentKHR(&present_info);
+    Sleep(1000);
 }

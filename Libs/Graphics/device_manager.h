@@ -42,6 +42,12 @@ private:
     // Returns the index from the gpu's queue family with a queue which is capable of graphics and presentation
     static uint32_t InitializePresentationQueueIndex(const vk::PhysicalDevice& gpu, const vk::SurfaceKHR& surface, uint32_t graphics_queue_index);
 
+    static vk::Queue InitializeGraphicsQueue(vk::Device& device, uint32_t graphics_queue_family_index);
+    static vk::Queue InitializePresentationQueue(vk::Device& device,
+                                                 const vk::Queue& graphics_queue,
+                                                 uint32_t graphics_queue_family_index,
+                                                 uint32_t presentation_queue_family_index);
+
     // A reference to the gpu we are using
     const VulkanGPU& gpu_;
 
@@ -57,6 +63,12 @@ private:
     // VkInstance's physical devices
     vk::Device device_;
 
+    // The device queue used for graphics
+    vk::Queue graphics_queue_;
+
+    // The device queue used for presentation
+    vk::Queue presentation_queue_;
+
     // Manages memory and allocates buffers
     VulkanMemoryManager memory_manager_;
 
@@ -64,13 +76,10 @@ private:
     CommandBufferManager* p_command_buffer_manager_;
 
     // Points the the swapchain for image handling
-    std::unique_ptr<SwapchainManager> p_swapchain_;
+    SwapchainManager* p_swapchain_;
 
     // A pointer to the Vulkan Pipeline
     std::unique_ptr<VulkanPipeline> p_pipeline_;
-
-    // A pointer to the Vulkan render pass
-    std::unique_ptr<VulkanRenderPass> p_render_pass_;
 
     // For logging
     static const std::string kWho;

@@ -322,7 +322,7 @@ Phyre::Graphics::SwapchainManager::DepthImage Phyre::Graphics::SwapchainManager:
     /* Use the memory properties to determine the type of memory required */
     vk::MemoryAllocateInfo memory_allocate_info;
     vk::MemoryPropertyFlagBits requirements_mask = vk::MemoryPropertyFlagBits::eDeviceLocal;
-    if(!memory_manager.CanFindMemoryTypeFromProperties(memory_requirements.memoryTypeBits, requirements_mask, memory_allocate_info.memoryTypeIndex)) {
+    if(!VulkanMemoryManager::CanFindMemoryTypeFromProperties(gpu, memory_requirements.memoryTypeBits, requirements_mask, memory_allocate_info.memoryTypeIndex)) {
         std::string error_message = "Could not satisfy memory requirements for image";
         Logging::fatal(error_message, kWho);
         throw std::runtime_error(error_message);
@@ -373,10 +373,5 @@ Phyre::Graphics::SwapchainManager::DepthImage Phyre::Graphics::SwapchainManager:
         throw std::runtime_error(error_message);
     }
 
-    DepthImage resulting_depth_image;
-    resulting_depth_image.image = depth_image;
-    resulting_depth_image.image_view = depth_image_view;
-    resulting_depth_image.format = depth_format;
-    resulting_depth_image.device_memory = device_memory;
-    return resulting_depth_image;
+    return DepthImage(depth_image, depth_image_view, depth_format, device_memory);
 }
