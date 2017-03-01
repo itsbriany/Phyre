@@ -27,10 +27,8 @@ const std::string Phyre::Graphics::VulkanLoader::kWho = "[VulkanLoader]";
 // Initialization pipeline
 Phyre::Graphics::VulkanLoader::VulkanLoader() :
     instance_(LoadVulkanInstance()),
-    p_debugger_(std::make_unique<VulkanDebugger>(&instance_)),
     gpus_(LoadGPUs(instance_)),
     active_gpu_(gpus_.front()),
-    p_window_(std::make_unique<VulkanWindow>(instance_)),
     p_device_manager_(std::make_unique<DeviceManager>(active_gpu_, *p_window_))
 {
     Logging::trace("Instantiated", kWho);
@@ -38,8 +36,6 @@ Phyre::Graphics::VulkanLoader::VulkanLoader() :
 
 Phyre::Graphics::VulkanLoader::~VulkanLoader() {
     p_device_manager_.reset();
-    p_window_.reset();
-    p_debugger_.reset();
     instance_.destroy();
     Logging::trace("Destroyed", kWho);
 }

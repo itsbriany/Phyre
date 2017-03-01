@@ -1,4 +1,5 @@
 #include "vulkan_window.h"
+#include "vulkan_instance.h"
 #include "logging.h"
 #include <GLFW/glfw3.h>
 
@@ -7,11 +8,11 @@ const std::string Phyre::Graphics::VulkanWindow::kWho = "[VulkanWindow]";
 // Dynamically loaded functions
 static PFN_vkDestroySurfaceKHR  s_destroy_surface_khr_ = nullptr;
 
-Phyre::Graphics::VulkanWindow::VulkanWindow(const vk::Instance& instance) :
+Phyre::Graphics::VulkanWindow::VulkanWindow(uint32_t width, uint32_t height, const VulkanInstance& instance) :
     instance_(instance),
-    width_(640),
-    height_(480),
-    surface_(InitializeSurface(width_, height_, instance_)) {
+    width_(width),
+    height_(height),
+    surface_(InitializeSurface(width_, height_, instance_.get())) {
     Logging::trace("Instantiated", kWho);
 }
 
@@ -21,9 +22,9 @@ Phyre::Graphics::VulkanWindow::~VulkanWindow() {
 }
 
 void Phyre::Graphics::VulkanWindow::DestroySurface() const {
-    s_destroy_surface_khr_ = reinterpret_cast<PFN_vkDestroySurfaceKHR>(vkGetInstanceProcAddr(instance_, "vkDestroySurfaceKHR"));
+    s_destroy_surface_khr_ = reinterpret_cast<PFN_vkDestroySurfaceKHR>(vkGetInstanceProcAddr(instance_.get(), "vkDestroySurfaceKHR"));
     if (s_destroy_surface_khr_) {
-        s_destroy_surface_khr_(instance_, surface_, nullptr);
+        s_destroy_surface_khr_(instance_.get(), surface_, nullptr);
     } else {
         Logging::warning("Could not delete surface", kWho);
     }

@@ -39,9 +39,6 @@ private:
     static vk::Instance LoadVulkanInstance();
     static GPUVector LoadGPUs(const vk::Instance& instance);
 
-    // Our debugger
-    std::unique_ptr<VulkanDebugger> p_debugger_;
-
     // Our context
     vk::Instance instance_;
 

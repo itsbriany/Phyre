@@ -8,7 +8,7 @@ namespace Graphics {
 class VulkanWindow;
 class VulkanMemoryManager;
 
-class SwapchainManager {
+class VulkanSwapchain {
 public:
     struct SwapchainImage {
         vk::Image image;
@@ -28,7 +28,7 @@ public:
 
     typedef std::vector<SwapchainImage> SwapchainImageVector;
 
-    explicit SwapchainManager(const VulkanMemoryManager& memory_manager,
+    explicit VulkanSwapchain(const VulkanMemoryManager& memory_manager,
                               const VulkanWindow& window,
                               const VulkanGPU& gpu,
                               const vk::Device& device, 
@@ -44,7 +44,7 @@ public:
     const DepthImage& depth_image() const { return depth_image_; }
     const vk::SwapchainKHR& swapchain() const { return swapchain_; }
 
-    ~SwapchainManager();
+    ~VulkanSwapchain();
 
 private:
     // --------------- Type definitions -----------------
@@ -92,7 +92,7 @@ private:
     static SwapchainImageVector InitializeSwapchainImages(const vk::Device& device, const vk::SwapchainKHR& swapchain, const vk::Format& format);
 
     // Throws a runtime exception if the depth buffer image failed to instantiate
-    static DepthImage SwapchainManager::InitializeDepthImage(const VulkanMemoryManager& memory_manager, 
+    static DepthImage VulkanSwapchain::InitializeDepthImage(const VulkanMemoryManager& memory_manager, 
                                                              const VulkanGPU& gpu,
                                                              const vk::Device& device,
                                                              uint32_t width, 

@@ -6,14 +6,14 @@ const std::string Phyre::Graphics::DeviceManager::kWho = "[DeviceManager]";
 
 Phyre::Graphics::DeviceManager::DeviceManager(const VulkanGPU& gpu, const VulkanWindow& window) :
     gpu_(gpu),
-    graphics_queue_family_index_(InitializeGraphicsQueueIndex(gpu_.physical_device())),
-    presentation_queue_family_index_(InitializePresentationQueueIndex(gpu_.physical_device(), window.GetSurfaceReference(), graphics_queue_family_index_)),
-    device_(InitializeLogicalDevice(gpu_.physical_device())),
+    graphics_queue_family_index_(InitializeGraphicsQueueIndex(gpu_.get())),
+    presentation_queue_family_index_(InitializePresentationQueueIndex(gpu_.get(), window.GetSurfaceReference(), graphics_queue_family_index_)),
+    device_(InitializeLogicalDevice(gpu_.get())),
     graphics_queue_(InitializeGraphicsQueue(device_, graphics_queue_family_index_)),
     presentation_queue_(InitializePresentationQueue(device_, graphics_queue_, graphics_queue_family_index_, presentation_queue_family_index_)),
     memory_manager_(gpu_, device_),
     p_command_buffer_manager_(new CommandBufferManager(*this)),
-    p_swapchain_(new SwapchainManager(memory_manager_, window, gpu_, device_, graphics_queue_family_index_, presentation_queue_family_index_)),
+    p_swapchain_(new VulkanSwapchain(memory_manager_, window, gpu_, device_, graphics_queue_family_index_, presentation_queue_family_index_)),
     p_pipeline_(std::make_unique<VulkanPipeline>(device_, *p_swapchain_, memory_manager_, *p_command_buffer_manager_, graphics_queue_, presentation_queue_))
 {
     Logging::trace("Instantiated", kWho);

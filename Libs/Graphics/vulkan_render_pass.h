@@ -1,13 +1,13 @@
 #pragma once
 #include <vulkan.hpp>
-#include "swapchain_manager.h"
+#include "vulkan_swapchain.h"
 #include "vulkan_memory_manager.h"
 
 namespace Phyre {
 namespace Graphics {
 class VulkanPipeline;
 
-class SwapchainManager;
+class VulkanSwapchain;
 class VulkanRenderPass {
 public:
     typedef std::array<vk::VertexInputAttributeDescription, 2> VertexInputAttributeDescriptions;
@@ -18,7 +18,7 @@ public:
         vk::DeviceMemory device_memory;
     };
 
-    explicit VulkanRenderPass(const vk::Device& device, const SwapchainManager& swapchain_manager, const VulkanMemoryManager& memory_manager);
+    explicit VulkanRenderPass(const vk::Device& device, const VulkanSwapchain& swapchain_manager, const VulkanMemoryManager& memory_manager);
     ~VulkanRenderPass();
 
     const vk::VertexInputBindingDescription& vertex_input_binding_description() const { return vertex_input_binding_description_; }
@@ -47,7 +47,7 @@ private:
                                                     const vk::RenderPass& render_pass,
                                                     const uint32_t width,
                                                     const uint32_t height,
-                                                    const SwapchainManager::SwapchainImageVector& swapchain_imge);
+                                                    const VulkanSwapchain::SwapchainImageVector& swapchain_imge);
     static VertexBuffer InitializeVertexBuffer(const vk::Device& device, const VulkanGPU& gpu);
     static vk::VertexInputBindingDescription InitializeVertexInputBindingDescription();
     static VertexInputAttributeDescriptions InitializeVertexInputAttributeDescriptions();
@@ -66,7 +66,7 @@ private:
     const vk::Device& device_;
 
     // A reference to the swapchain manager
-    const SwapchainManager& swapchain_manager_;
+    const VulkanSwapchain& swapchain_manager_;
 
     // The underlying render pass object
     vk::RenderPass render_pass_;

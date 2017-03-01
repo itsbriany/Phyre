@@ -1,14 +1,15 @@
 #pragma once
 #include <vulkan.hpp>
-#include "swapchain_manager.h"
+#include "vulkan_swapchain.h"
 
 namespace Phyre {
 namespace Graphics {
+class VulkanInstance;
 
 class DeviceManager;
 class VulkanWindow {
 public:
-    explicit VulkanWindow(const vk::Instance& instance);
+    explicit VulkanWindow(uint32_t width, uint32_t height, const VulkanInstance& instance);
     
     // Clean up vulkan resources
     ~VulkanWindow();
@@ -28,7 +29,7 @@ private:
     void DestroySurface() const;
 
     // A reference to the vulkan instance
-    const vk::Instance& instance_;
+    const VulkanInstance& instance_;
 
     // Width of the window
     uint32_t width_;

@@ -4,9 +4,9 @@
 const std::string Phyre::Graphics::VulkanGPU::kWho = "[VulkanGPU]";
 
 Phyre::Graphics::VulkanGPU::VulkanGPU(const vk::PhysicalDevice& physical_device) : 
-    physical_device_(physical_device),
-    properties_(InitializePhysicalDeviceProperties(physical_device_)),
-    memory_properties_(InitializePhysicalDeviceMemoryProperties(physical_device_)) {
+    gpu_(physical_device),
+    properties_(InitializePhysicalDeviceProperties(gpu_)),
+    memory_properties_(InitializePhysicalDeviceMemoryProperties(gpu_)) {
     Logging::trace("Instantiated", kWho);
 }
 

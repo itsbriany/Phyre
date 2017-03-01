@@ -1,12 +1,12 @@
-#include "swapchain_manager.h"
+#include "vulkan_swapchain.h"
 #include "vulkan_memory_manager.h"
 #include "vulkan_errors.h"
 #include "vulkan_window.h"
 
-const std::string Phyre::Graphics::SwapchainManager::kWho = "[SwapchainManager]";
+const std::string Phyre::Graphics::VulkanSwapchain::kWho = "[VulkanSwapchain]";
 
 // Initialization pipeline
-Phyre::Graphics::SwapchainManager::SwapchainManager(const VulkanMemoryManager& memory_manager,
+Phyre::Graphics::VulkanSwapchain::VulkanSwapchain(const VulkanMemoryManager& memory_manager,
                                                     const VulkanWindow& window,
                                                     const VulkanGPU& gpu,
                                                     const vk::Device& device, 
@@ -18,12 +18,12 @@ Phyre::Graphics::SwapchainManager::SwapchainManager(const VulkanMemoryManager& m
     image_height_(window.height()),
     gpu_(gpu),
     device_(device),
-    surface_formats_(InitializeSurfaceFormats(surface_, gpu_.physical_device())),
+    surface_formats_(InitializeSurfaceFormats(surface_, gpu_.get())),
     preferred_surface_format_(InitializePreferredSurfaceFormat(surface_formats_)),
-    surface_capabilities_(InitializeSurfaceCapabilities(surface_, gpu_.physical_device())),
+    surface_capabilities_(InitializeSurfaceCapabilities(surface_, gpu_.get())),
     swapchain_extent_(InitializeSwapchainExtent(window.width(), window.height(), surface_capabilities_)),
     pre_transform_(InitializePreTransform(surface_capabilities_)),
-    surface_present_modes_(InitializeSurfacePresentModes(surface_, gpu_.physical_device())),
+    surface_present_modes_(InitializeSurfacePresentModes(surface_, gpu_.get())),
     preferred_surface_present_mode_(InitializePreferredPresentMode(surface_present_modes_)),
     swapchain_(InitializeSwapchain(device,
                                    surface_,
@@ -40,7 +40,7 @@ Phyre::Graphics::SwapchainManager::SwapchainManager(const VulkanMemoryManager& m
     Logging::trace("Instantiated", kWho);
 }
 
-Phyre::Graphics::SwapchainManager::~SwapchainManager() {
+Phyre::Graphics::VulkanSwapchain::~VulkanSwapchain() {
     device_.destroyImage(depth_image_.image);
     device_.destroyImageView(depth_image_.image_view);
     device_.freeMemory(depth_image_.device_memory);
@@ -51,7 +51,7 @@ Phyre::Graphics::SwapchainManager::~SwapchainManager() {
     Logging::trace("Destroyed", kWho);
 }
 
-std::vector<vk::SurfaceFormatKHR> Phyre::Graphics::SwapchainManager::InitializeSurfaceFormats(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& gpu) {
+std::vector<vk::SurfaceFormatKHR> Phyre::Graphics::VulkanSwapchain::InitializeSurfaceFormats(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& gpu) {
     uint32_t surface_format_count = 0;
     gpu.getSurfaceFormatsKHR(surface, &surface_format_count, nullptr);
 
@@ -65,7 +65,7 @@ std::vector<vk::SurfaceFormatKHR> Phyre::Graphics::SwapchainManager::InitializeS
     return surface_formats;
 }
 
-vk::SurfaceFormatKHR Phyre::Graphics::SwapchainManager::InitializePreferredSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& surface_formats) {
+vk::SurfaceFormatKHR Phyre::Graphics::VulkanSwapchain::InitializePreferredSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& surface_formats) {
     if (surface_formats.empty()) {
         Logging::warning("No surface formats detected!", kWho);
     }
@@ -83,7 +83,7 @@ vk::SurfaceFormatKHR Phyre::Graphics::SwapchainManager::InitializePreferredSurfa
     return surface_format;
 }
 
-vk::Extent2D Phyre::Graphics::SwapchainManager::InitializeSwapchainExtent(uint32_t width, uint32_t height, const vk::SurfaceCapabilitiesKHR& surface_capabilities) {
+vk::Extent2D Phyre::Graphics::VulkanSwapchain::InitializeSwapchainExtent(uint32_t width, uint32_t height, const vk::SurfaceCapabilitiesKHR& surface_capabilities) {
     // Width and height are either both 0xFFFFFFFF, or both not 0xFFFFFFFF.
     vk::Extent2D extent;
     if (surface_capabilities.currentExtent.width == 0xFFFFFFFF) {
@@ -109,7 +109,7 @@ vk::Extent2D Phyre::Graphics::SwapchainManager::InitializeSwapchainExtent(uint32
     return extent;
 }
 
-vk::SurfaceTransformFlagBitsKHR Phyre::Graphics::SwapchainManager::InitializePreTransform(const vk::SurfaceCapabilitiesKHR& surface_capabilities) {
+vk::SurfaceTransformFlagBitsKHR Phyre::Graphics::VulkanSwapchain::InitializePreTransform(const vk::SurfaceCapabilitiesKHR& surface_capabilities) {
     vk::SurfaceTransformFlagBitsKHR pre_transform;
     if (surface_capabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) {
         pre_transform = vk::SurfaceTransformFlagBitsKHR::eIdentity;
@@ -119,11 +119,11 @@ vk::SurfaceTransformFlagBitsKHR Phyre::Graphics::SwapchainManager::InitializePre
     return pre_transform;
 }
 
-vk::SurfaceCapabilitiesKHR Phyre::Graphics::SwapchainManager::InitializeSurfaceCapabilities(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& gpu) {
+vk::SurfaceCapabilitiesKHR Phyre::Graphics::VulkanSwapchain::InitializeSurfaceCapabilities(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& gpu) {
     return gpu.getSurfaceCapabilitiesKHR(surface);
 }
 
-Phyre::Graphics::SwapchainManager::PresentModes Phyre::Graphics::SwapchainManager::InitializeSurfacePresentModes(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& gpu) {
+Phyre::Graphics::VulkanSwapchain::PresentModes Phyre::Graphics::VulkanSwapchain::InitializeSurfacePresentModes(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& gpu) {
     uint32_t present_modes_count = 0;
     gpu.getSurfacePresentModesKHR(surface, &present_modes_count, nullptr);
 
@@ -135,7 +135,7 @@ Phyre::Graphics::SwapchainManager::PresentModes Phyre::Graphics::SwapchainManage
     return surface_present_modes;
 }
 
-vk::PresentModeKHR Phyre::Graphics::SwapchainManager::InitializePreferredPresentMode(const PresentModes& surface_present_modes) {
+vk::PresentModeKHR Phyre::Graphics::VulkanSwapchain::InitializePreferredPresentMode(const PresentModes& surface_present_modes) {
     // Tears when the app misses, but does not tear when the app is fast enough
     if (std::find(surface_present_modes.cbegin(), surface_present_modes.cend(), vk::PresentModeKHR::eFifoRelaxed) != surface_present_modes.cend()) {
         return vk::PresentModeKHR::eFifoRelaxed;
@@ -155,7 +155,7 @@ vk::PresentModeKHR Phyre::Graphics::SwapchainManager::InitializePreferredPresent
     return vk::PresentModeKHR::eImmediate;
 }
 
-vk::SwapchainKHR Phyre::Graphics::SwapchainManager::InitializeSwapchain(const vk::Device& device,
+vk::SwapchainKHR Phyre::Graphics::VulkanSwapchain::InitializeSwapchain(const vk::Device& device,
                                                                        const vk::SurfaceKHR& surface, 
                                                                        const vk::SurfaceCapabilitiesKHR& surface_capabilities,
                                                                        const vk::SurfaceFormatKHR& surface_format,
@@ -202,7 +202,7 @@ vk::SwapchainKHR Phyre::Graphics::SwapchainManager::InitializeSwapchain(const vk
     throw std::runtime_error(error_message);
 }
 
-Phyre::Graphics::SwapchainManager::SwapchainImageVector Phyre::Graphics::SwapchainManager::InitializeSwapchainImages(const vk::Device& device,
+Phyre::Graphics::VulkanSwapchain::SwapchainImageVector Phyre::Graphics::VulkanSwapchain::InitializeSwapchainImages(const vk::Device& device,
                                                                                                                    const vk::SwapchainKHR& swapchain,
                                                                                                                    const vk::Format& format) {
     uint32_t swapchain_image_count = 0;
@@ -262,7 +262,7 @@ Phyre::Graphics::SwapchainManager::SwapchainImageVector Phyre::Graphics::Swapcha
     return swapchain_images;
 }
 
-Phyre::Graphics::SwapchainManager::DepthImage Phyre::Graphics::SwapchainManager::InitializeDepthImage(const VulkanMemoryManager& memory_manager, 
+Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::InitializeDepthImage(const VulkanMemoryManager& memory_manager,
                                                                                                       const VulkanGPU& gpu,
                                                                                                       const vk::Device& device,
                                                                                                       uint32_t width,
@@ -272,7 +272,7 @@ Phyre::Graphics::SwapchainManager::DepthImage Phyre::Graphics::SwapchainManager:
     vk::ImageCreateInfo image_create_info;
     vk::Format depth_format = vk::Format::eD16Unorm;
     vk::FormatProperties format_properties;
-    gpu.physical_device().getFormatProperties(depth_format, &format_properties);
+    gpu.get().getFormatProperties(depth_format, &format_properties);
 
     // Make sure the GPU supports depth
     if (format_properties.linearTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment) {

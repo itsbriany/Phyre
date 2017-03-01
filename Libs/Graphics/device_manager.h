@@ -1,6 +1,6 @@
 #pragma once
 #include <vulkan.hpp>
-#include "swapchain_manager.h"
+#include "vulkan_swapchain.h"
 #include "vulkan_gpu.h"
 #include "command_buffer_manager.h"
 #include "vulkan_memory_manager.h"
@@ -76,7 +76,7 @@ private:
     CommandBufferManager* p_command_buffer_manager_;
 
     // Points the the swapchain for image handling
-    SwapchainManager* p_swapchain_;
+    VulkanSwapchain* p_swapchain_;
 
     // A pointer to the Vulkan Pipeline
     std::unique_ptr<VulkanPipeline> p_pipeline_;

@@ -1,5 +1,6 @@
 #include "vulkan_debugger.h"
 #include "vulkan_errors.h"
+#include "vulkan_instance.h"
 
 static PFN_vkCreateDebugReportCallbackEXT s_create_debug_report_callback_proxy = nullptr;
 static PFN_vkDestroyDebugReportCallbackEXT s_destroy_debug_report_callback_proxy = nullptr;
@@ -20,7 +21,7 @@ VKAPI_ATTR VkResult VKAPI_CALL vkCreateDebugReportCallbackEXT(
 
 const std::string Phyre::Graphics::VulkanDebugger::kWho = "[VulkanDebugger]";
 
-Phyre::Graphics::VulkanDebugger::VulkanDebugger(const vk::Instance* instance) : p_vk_instance_(instance), debug_report_callback_(nullptr) {
+Phyre::Graphics::VulkanDebugger::VulkanDebugger(const VulkanInstance& instance) : instance_(instance), debug_report_callback_(nullptr) {
     Logging::trace("Intantiated", kWho);
 }
 
@@ -28,24 +29,18 @@ Phyre::Graphics::VulkanDebugger::VulkanDebugger(const vk::Instance* instance) : 
 // Rationale: Vulkan validation layers will scream at you if you do not free the debug report callback.
 Phyre::Graphics::VulkanDebugger::~VulkanDebugger() {
     if (s_destroy_debug_report_callback_proxy) {
-        s_destroy_debug_report_callback_proxy(*p_vk_instance_, debug_report_callback_, nullptr);
+       s_destroy_debug_report_callback_proxy(instance_.get(), debug_report_callback_, nullptr);
     }
-    Logging::trace("Destoryed", kWho);
+    Logging::trace("Destroyed", kWho);
 }
 
-bool Phyre::Graphics::VulkanDebugger::InitializeDebugReport(const vk::Instance* instance) {
-    if (!instance) {
-        Logging::error("Cannot initialize debug report when vulkan instance is nullptr", kWho);
-        return false;
-    }
-
-    p_vk_instance_ = instance;
+bool Phyre::Graphics::VulkanDebugger::InitializeDebugReport() {
     vk::DebugReportCallbackCreateInfoEXT debug_report_info;
     debug_report_info.setFlags(vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning);
     debug_report_info.setPfnCallback(Callback);
     debug_report_info.pUserData = reinterpret_cast<void *>(this);
 
-    vk::Result result = instance->createDebugReportCallbackEXT(&debug_report_info, nullptr, &debug_report_callback_);
+    vk::Result result = instance_.get().createDebugReportCallbackEXT(&debug_report_info, nullptr, &debug_report_callback_);
     return ErrorCheck(result, kWho);
 }
 
