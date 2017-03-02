@@ -7,14 +7,14 @@ namespace Graphics {
 // TODO Currently, the functions are stateless. It would be worthwhile to manage state
 // such as command pools and buffers, this way, we can simply submit to them and create a 
 // new command pool when necessary. Still need to figure out a way to identify command buffers though.
-class DeviceManager;
+class VulkanDevice;
 class CommandBufferManager {
 public:
     //--------------- Type definitions --------------------
     typedef std::vector<vk::CommandBuffer> CommandBufferVector;
 
     // --------------- Construction/Destruction ------------
-    CommandBufferManager(const DeviceManager& device);
+    CommandBufferManager(const VulkanDevice& device);
     ~CommandBufferManager();
 
     const vk::CommandBuffer& command_buffer() const { return command_buffers_[0]; }
@@ -36,7 +36,7 @@ private:
 
     // ------------------- Data Members -------------------------------
     // A reference to the logical device which owns us
-    const DeviceManager& device_manager_;
+    const VulkanDevice& device_manager_;
 
     // The command pool from which we create command buffers
     vk::CommandPool command_pool_;

@@ -5,7 +5,7 @@
 const std::string Phyre::Graphics::VulkanPipeline::kWho = "[VulkanPipeline]";
 
 Phyre::Graphics::VulkanPipeline::VulkanPipeline(const vk::Device& device,
-                                                const VulkanSwapchain& swapchain_manager,
+                                                const VulkanSwapchainDeprecated& swapchain_manager,
                                                 const VulkanMemoryManager& memory_manager,
                                                 const CommandBufferManager& command_buffer_manager,
                                                 const vk::Queue& graphics_queue,

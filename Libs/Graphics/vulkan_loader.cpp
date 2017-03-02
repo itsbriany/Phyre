@@ -29,7 +29,7 @@ Phyre::Graphics::VulkanLoader::VulkanLoader() :
     instance_(LoadVulkanInstance()),
     gpus_(LoadGPUs(instance_)),
     active_gpu_(gpus_.front()),
-    p_device_manager_(std::make_unique<DeviceManager>(active_gpu_, *p_window_))
+    p_device_manager_(std::make_unique<VulkanDevice>(active_gpu_, *p_window_))
 {
     Logging::trace("Instantiated", kWho);
 }

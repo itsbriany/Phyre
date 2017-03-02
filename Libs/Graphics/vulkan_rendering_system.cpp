@@ -7,12 +7,17 @@ Phyre::Graphics::VulkanRenderingSystem::VulkanRenderingSystem() :
     instance_(),
     debugger_(instance_),
     p_active_gpu_(nullptr),
-    p_window_(nullptr) {
+    p_window_(nullptr),
+    p_device_(nullptr),
+    p_swapchain_(nullptr) {
     Logging::trace("Instantiated", kWho);
 }
 
 Phyre::Graphics::VulkanRenderingSystem::~VulkanRenderingSystem() {
+    delete p_swapchain_;
+    p_device_->device().destroyCommandPool(command_pool_);
     delete p_window_;
+    delete p_device_;
     Logging::trace("Destroyed", kWho);
 }
 
@@ -22,9 +27,13 @@ void Phyre::Graphics::VulkanRenderingSystem::Start() {
 #endif
     LoadGPUs();
     LoadWindow(640, 480);
-
     // TODO On other platforms, we may need to initialize a connection to the window
 
+    LoadDevice();
+    LoadCommandPool();
+    LoadCommandBuffers();
+    ExecuteBeginCommandBuffer(0);
+    LoadSwapchain();
 }
 
 void Phyre::Graphics::VulkanRenderingSystem::StartDebugger() {
@@ -50,5 +59,77 @@ void Phyre::Graphics::VulkanRenderingSystem::LoadGPUs() {
 }
 
 void Phyre::Graphics::VulkanRenderingSystem::LoadWindow(uint32_t width, uint32_t height) {
-    p_window_ = new VulkanWindow(width, height, instance_);
+    if (!p_active_gpu_) {
+        Logging::error("Failed to load window: No active GPU", kWho);
+        return;
+    }
+    p_window_ = new VulkanWindow(width, height, instance_, *p_active_gpu_);
+}
+
+void Phyre::Graphics::VulkanRenderingSystem::LoadDevice() {
+    if (!AreDependenciesValid()) {
+        return;
+    }
+    p_device_ = new VulkanDevice(*p_active_gpu_, *p_window_);
+}
+
+void Phyre::Graphics::VulkanRenderingSystem::LoadCommandPool() {
+    /**
+    * Command buffers reside in command buffer pools.
+    * This is necessary for allocating command buffers
+    * because memory is coarsly allocated in large chunks between the CPU and GPU.
+    */
+    if (!p_device_) {
+        Logging::error("Failed to load command pool: No Device", kWho);
+        return;
+    }
+
+    vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlags(), p_device_->graphics_queue_family_index());
+    command_pool_ = p_device_->device().createCommandPool(command_pool_create_info);
+}
+
+void Phyre::Graphics::VulkanRenderingSystem::LoadCommandBuffers() {
+    if (!p_device_) {
+        Logging::error("Failed to load command buffers: No Device", kWho);
+        return;
+    }
+    vk::CommandBufferAllocateInfo command_buffer_allocate_info;
+    uint32_t command_buffer_count = 1;
+    command_buffer_allocate_info.setCommandPool(command_pool_);
+    command_buffer_allocate_info.setLevel(vk::CommandBufferLevel::ePrimary);
+    command_buffer_allocate_info.setCommandBufferCount(command_buffer_count);
+    
+    command_buffers_ = p_device_->device().allocateCommandBuffers(command_buffer_allocate_info);
+}
+
+void Phyre::Graphics::VulkanRenderingSystem::ExecuteBeginCommandBuffer(size_t command_buffer_index) {
+    if (command_buffer_index > command_buffers_.size()) {
+        Logging::error("Failed to begin command buffer: index out of bounds", kWho);
+        return;
+    }
+
+    vk::CommandBufferBeginInfo info;
+    info.setPInheritanceInfo(nullptr);
+    command_buffers_[command_buffer_index].begin(&info);
+    Logging::trace("Command buffer begin", kWho);
+}
+
+void Phyre::Graphics::VulkanRenderingSystem::LoadSwapchain() {
+    if (!AreDependenciesValid()) {
+        return;
+    }
+    p_swapchain_ = new VulkanSwapchain(*p_device_, *p_window_);
+}
+
+bool Phyre::Graphics::VulkanRenderingSystem::AreDependenciesValid() const {
+    if (!p_active_gpu_) {
+        Logging::error("Failed to load logical device: No active GPU", kWho);
+        return false;
+    }
+    if (!p_window_) {
+        Logging::error("Failed to load logical device: No Window", kWho);
+        return false;
+    }
+
+    return true;
 }

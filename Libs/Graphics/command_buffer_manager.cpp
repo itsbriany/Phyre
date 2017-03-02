@@ -1,11 +1,11 @@
 #include "command_buffer_manager.h"
-#include "device_manager.h"
+#include "vulkan_device.h"
 #include "logging.h"
 #include "vulkan_errors.h"
 
 const std::string Phyre::Graphics::CommandBufferManager::kWho = "[CommandBufferManager]";
 
-Phyre::Graphics::CommandBufferManager::CommandBufferManager(const DeviceManager& device) :
+Phyre::Graphics::CommandBufferManager::CommandBufferManager(const VulkanDevice& device) :
     device_manager_(device),
     command_pool_(InitializeCommandPool(device_manager_.device(), device_manager_.graphics_queue_family_index())),
     command_buffers_(InitializeCommandBuffers(device_manager_.device(), command_pool_)) {

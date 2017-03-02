@@ -2,93 +2,76 @@
 #include "vulkan_memory_manager.h"
 #include "vulkan_errors.h"
 #include "vulkan_window.h"
+#include "vulkan_device.h"
 
 const std::string Phyre::Graphics::VulkanSwapchain::kWho = "[VulkanSwapchain]";
 
 // Initialization pipeline
-Phyre::Graphics::VulkanSwapchain::VulkanSwapchain(const VulkanMemoryManager& memory_manager,
-                                                    const VulkanWindow& window,
-                                                    const VulkanGPU& gpu,
-                                                    const vk::Device& device, 
-                                                    uint32_t graphics_queue_family_index, 
-                                                    uint32_t presentation_family_index) :
-    memory_manager_(memory_manager),
-    surface_(window.GetSurfaceReference()),
+Phyre::Graphics::VulkanSwapchain::VulkanSwapchain(const VulkanDevice& device, const VulkanWindow& window) :
+    surface_(window.surface()),
     image_width_(window.width()),
     image_height_(window.height()),
-    gpu_(gpu),
     device_(device),
-    surface_formats_(InitializeSurfaceFormats(surface_, gpu_.get())),
-    preferred_surface_format_(InitializePreferredSurfaceFormat(surface_formats_)),
-    surface_capabilities_(InitializeSurfaceCapabilities(surface_, gpu_.get())),
-    swapchain_extent_(InitializeSwapchainExtent(window.width(), window.height(), surface_capabilities_)),
-    pre_transform_(InitializePreTransform(surface_capabilities_)),
-    surface_present_modes_(InitializeSurfacePresentModes(surface_, gpu_.get())),
-    preferred_surface_present_mode_(InitializePreferredPresentMode(surface_present_modes_)),
-    swapchain_(InitializeSwapchain(device,
-                                   surface_,
-                                   surface_capabilities_,
-                                   preferred_surface_format_,
-                                   swapchain_extent_,
-                                   pre_transform_,
-                                   preferred_surface_present_mode_,
-                                   graphics_queue_family_index,
-                                   presentation_family_index)),
-    swapchain_images_(InitializeSwapchainImages(device_, swapchain_, preferred_surface_format_.format)),
+    swapchain_extent_(InitializeSwapchainExtent(window)),
+    pre_transform_(InitializePreTransform(window.surface_capabilities())),
+    swapchain_(InitializeSwapchain(device_, window, swapchain_extent_, pre_transform_)),
+    swapchain_images_(InitializeSwapchainImages(device_.device(), swapchain_, window.preferred_surface_format().format)),
     samples_(vk::SampleCountFlagBits::e1),
-    depth_image_(InitializeDepthImage(memory_manager_, gpu_, device_, window.width(), window.height(), samples_)) {
+    depth_image_(InitializeDepthImage(device_, window.width(), window.height(), samples_)) {
     Logging::trace("Instantiated", kWho);
 }
 
 Phyre::Graphics::VulkanSwapchain::~VulkanSwapchain() {
-    device_.destroyImage(depth_image_.image);
-    device_.destroyImageView(depth_image_.image_view);
-    device_.freeMemory(depth_image_.device_memory);
+    device_.device().destroyImage(depth_image_.image);
+    device_.device().destroyImageView(depth_image_.image_view);
+    device_.device().freeMemory(depth_image_.device_memory);
     for (const auto& swapchain_image : swapchain_images_) {
-        device_.destroyImageView(swapchain_image.image_view);
+        device_.device().destroyImageView(swapchain_image.image_view);
     }
-    device_.destroySwapchainKHR(swapchain_, nullptr);
+    device_.device().destroySwapchainKHR(swapchain_, nullptr);
     Logging::trace("Destroyed", kWho);
 }
 
-std::vector<vk::SurfaceFormatKHR> Phyre::Graphics::VulkanSwapchain::InitializeSurfaceFormats(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& gpu) {
-    uint32_t surface_format_count = 0;
-    gpu.getSurfaceFormatsKHR(surface, &surface_format_count, nullptr);
-
-    std::vector<vk::SurfaceFormatKHR> surface_formats(surface_format_count);
-    surface_formats = gpu.getSurfaceFormatsKHR(surface);
-
-    if (surface_formats.empty()) {
-        Logging::error("No surface formats detected", kWho);
+vk::SwapchainKHR Phyre::Graphics::VulkanSwapchain::InitializeSwapchain(const VulkanDevice& device,
+                                                                       const VulkanWindow& window, 
+                                                                       const vk::Extent2D& extent,
+                                                                       const vk::SurfaceTransformFlagBitsKHR& pre_transform) {
+    uint32_t desired_number_swapchain_images = window.surface_capabilities().minImageCount;
+    vk::SwapchainCreateInfoKHR info;
+    info.setSurface(window.surface());
+    info.setMinImageCount(desired_number_swapchain_images); // Minimum is generally double buffering
+    info.setImageFormat(window.preferred_surface_format().format);
+    info.setImageExtent(extent);
+    info.setPreTransform(pre_transform);
+    info.setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
+    info.setImageArrayLayers(1);
+    info.setPresentMode(window.preferred_present_mode());
+    info.setOldSwapchain(nullptr);
+    info.setClipped(false); // We are not allowed to discard rendering operations affecting regions of the surface which are not visible
+    info.setImageColorSpace(vk::ColorSpaceKHR::eSrgbNonlinear);
+    info.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferDst);
+    info.setImageSharingMode(vk::SharingMode::eExclusive); // If we are using VK_SHARING_MODE_CONCURRENT, then here we can specify how many queue families we want to use
+    info.setQueueFamilyIndexCount(0);
+    info.setPQueueFamilyIndices(nullptr);
+    if (device.graphics_queue_family_index() != device.presentation_queue_family_index()) {
+        // When the graphics and present queues are from different queue families,
+        // we either have to explicitly transfer ownership of images between
+        // the queues, or we have to share image resources between them
+        std::array<uint32_t, 2> queueFamilyIndices = { device.graphics_queue_family_index(), device.presentation_queue_family_index() };
+        info.setImageSharingMode(vk::SharingMode::eConcurrent);
+        info.setQueueFamilyIndexCount(queueFamilyIndices.size());
+        info.setPQueueFamilyIndices(queueFamilyIndices.data());
     }
-
-    return surface_formats;
+    return device.device().createSwapchainKHR(info);
 }
 
-vk::SurfaceFormatKHR Phyre::Graphics::VulkanSwapchain::InitializePreferredSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& surface_formats) {
-    if (surface_formats.empty()) {
-        Logging::warning("No surface formats detected!", kWho);
-    }
-
-    // The first image format is the preferred one
-    vk::SurfaceFormatKHR surface_format;
-    const vk::Format default_image_format = vk::Format::eB8G8R8A8Unorm;
-    if (surface_formats.size() == 1 && surface_formats.front().format == vk::Format::eUndefined) {
-        surface_format.format = default_image_format;
-    } else {
-        surface_format.format = surface_formats.front().format;
-    }
-
-    surface_format.colorSpace = surface_formats.front().colorSpace;
-    return surface_format;
-}
-
-vk::Extent2D Phyre::Graphics::VulkanSwapchain::InitializeSwapchainExtent(uint32_t width, uint32_t height, const vk::SurfaceCapabilitiesKHR& surface_capabilities) {
+vk::Extent2D Phyre::Graphics::VulkanSwapchain::InitializeSwapchainExtent(const VulkanWindow& window) {
     // Width and height are either both 0xFFFFFFFF, or both not 0xFFFFFFFF.
     vk::Extent2D extent;
+    const vk::SurfaceCapabilitiesKHR& surface_capabilities = window.surface_capabilities();
     if (surface_capabilities.currentExtent.width == 0xFFFFFFFF) {
-        extent.width = width;
-        extent.height = height;
+        extent.width = window.width();
+        extent.height = window.height();
 
         // We make a sanity check to optimize the extent of our swapchain buffers
         if (extent.width < surface_capabilities.minImageExtent.width) {
@@ -117,89 +100,6 @@ vk::SurfaceTransformFlagBitsKHR Phyre::Graphics::VulkanSwapchain::InitializePreT
         pre_transform = surface_capabilities.currentTransform;
     }
     return pre_transform;
-}
-
-vk::SurfaceCapabilitiesKHR Phyre::Graphics::VulkanSwapchain::InitializeSurfaceCapabilities(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& gpu) {
-    return gpu.getSurfaceCapabilitiesKHR(surface);
-}
-
-Phyre::Graphics::VulkanSwapchain::PresentModes Phyre::Graphics::VulkanSwapchain::InitializeSurfacePresentModes(const vk::SurfaceKHR& surface, const vk::PhysicalDevice& gpu) {
-    uint32_t present_modes_count = 0;
-    gpu.getSurfacePresentModesKHR(surface, &present_modes_count, nullptr);
-
-    PresentModes surface_present_modes(present_modes_count);
-    surface_present_modes = gpu.getSurfacePresentModesKHR(surface);
-    if (surface_present_modes.empty()) {
-        Logging::error("No surface presentation modes detected", kWho);
-    }
-    return surface_present_modes;
-}
-
-vk::PresentModeKHR Phyre::Graphics::VulkanSwapchain::InitializePreferredPresentMode(const PresentModes& surface_present_modes) {
-    // Tears when the app misses, but does not tear when the app is fast enough
-    if (std::find(surface_present_modes.cbegin(), surface_present_modes.cend(), vk::PresentModeKHR::eFifoRelaxed) != surface_present_modes.cend()) {
-        return vk::PresentModeKHR::eFifoRelaxed;
-    }
-    
-    // Tearning is never observed
-    if (std::find(surface_present_modes.cbegin(), surface_present_modes.cend(), vk::PresentModeKHR::eFifo) != surface_present_modes.cend()) {
-        return vk::PresentModeKHR::eFifo;
-    }
-
-    // Never tears
-    if (std::find(surface_present_modes.cbegin(), surface_present_modes.cend(), vk::PresentModeKHR::eMailbox) != surface_present_modes.cend()) {
-        return vk::PresentModeKHR::eMailbox;
-    }
-
-    // Tears because the presentation requests are immediately rendered
-    return vk::PresentModeKHR::eImmediate;
-}
-
-vk::SwapchainKHR Phyre::Graphics::VulkanSwapchain::InitializeSwapchain(const vk::Device& device,
-                                                                       const vk::SurfaceKHR& surface, 
-                                                                       const vk::SurfaceCapabilitiesKHR& surface_capabilities,
-                                                                       const vk::SurfaceFormatKHR& surface_format,
-                                                                       const vk::Extent2D& swapchain_extent,
-                                                                       const vk::SurfaceTransformFlagBitsKHR& pre_transform,
-                                                                       const vk::PresentModeKHR& surface_present_mode,
-                                                                       uint32_t graphics_queue_family_index,
-                                                                       uint32_t presentation_queue_family_index) {
-    vk::SwapchainCreateInfoKHR swapchain_create_info;
-    swapchain_create_info.setSurface(surface);
-    swapchain_create_info.setMinImageCount(surface_capabilities.minImageCount); // Minimum is generally double buffering
-    swapchain_create_info.setImageFormat(surface_format.format);
-    swapchain_create_info.setImageColorSpace(surface_format.colorSpace);
-    swapchain_create_info.setImageExtent(swapchain_extent);
-    swapchain_create_info.setImageArrayLayers(1); // For simplicity, we will only use one for now
-    swapchain_create_info.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferDst); // How will the application use the swapchain's presentable images?
-    swapchain_create_info.setImageSharingMode(vk::SharingMode::eExclusive); // Let's prevent other resources from accessing this swap chain for now
-    swapchain_create_info.setQueueFamilyIndexCount(0); // If we are using VK_SHARING_MODE_CONCURRENT, then here we can specify how many queue families we want to use
-    swapchain_create_info.setPQueueFamilyIndices(nullptr); // Only use when VK_SHARING_MODE_CONCURRENT
-    swapchain_create_info.setPreTransform(pre_transform);
-    swapchain_create_info.setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
-    swapchain_create_info.setPresentMode(surface_present_mode);
-    swapchain_create_info.setClipped(true); // We are allowd to discard rendering operations affecting regions of the surface which are not visible
-    swapchain_create_info.setOldSwapchain(nullptr);
-
-    if (graphics_queue_family_index != presentation_queue_family_index) {
-        // When the graphics and present queues are from different queue families,
-        // we either have to explicitly transfer ownership of images between
-        // the queues, or we have to share image resources between them
-        std::array<uint32_t, 2> queueFamilyIndices = { graphics_queue_family_index, presentation_queue_family_index };
-        swapchain_create_info.imageSharingMode = vk::SharingMode::eConcurrent;
-        swapchain_create_info.queueFamilyIndexCount = queueFamilyIndices.size();
-        swapchain_create_info.pQueueFamilyIndices = queueFamilyIndices.data();
-    }
-    
-    vk::SwapchainKHR swapchain;
-    vk::Result result = device.createSwapchainKHR(&swapchain_create_info, nullptr, &swapchain);
-    if (ErrorCheck(result, kWho)) {
-        return swapchain;
-    }
-
-    std::string error_message = "Failed to initialize swapchain";
-    Logging::fatal(error_message, kWho);
-    throw std::runtime_error(error_message);
 }
 
 Phyre::Graphics::VulkanSwapchain::SwapchainImageVector Phyre::Graphics::VulkanSwapchain::InitializeSwapchainImages(const vk::Device& device,
@@ -262,17 +162,15 @@ Phyre::Graphics::VulkanSwapchain::SwapchainImageVector Phyre::Graphics::VulkanSw
     return swapchain_images;
 }
 
-Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::InitializeDepthImage(const VulkanMemoryManager& memory_manager,
-                                                                                                      const VulkanGPU& gpu,
-                                                                                                      const vk::Device& device,
-                                                                                                      uint32_t width,
-                                                                                                      uint32_t height,
-                                                                                                      vk::SampleCountFlagBits samples) {
+Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::InitializeDepthImage(const VulkanDevice& device,
+                                                                                                    uint32_t width,
+                                                                                                    uint32_t height,
+                                                                                                    vk::SampleCountFlagBits samples) {
     // Create a depth buffer image so that we can eventually have 3D rendering.
     vk::ImageCreateInfo image_create_info;
     vk::Format depth_format = vk::Format::eD16Unorm;
     vk::FormatProperties format_properties;
-    gpu.get().getFormatProperties(depth_format, &format_properties);
+    device.GpuReference().get().getFormatProperties(depth_format, &format_properties);
 
     // Make sure the GPU supports depth
     if (format_properties.linearTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment) {
@@ -304,25 +202,20 @@ Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::I
     image_create_info.setPQueueFamilyIndices(nullptr);
     image_create_info.setSharingMode(vk::SharingMode::eExclusive);
 
-    vk::Image depth_image;
-    vk::Result result = device.createImage(&image_create_info, nullptr, &depth_image);
-    if (!ErrorCheck(result, kWho)) {
-        std::string error_message = "Could not create image";
-        Logging::fatal(error_message, kWho);
-        throw std::runtime_error(error_message);
-    }
+    vk::Image depth_image = device.device().createImage(image_create_info);
+    
 
     // Gather memory allocation requirements for non-sparse images
     // We do this because we still need to figure out how much memory to allocate.
     // There may be alignment constraints placed by the GPU hardware, so we need to be aware of this.
     vk::MemoryRequirements memory_requirements;
-    device.getImageMemoryRequirements(depth_image, &memory_requirements);
+    device.device().getImageMemoryRequirements(depth_image, &memory_requirements);
     
     // Now that we know about the memory constraints, we can now allocate memory for our image
     /* Use the memory properties to determine the type of memory required */
     vk::MemoryAllocateInfo memory_allocate_info;
     vk::MemoryPropertyFlagBits requirements_mask = vk::MemoryPropertyFlagBits::eDeviceLocal;
-    if(!VulkanMemoryManager::CanFindMemoryTypeFromProperties(gpu, memory_requirements.memoryTypeBits, requirements_mask, memory_allocate_info.memoryTypeIndex)) {
+    if(!VulkanMemoryManager::CanFindMemoryTypeFromProperties(device.GpuReference(), memory_requirements.memoryTypeBits, requirements_mask, memory_allocate_info.memoryTypeIndex)) {
         std::string error_message = "Could not satisfy memory requirements for image";
         Logging::fatal(error_message, kWho);
         throw std::runtime_error(error_message);
@@ -331,16 +224,10 @@ Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::I
     memory_allocate_info.setAllocationSize(memory_requirements.size);
     memory_allocate_info.setMemoryTypeIndex(memory_allocate_info.memoryTypeIndex);
 
-    vk::DeviceMemory device_memory;
-    result = device.allocateMemory(&memory_allocate_info, nullptr, &device_memory);
-    if (!ErrorCheck(result, kWho)) {
-        std::string error_message = "Failed to allocate device memory for image";
-        Logging::fatal(error_message, kWho);
-        throw std::runtime_error(error_message);
-    }
+    vk::DeviceMemory device_memory = device.device().allocateMemory(memory_allocate_info);
 
     // Finally, we may bind the memory to our depth image buffer
-    device.bindImageMemory(depth_image, device_memory, 0);
+    device.device().bindImageMemory(depth_image, device_memory, 0);
 
     // Give it a view
     vk::ImageViewCreateInfo depth_image_view_create_info;
@@ -365,13 +252,7 @@ Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::I
     depth_image_view_create_info.setSubresourceRange(image_subresource_range);
     depth_image_view_create_info.setViewType(vk::ImageViewType::e2D);
 
-    vk::ImageView depth_image_view;
-    result = device.createImageView(&depth_image_view_create_info, nullptr, &depth_image_view);
-    if (!ErrorCheck(result, kWho)) {
-        std::string error_message = "Failed to initialize depth image view";
-        Logging::fatal(error_message, kWho);
-        throw std::runtime_error(error_message);
-    }
+    vk::ImageView depth_image_view = device.device().createImageView(depth_image_view_create_info);
 
     return DepthImage(depth_image, depth_image_view, depth_format, device_memory);
 }

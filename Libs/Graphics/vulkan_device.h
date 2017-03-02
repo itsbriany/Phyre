@@ -10,12 +10,16 @@
 namespace Phyre {
 namespace Graphics {
 
-class DeviceManager {
+/**
+ * An abstraction around the core Vulkan Logical Device.
+ * You may query various queues from here.
+ */
+class VulkanDevice {
 public:
-    explicit DeviceManager(const VulkanGPU& gpu, const VulkanWindow& window);
+    explicit VulkanDevice(const VulkanGPU& gpu, const VulkanWindow& window);
 
     // Clean up allocated resources
-    ~DeviceManager();
+    ~VulkanDevice();
 
     // Get a handle to the physical device
     const VulkanGPU& GpuReference() const { return gpu_; }
@@ -42,7 +46,10 @@ private:
     // Returns the index from the gpu's queue family with a queue which is capable of graphics and presentation
     static uint32_t InitializePresentationQueueIndex(const vk::PhysicalDevice& gpu, const vk::SurfaceKHR& surface, uint32_t graphics_queue_index);
 
+    // Initializes the graphics queue
     static vk::Queue InitializeGraphicsQueue(vk::Device& device, uint32_t graphics_queue_family_index);
+
+    // Initializes the presentation queue
     static vk::Queue InitializePresentationQueue(vk::Device& device,
                                                  const vk::Queue& graphics_queue,
                                                  uint32_t graphics_queue_family_index,
@@ -70,16 +77,16 @@ private:
     vk::Queue presentation_queue_;
 
     // Manages memory and allocates buffers
-    VulkanMemoryManager memory_manager_;
+    //VulkanMemoryManager memory_manager_;
 
     // Manages the command pools and buffers
-    CommandBufferManager* p_command_buffer_manager_;
+    //CommandBufferManager* p_command_buffer_manager_;
 
     // Points the the swapchain for image handling
-    VulkanSwapchain* p_swapchain_;
+    //VulkanSwapchainDeprecated* p_swapchain_;
 
     // A pointer to the Vulkan Pipeline
-    std::unique_ptr<VulkanPipeline> p_pipeline_;
+    //std::unique_ptr<VulkanPipeline> p_pipeline_;
 
     // For logging
     static const std::string kWho;

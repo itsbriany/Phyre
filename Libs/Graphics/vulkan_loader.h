@@ -1,7 +1,7 @@
 #pragma once
 #include "vulkan_debugger.h"
 #include "vulkan_window.h"
-#include "device_manager.h"
+#include "vulkan_device.h"
 #include "vulkan_gpu.h"
 #include "vulkan_pipeline.h"
 
@@ -52,7 +52,7 @@ private:
     std::unique_ptr<VulkanWindow> p_window_;
 
     // Points to the logical device currently in use
-    std::unique_ptr<DeviceManager> p_device_manager_;
+    std::unique_ptr<VulkanDevice> p_device_manager_;
 
     static const std::vector<const char*> kInstanceLayerNames;
     static const std::vector<const char*> kInstanceExtensionNames;

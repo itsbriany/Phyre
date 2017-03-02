@@ -8,7 +8,7 @@
 
 const std::string Phyre::Graphics::VulkanRenderPass::kWho = "[VulkanRenderPass]";
 
-Phyre::Graphics::VulkanRenderPass::VulkanRenderPass(const vk::Device& device, const VulkanSwapchain& swapchain_manager, const VulkanMemoryManager& memory_manager) :
+Phyre::Graphics::VulkanRenderPass::VulkanRenderPass(const vk::Device& device, const VulkanSwapchainDeprecated& swapchain_manager, const VulkanMemoryManager& memory_manager) :
     device_(device),
     swapchain_manager_(swapchain_manager),
     render_pass_(InitializeRenderPass(device_, swapchain_manager.samples(), swapchain_manager.image_format(), swapchain_manager.depth_format())),
@@ -165,7 +165,7 @@ Phyre::Graphics::VulkanRenderPass::FramebufferVector Phyre::Graphics::VulkanRend
                                                                                                                const vk::RenderPass& render_pass,
                                                                                                                const uint32_t width,
                                                                                                                const uint32_t height,
-                                                                                                               const VulkanSwapchain::SwapchainImageVector& swapchain_imges) {
+                                                                                                               const VulkanSwapchainDeprecated::SwapchainImageVector& swapchain_imges) {
     uint32_t color_index = 0;
     uint32_t depth_index = 1;
     std::array<vk::ImageView, 2> attachments;

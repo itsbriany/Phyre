@@ -1,33 +1,34 @@
-#include "device_manager.h"
+#include "vulkan_device.h"
 #include "vulkan_errors.h"
+#include "vulkan_instance.h"
 #include "vulkan_loader.h"
 
-const std::string Phyre::Graphics::DeviceManager::kWho = "[DeviceManager]";
+const std::string Phyre::Graphics::VulkanDevice::kWho = "[VulkanDevice]";
 
-Phyre::Graphics::DeviceManager::DeviceManager(const VulkanGPU& gpu, const VulkanWindow& window) :
+Phyre::Graphics::VulkanDevice::VulkanDevice(const VulkanGPU& gpu, const VulkanWindow& window) :
     gpu_(gpu),
     graphics_queue_family_index_(InitializeGraphicsQueueIndex(gpu_.get())),
-    presentation_queue_family_index_(InitializePresentationQueueIndex(gpu_.get(), window.GetSurfaceReference(), graphics_queue_family_index_)),
+    presentation_queue_family_index_(InitializePresentationQueueIndex(gpu_.get(), window.surface(), graphics_queue_family_index_)),
     device_(InitializeLogicalDevice(gpu_.get())),
     graphics_queue_(InitializeGraphicsQueue(device_, graphics_queue_family_index_)),
-    presentation_queue_(InitializePresentationQueue(device_, graphics_queue_, graphics_queue_family_index_, presentation_queue_family_index_)),
-    memory_manager_(gpu_, device_),
-    p_command_buffer_manager_(new CommandBufferManager(*this)),
-    p_swapchain_(new VulkanSwapchain(memory_manager_, window, gpu_, device_, graphics_queue_family_index_, presentation_queue_family_index_)),
-    p_pipeline_(std::make_unique<VulkanPipeline>(device_, *p_swapchain_, memory_manager_, *p_command_buffer_manager_, graphics_queue_, presentation_queue_))
+    presentation_queue_(InitializePresentationQueue(device_, graphics_queue_, graphics_queue_family_index_, presentation_queue_family_index_))
+   // memory_manager_(gpu_, device_),
+   // p_command_buffer_manager_(new CommandBufferManager(*this)),
+  //  p_swapchain_(new VulkanSwapchainDeprecated(memory_manager_, window, gpu_, device_, graphics_queue_family_index_, presentation_queue_family_index_)),
+  //  p_pipeline_(std::make_unique<VulkanPipeline>(device_, *p_swapchain_, memory_manager_, *p_command_buffer_manager_, graphics_queue_, presentation_queue_))
 {
     Logging::trace("Instantiated", kWho);
 }
 
-Phyre::Graphics::DeviceManager::~DeviceManager() {
-    p_pipeline_.reset();
-    delete p_swapchain_;
-    delete p_command_buffer_manager_;
+Phyre::Graphics::VulkanDevice::~VulkanDevice() {
+  //  p_pipeline_.reset();
+  //  delete p_swapchain_;
+  //  delete p_command_buffer_manager_;
     device_.destroy();
     Logging::trace("Destroyed", kWho);
 }
 
-vk::Device Phyre::Graphics::DeviceManager::InitializeLogicalDevice(const vk::PhysicalDevice& gpu) {
+vk::Device Phyre::Graphics::VulkanDevice::InitializeLogicalDevice(const vk::PhysicalDevice& gpu) {
     std::vector<float> queue_priorities;
     uint32_t max_queue_count = 1; // Let's only use one queue for now
     std::vector<vk::DeviceQueueCreateInfo> device_queue_create_infos(1, PrepareGraphicsQueueInfo(gpu, queue_priorities, max_queue_count));
@@ -42,23 +43,16 @@ vk::Device Phyre::Graphics::DeviceManager::InitializeLogicalDevice(const vk::Phy
     device_create_info.setQueueCreateInfoCount(device_queue_create_infos.size());
     device_create_info.setPQueueCreateInfos(device_queue_create_infos.data());
 
-    if (kDebugging) {
-        device_layer_names.emplace_back(VulkanLoader::kLunarGStandardValidation);
-        device_create_info.setPpEnabledLayerNames(device_layer_names.data());
-        device_create_info.setEnabledLayerCount(device_layer_names.size());
-    }
+#ifndef NDEBUG
+    device_layer_names.emplace_back(VulkanInstance::kLunarGStandardValidation);
+    device_create_info.setPpEnabledLayerNames(device_layer_names.data());
+    device_create_info.setEnabledLayerCount(device_layer_names.size());
+#endif
 
-    vk::Device device;
-    vk::Result result = gpu.createDevice(&device_create_info, nullptr, &device);
-    if (ErrorCheck(result, kWho)) {
-        return device;
-    }
-    std::string error_message = "Could not initialize logical device!";
-    Logging::fatal(error_message, kWho);
-    throw std::runtime_error(error_message);
+    return gpu.createDevice(device_create_info);
 }
 
-vk::DeviceQueueCreateInfo Phyre::Graphics::DeviceManager::PrepareGraphicsQueueInfo(const vk::PhysicalDevice& gpu, std::vector<float>& queue_priorities, uint32_t max_queue_count) {
+vk::DeviceQueueCreateInfo Phyre::Graphics::VulkanDevice::PrepareGraphicsQueueInfo(const vk::PhysicalDevice& gpu, std::vector<float>& queue_priorities, uint32_t max_queue_count) {
     /**
     * Queues are categorized into families. We can think of families as GPU capabilities
     * such as Graphics, Compute, performing pixel block copies (blits), etc...
@@ -92,13 +86,13 @@ vk::DeviceQueueCreateInfo Phyre::Graphics::DeviceManager::PrepareGraphicsQueueIn
     return device_queue_create_info;
 }
 
-std::vector<const char*> Phyre::Graphics::DeviceManager::DeviceExtentionNames() {
+std::vector<const char*> Phyre::Graphics::VulkanDevice::DeviceExtentionNames() {
     return std::vector<const char*> {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 }
 
-uint32_t Phyre::Graphics::DeviceManager::InitializeGraphicsQueueIndex(const vk::PhysicalDevice& gpu) {
+uint32_t Phyre::Graphics::VulkanDevice::InitializeGraphicsQueueIndex(const vk::PhysicalDevice& gpu) {
     std::vector<vk::QueueFamilyProperties> queue_family_properties_vector = gpu.getQueueFamilyProperties();
     for (const auto& queue_family_properties : queue_family_properties_vector) {
         for (uint32_t queue_index = 0; queue_index < queue_family_properties.queueCount; ++queue_index) {
@@ -113,7 +107,7 @@ uint32_t Phyre::Graphics::DeviceManager::InitializeGraphicsQueueIndex(const vk::
     return UINT32_MAX;
 }
 
-uint32_t Phyre::Graphics::DeviceManager::InitializePresentationQueueIndex(const vk::PhysicalDevice& gpu, const vk::SurfaceKHR& surface, uint32_t graphics_queue_index) {
+uint32_t Phyre::Graphics::VulkanDevice::InitializePresentationQueueIndex(const vk::PhysicalDevice& gpu, const vk::SurfaceKHR& surface, uint32_t graphics_queue_index) {
     uint32_t presentation_queue_index = UINT32_MAX;
 
     // Initialize a vector letting us know which queues currently support surface presentation
@@ -150,12 +144,12 @@ uint32_t Phyre::Graphics::DeviceManager::InitializePresentationQueueIndex(const 
     return presentation_queue_index;
 }
 
-vk::Queue Phyre::Graphics::DeviceManager::InitializeGraphicsQueue(vk::Device& device, uint32_t graphics_queue_family_index) {
+vk::Queue Phyre::Graphics::VulkanDevice::InitializeGraphicsQueue(vk::Device& device, uint32_t graphics_queue_family_index) {
     uint32_t queue_index = 0; // The first graphics queue index
     return device.getQueue(graphics_queue_family_index, queue_index);
 }
 
-vk::Queue Phyre::Graphics::DeviceManager::InitializePresentationQueue(vk::Device& device,
+vk::Queue Phyre::Graphics::VulkanDevice::InitializePresentationQueue(vk::Device& device,
                                                                       const vk::Queue& graphics_queue, 
                                                                       uint32_t graphics_queue_family_index,
                                                                       uint32_t presentation_queue_family_index) {

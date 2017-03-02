@@ -13,7 +13,7 @@ public:
     typedef std::array<vk::WriteDescriptorSet, 2> WriteDescriptorSets;
 
     explicit VulkanPipeline(const vk::Device& device,
-                            const VulkanSwapchain& swapchain_manager,
+                            const VulkanSwapchainDeprecated& swapchain_manager,
                             const VulkanMemoryManager& memory_manager, 
                             const CommandBufferManager& command_buffer_manager,
                             const vk::Queue& graphics_queue,
@@ -54,7 +54,7 @@ private:
     const vk::Queue presentation_queue_;
 
     // A reference to the swapchain manager
-    const VulkanSwapchain& swapchain_manager_;
+    const VulkanSwapchainDeprecated& swapchain_manager_;
 
     // A reference to the memory manager
     const VulkanMemoryManager& memory_manager_;
