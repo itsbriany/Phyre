@@ -22,14 +22,16 @@ public:
     ~VulkanDevice();
 
     // Get a handle to the physical device
-    const VulkanGPU& GpuReference() const { return gpu_; }
+    const VulkanGPU& gpu() const { return gpu_; }
 
     // Get a handle to the logical device
-    const vk::Device& device() const { return device_; }
+    const vk::Device& get() const { return device_; }
 
     // Getters
     uint32_t graphics_queue_family_index() const { return graphics_queue_family_index_; }
     uint32_t presentation_queue_family_index() const { return presentation_queue_family_index_; }
+    const vk::Queue& graphics_queue() const { return graphics_queue_; }
+    const vk::Queue& presentation_queue() const { return presentation_queue_; }
 
     static std::vector<const char*> DeviceExtentionNames();
 

@@ -1,6 +1,7 @@
 #include "vulkan_window.h"
 #include "vulkan_instance.h"
 #include "logging.h"
+#include "vulkan_gpu.h"
 #include <GLFW/glfw3.h>
 
 const std::string Phyre::Graphics::VulkanWindow::kWho = "[VulkanWindow]";

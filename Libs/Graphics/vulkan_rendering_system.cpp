@@ -9,13 +9,15 @@ Phyre::Graphics::VulkanRenderingSystem::VulkanRenderingSystem() :
     p_active_gpu_(nullptr),
     p_window_(nullptr),
     p_device_(nullptr),
-    p_swapchain_(nullptr) {
+    p_swapchain_(nullptr),
+    p_pipeline_(nullptr) {
     Logging::trace("Instantiated", kWho);
 }
 
 Phyre::Graphics::VulkanRenderingSystem::~VulkanRenderingSystem() {
+    delete p_pipeline_;
     delete p_swapchain_;
-    p_device_->device().destroyCommandPool(command_pool_);
+    p_device_->get().destroyCommandPool(command_pool_);
     delete p_window_;
     delete p_device_;
     Logging::trace("Destroyed", kWho);
@@ -34,6 +36,7 @@ void Phyre::Graphics::VulkanRenderingSystem::Start() {
     LoadCommandBuffers();
     ExecuteBeginCommandBuffer(0);
     LoadSwapchain();
+    LoadPipeline();
 }
 
 void Phyre::Graphics::VulkanRenderingSystem::StartDebugger() {
@@ -85,7 +88,7 @@ void Phyre::Graphics::VulkanRenderingSystem::LoadCommandPool() {
     }
 
     vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlags(), p_device_->graphics_queue_family_index());
-    command_pool_ = p_device_->device().createCommandPool(command_pool_create_info);
+    command_pool_ = p_device_->get().createCommandPool(command_pool_create_info);
 }
 
 void Phyre::Graphics::VulkanRenderingSystem::LoadCommandBuffers() {
@@ -99,7 +102,7 @@ void Phyre::Graphics::VulkanRenderingSystem::LoadCommandBuffers() {
     command_buffer_allocate_info.setLevel(vk::CommandBufferLevel::ePrimary);
     command_buffer_allocate_info.setCommandBufferCount(command_buffer_count);
     
-    command_buffers_ = p_device_->device().allocateCommandBuffers(command_buffer_allocate_info);
+    command_buffers_ = p_device_->get().allocateCommandBuffers(command_buffer_allocate_info);
 }
 
 void Phyre::Graphics::VulkanRenderingSystem::ExecuteBeginCommandBuffer(size_t command_buffer_index) {
@@ -119,6 +122,18 @@ void Phyre::Graphics::VulkanRenderingSystem::LoadSwapchain() {
         return;
     }
     p_swapchain_ = new VulkanSwapchain(*p_device_, *p_window_);
+}
+
+void Phyre::Graphics::VulkanRenderingSystem::LoadPipeline() {
+    if (!p_device_) {
+        Logging::error("Failed to load pipeline: No active device", kWho);
+        return;
+    }
+    if (!p_swapchain_) {
+        Logging::error("Failed to load pipeline: No active swapchain", kWho);
+        return;
+    }
+    p_pipeline_ = new VulkanPipeline(*p_device_, *p_swapchain_);
 }
 
 bool Phyre::Graphics::VulkanRenderingSystem::AreDependenciesValid() const {

@@ -1,11 +1,10 @@
 #pragma once
 #include <vulkan.hpp>
-#include "vulkan_swapchain_deprecated.h"
 
 namespace Phyre {
 namespace Graphics {
+class VulkanGPU;
 class VulkanInstance;
-
 class VulkanDevice;
 class VulkanWindow {
 public:

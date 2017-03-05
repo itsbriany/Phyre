@@ -12,18 +12,11 @@ Phyre::Graphics::VulkanDevice::VulkanDevice(const VulkanGPU& gpu, const VulkanWi
     device_(InitializeLogicalDevice(gpu_.get())),
     graphics_queue_(InitializeGraphicsQueue(device_, graphics_queue_family_index_)),
     presentation_queue_(InitializePresentationQueue(device_, graphics_queue_, graphics_queue_family_index_, presentation_queue_family_index_))
-   // memory_manager_(gpu_, device_),
-   // p_command_buffer_manager_(new CommandBufferManager(*this)),
-  //  p_swapchain_(new VulkanSwapchainDeprecated(memory_manager_, window, gpu_, device_, graphics_queue_family_index_, presentation_queue_family_index_)),
-  //  p_pipeline_(std::make_unique<VulkanPipeline>(device_, *p_swapchain_, memory_manager_, *p_command_buffer_manager_, graphics_queue_, presentation_queue_))
 {
     Logging::trace("Instantiated", kWho);
 }
 
 Phyre::Graphics::VulkanDevice::~VulkanDevice() {
-  //  p_pipeline_.reset();
-  //  delete p_swapchain_;
-  //  delete p_command_buffer_manager_;
     device_.destroy();
     Logging::trace("Destroyed", kWho);
 }

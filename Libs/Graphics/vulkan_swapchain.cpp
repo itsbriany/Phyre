@@ -8,27 +8,28 @@ const std::string Phyre::Graphics::VulkanSwapchain::kWho = "[VulkanSwapchain]";
 
 // Initialization pipeline
 Phyre::Graphics::VulkanSwapchain::VulkanSwapchain(const VulkanDevice& device, const VulkanWindow& window) :
-    surface_(window.surface()),
-    image_width_(window.width()),
-    image_height_(window.height()),
+    window_(window),
+    surface_(window_.surface()),
+    image_width_(window_.width()),
+    image_height_(window_.height()),
     device_(device),
-    swapchain_extent_(InitializeSwapchainExtent(window)),
-    pre_transform_(InitializePreTransform(window.surface_capabilities())),
-    swapchain_(InitializeSwapchain(device_, window, swapchain_extent_, pre_transform_)),
-    swapchain_images_(InitializeSwapchainImages(device_.device(), swapchain_, window.preferred_surface_format().format)),
+    swapchain_extent_(InitializeSwapchainExtent(window_)),
+    pre_transform_(InitializePreTransform(window_.surface_capabilities())),
+    swapchain_(InitializeSwapchain(device_, window_, swapchain_extent_, pre_transform_)),
+    swapchain_images_(InitializeSwapchainImages(device_.get(), swapchain_, window_.preferred_surface_format().format)),
     samples_(vk::SampleCountFlagBits::e1),
-    depth_image_(InitializeDepthImage(device_, window.width(), window.height(), samples_)) {
+    depth_image_(InitializeDepthImage(device_, window_.width(), window_.height(), samples_)) {
     Logging::trace("Instantiated", kWho);
 }
 
 Phyre::Graphics::VulkanSwapchain::~VulkanSwapchain() {
-    device_.device().destroyImage(depth_image_.image);
-    device_.device().destroyImageView(depth_image_.image_view);
-    device_.device().freeMemory(depth_image_.device_memory);
+    device_.get().destroyImage(depth_image_.image);
+    device_.get().destroyImageView(depth_image_.image_view);
+    device_.get().freeMemory(depth_image_.device_memory);
     for (const auto& swapchain_image : swapchain_images_) {
-        device_.device().destroyImageView(swapchain_image.image_view);
+        device_.get().destroyImageView(swapchain_image.image_view);
     }
-    device_.device().destroySwapchainKHR(swapchain_, nullptr);
+    device_.get().destroySwapchainKHR(swapchain_, nullptr);
     Logging::trace("Destroyed", kWho);
 }
 
@@ -62,7 +63,7 @@ vk::SwapchainKHR Phyre::Graphics::VulkanSwapchain::InitializeSwapchain(const Vul
         info.setQueueFamilyIndexCount(queueFamilyIndices.size());
         info.setPQueueFamilyIndices(queueFamilyIndices.data());
     }
-    return device.device().createSwapchainKHR(info);
+    return device.get().createSwapchainKHR(info);
 }
 
 vk::Extent2D Phyre::Graphics::VulkanSwapchain::InitializeSwapchainExtent(const VulkanWindow& window) {
@@ -105,16 +106,8 @@ vk::SurfaceTransformFlagBitsKHR Phyre::Graphics::VulkanSwapchain::InitializePreT
 Phyre::Graphics::VulkanSwapchain::SwapchainImageVector Phyre::Graphics::VulkanSwapchain::InitializeSwapchainImages(const vk::Device& device,
                                                                                                                    const vk::SwapchainKHR& swapchain,
                                                                                                                    const vk::Format& format) {
-    uint32_t swapchain_image_count = 0;
-    device.getSwapchainImagesKHR(swapchain, &swapchain_image_count, nullptr);
-
-    std::vector<vk::Image> image_buffers(swapchain_image_count);
-    vk::Result result = device.getSwapchainImagesKHR(swapchain, &swapchain_image_count, image_buffers.data());
-    if (!ErrorCheck(result, kWho)) {
-        std::string error_message = "Could not initialize swapchain images";
-        Logging::fatal(error_message, kWho);
-        throw std::runtime_error(error_message);
-    }
+    std::vector<vk::Image> image_buffers = device.getSwapchainImagesKHR(swapchain);
+   
 
     ImageViewVector image_views;
     for (const vk::Image& image : image_buffers) {
@@ -141,19 +134,12 @@ Phyre::Graphics::VulkanSwapchain::SwapchainImageVector Phyre::Graphics::VulkanSw
         image_subresource_range.setLayerCount(1);
         color_image_view_create_info.setSubresourceRange(image_subresource_range);
 
-        vk::ImageView image_view;
-        result = device.createImageView(&color_image_view_create_info, nullptr, &image_view);
-        if (!ErrorCheck(result, kWho)) {
-            std::string error_message = "Failed to create image view";
-            Logging::fatal(error_message, kWho);
-            throw std::runtime_error(error_message);
-        }
-       
+        vk::ImageView image_view = device.createImageView(color_image_view_create_info);
         image_views.emplace_back(image_view);
     }
 
     SwapchainImageVector swapchain_images;
-    for (uint32_t i = 0; i < swapchain_image_count; ++i) {
+    for (uint32_t i = 0; i < image_buffers.size(); ++i) {
         SwapchainImage swapchain_image;
         swapchain_image.image = image_buffers[i];
         swapchain_image.image_view = image_views[i];
@@ -170,7 +156,7 @@ Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::I
     vk::ImageCreateInfo image_create_info;
     vk::Format depth_format = vk::Format::eD16Unorm;
     vk::FormatProperties format_properties;
-    device.GpuReference().get().getFormatProperties(depth_format, &format_properties);
+    device.gpu().get().getFormatProperties(depth_format, &format_properties);
 
     // Make sure the GPU supports depth
     if (format_properties.linearTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment) {
@@ -202,20 +188,20 @@ Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::I
     image_create_info.setPQueueFamilyIndices(nullptr);
     image_create_info.setSharingMode(vk::SharingMode::eExclusive);
 
-    vk::Image depth_image = device.device().createImage(image_create_info);
+    vk::Image depth_image = device.get().createImage(image_create_info);
     
 
     // Gather memory allocation requirements for non-sparse images
     // We do this because we still need to figure out how much memory to allocate.
     // There may be alignment constraints placed by the GPU hardware, so we need to be aware of this.
     vk::MemoryRequirements memory_requirements;
-    device.device().getImageMemoryRequirements(depth_image, &memory_requirements);
+    device.get().getImageMemoryRequirements(depth_image, &memory_requirements);
     
     // Now that we know about the memory constraints, we can now allocate memory for our image
     /* Use the memory properties to determine the type of memory required */
     vk::MemoryAllocateInfo memory_allocate_info;
     vk::MemoryPropertyFlagBits requirements_mask = vk::MemoryPropertyFlagBits::eDeviceLocal;
-    if(!VulkanMemoryManager::CanFindMemoryTypeFromProperties(device.GpuReference(), memory_requirements.memoryTypeBits, requirements_mask, memory_allocate_info.memoryTypeIndex)) {
+    if(!VulkanMemoryManager::CanFindMemoryTypeFromProperties(device.gpu(), memory_requirements.memoryTypeBits, requirements_mask, memory_allocate_info.memoryTypeIndex)) {
         std::string error_message = "Could not satisfy memory requirements for image";
         Logging::fatal(error_message, kWho);
         throw std::runtime_error(error_message);
@@ -224,10 +210,10 @@ Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::I
     memory_allocate_info.setAllocationSize(memory_requirements.size);
     memory_allocate_info.setMemoryTypeIndex(memory_allocate_info.memoryTypeIndex);
 
-    vk::DeviceMemory device_memory = device.device().allocateMemory(memory_allocate_info);
+    vk::DeviceMemory device_memory = device.get().allocateMemory(memory_allocate_info);
 
     // Finally, we may bind the memory to our depth image buffer
-    device.device().bindImageMemory(depth_image, device_memory, 0);
+    device.get().bindImageMemory(depth_image, device_memory, 0);
 
     // Give it a view
     vk::ImageViewCreateInfo depth_image_view_create_info;
@@ -252,7 +238,7 @@ Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::I
     depth_image_view_create_info.setSubresourceRange(image_subresource_range);
     depth_image_view_create_info.setViewType(vk::ImageViewType::e2D);
 
-    vk::ImageView depth_image_view = device.device().createImageView(depth_image_view_create_info);
+    vk::ImageView depth_image_view = device.get().createImageView(depth_image_view_create_info);
 
     return DepthImage(depth_image, depth_image_view, depth_format, device_memory);
 }

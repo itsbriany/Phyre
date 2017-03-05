@@ -18,7 +18,7 @@ namespace Geometry {
         float u, v;                    // texture u,v
     };
 
-    static const Vertex kVertexBufferSolidFaceColorData[] = {
+    static const std::vector<Vertex> kVertexBufferSolidFaceColorData = {
         // red face
         { XYZ1(-1, -1, 1), XYZ1(1.f, 0.f, 0.f) },
         { XYZ1(-1, 1, 1), XYZ1(1.f, 0.f, 0.f) },

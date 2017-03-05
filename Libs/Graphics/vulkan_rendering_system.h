@@ -31,6 +31,7 @@ private:
     void LoadCommandBuffers();
     void ExecuteBeginCommandBuffer(size_t command_buffer_index);
     void LoadSwapchain();
+    void LoadPipeline();
 
     // ------------------------ Helpers -------------------------
     // Returns true when the member dependencies are valid
@@ -58,6 +59,9 @@ private:
 
     // A swapchain which helps manage image buffers
     VulkanSwapchain* p_swapchain_;
+
+    // The pipeline
+    VulkanPipeline* p_pipeline_;
 
     // ---------------------- Logging ---------------------------
     static const std::string kWho;

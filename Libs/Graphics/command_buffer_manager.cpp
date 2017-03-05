@@ -6,14 +6,14 @@
 const std::string Phyre::Graphics::CommandBufferManager::kWho = "[CommandBufferManager]";
 
 Phyre::Graphics::CommandBufferManager::CommandBufferManager(const VulkanDevice& device) :
-    device_manager_(device),
-    command_pool_(InitializeCommandPool(device_manager_.device(), device_manager_.graphics_queue_family_index())),
-    command_buffers_(InitializeCommandBuffers(device_manager_.device(), command_pool_)) {
+    device_(device),
+    command_pool_(InitializeCommandPool(device_.get(), device_.graphics_queue_family_index())),
+    command_buffers_(InitializeCommandBuffers(device_.get(), command_pool_)) {
     Logging::trace("Instantiated", kWho);
 }
 
 Phyre::Graphics::CommandBufferManager::~CommandBufferManager() {
-    device_manager_.device().destroyCommandPool(command_pool_, nullptr);
+    device_.get().destroyCommandPool(command_pool_, nullptr);
     Logging::trace("Destroyed", kWho);
 }
 
@@ -49,7 +49,7 @@ Phyre::Graphics::CommandBufferManager::InitializeCommandBuffers(const vk::Device
 void
 Phyre::Graphics::CommandBufferManager::AllocateCommandBuffer(CommandBufferVector& command_buffers, vk::CommandBufferAllocateInfo* info) const {
     if (info) {
-        command_buffers = device_manager_.device().allocateCommandBuffers(*info);
+        command_buffers = device_.get().allocateCommandBuffers(*info);
         if (command_buffers.empty()) {
             Logging::warning("Could not allocate command buffers given the info", kWho);
         }
@@ -63,7 +63,7 @@ Phyre::Graphics::CommandBufferManager::AllocateCommandBuffer(CommandBufferVector
     command_buffer_allocate_info.setCommandBufferCount(command_buffer_count);
 
     command_buffers.resize(command_buffer_count);
-    vk::Result result = device_manager_.device().allocateCommandBuffers(&command_buffer_allocate_info, command_buffers.data());
+    vk::Result result = device_.get().allocateCommandBuffers(&command_buffer_allocate_info, command_buffers.data());
     if (!ErrorCheck(result, kWho)) {
         Logging::fatal("Failed to allocate default command buffer", kWho);
     }

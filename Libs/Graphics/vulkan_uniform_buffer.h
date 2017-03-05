@@ -4,12 +4,12 @@
 
 namespace Phyre {
 namespace Graphics {
-class VulkanGPU;
+class VulkanDevice;
 
 // A read only buffer for shaders
 class VulkanUniformBuffer {
 public:
-    VulkanUniformBuffer(const VulkanGPU& gpu, const vk::Device& device);
+    VulkanUniformBuffer(const VulkanDevice& device);
     ~VulkanUniformBuffer();
 
     void set_memory(const vk::DeviceMemory& memory) { device_memory_ = memory; }
@@ -22,8 +22,7 @@ private:
     static vk::Buffer InitializeBuffer(const vk::Device& device, const glm::mat4& MVP);
     void Initialize();
 
-    const VulkanGPU& gpu_;
-    const vk::Device& device_;
+    const VulkanDevice& device_;
     glm::mat4 projection_;
     glm::mat4 view_;
     glm::mat4 model_;

@@ -28,6 +28,7 @@ public:
 
     explicit VulkanSwapchain(const VulkanDevice& device, const VulkanWindow& window);
 
+    const VulkanWindow& window() const { return window_; }
     const SwapchainImageVector& swapchain_images() const { return swapchain_images_; }
     vk::Format depth_format() const { return depth_image_.format; }
     vk::SampleCountFlagBits samples() const { return samples_; }
@@ -70,6 +71,8 @@ private:
                                            vk::SampleCountFlagBits samples);
 
     // -------------------Data members -----------------
+    // A reference to our window
+    const VulkanWindow& window_;
 
     // A reference to the surface we want to send images to
     const vk::SurfaceKHR& surface_;

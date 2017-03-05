@@ -36,7 +36,7 @@ private:
 
     // ------------------- Data Members -------------------------------
     // A reference to the logical device which owns us
-    const VulkanDevice& device_manager_;
+    const VulkanDevice& device_;
 
     // The command pool from which we create command buffers
     vk::CommandPool command_pool_;
