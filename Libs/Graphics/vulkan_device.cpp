@@ -1,7 +1,6 @@
 #include "vulkan_device.h"
-#include "vulkan_errors.h"
 #include "vulkan_instance.h"
-#include "vulkan_loader.h"
+#include "logging.h"
 
 const std::string Phyre::Graphics::VulkanDevice::kWho = "[VulkanDevice]";
 

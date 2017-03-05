@@ -2,6 +2,7 @@
 #include "draw_cube.h"
 #include "geometry.h"
 #include "logging.h"
+#include "vulkan_memory_manager.h"
 
 int main(int argc, const char* argv[]) {
     Phyre::Graphics::DrawCube app;
@@ -100,17 +101,10 @@ void Phyre::Graphics::DrawCube::LoadGPUs() {
 }
 
 void Phyre::Graphics::DrawCube::LoadWindow(uint32_t width, uint32_t height) {
-    if (!p_active_gpu_) {
-        Logging::error("Failed to load window: No active GPU", kWho);
-        return;
-    }
     p_window_ = new VulkanWindow(width, height, instance_, *p_active_gpu_);
 }
 
 void Phyre::Graphics::DrawCube::LoadDevice() {
-    if (!AreDependenciesValid()) {
-        return;
-    }
     p_device_ = new VulkanDevice(*p_active_gpu_, *p_window_);
 }
 
@@ -120,20 +114,11 @@ void Phyre::Graphics::DrawCube::LoadCommandPool() {
     * This is necessary for allocating command buffers
     * because memory is coarsly allocated in large chunks between the CPU and GPU.
     */
-    if (!p_device_) {
-        Logging::error("Failed to load command pool: No Device", kWho);
-        return;
-    }
-
     vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlags(), p_device_->graphics_queue_family_index());
     command_pool_ = p_device_->get().createCommandPool(command_pool_create_info);
 }
 
 void Phyre::Graphics::DrawCube::LoadCommandBuffers() {
-    if (!p_device_) {
-        Logging::error("Failed to load command buffers: No Device", kWho);
-        return;
-    }
     vk::CommandBufferAllocateInfo command_buffer_allocate_info;
     uint32_t command_buffer_count = 1;
     command_buffer_allocate_info.setCommandPool(command_pool_);
@@ -156,26 +141,10 @@ void Phyre::Graphics::DrawCube::ExecuteBeginCommandBuffer(size_t command_buffer_
 }
 
 void Phyre::Graphics::DrawCube::LoadSwapchain() {
-    if (!AreDependenciesValid()) {
-        return;
-    }
     p_swapchain_ = new VulkanSwapchain(*p_device_, *p_window_);
 }
 
 void Phyre::Graphics::DrawCube::LoadPipeline() {
-    if (!p_device_) {
-        Logging::error("Faild to load pipeline: No logical device", kWho);
-        return;
-    }
-    if (!p_render_pass_) {
-        Logging::error("Faild to load pipeline: No render pass", kWho);
-        return;
-    }
-    if (shader_stages_.empty()) {
-        Logging::error("Faild to load pipeline: No shader stages", kWho);
-        return;
-    }
-
     // Dynamic State
     // These states will be added dynamically
     std::vector<vk::DynamicState> dynamic_states;
@@ -310,7 +279,6 @@ void Phyre::Graphics::DrawCube::LoadVulkanFence() {
 }
 
 void Phyre::Graphics::DrawCube::Draw() {
-
     // We cannot bind the vertex buffer until we begin a renderpass
     std::array<vk::ClearValue, 2> clear_values;
     vk::ClearColorValue color;
@@ -445,11 +413,6 @@ void Phyre::Graphics::DrawCube::Draw() {
 }
 
 void Phyre::Graphics::DrawCube::LoadShaderModules() {
-    if (!p_device_) {
-        Logging::error("Failed to load shader modules: No logical device", kWho);
-        return;
-    }
-
     // This is where the SPIR-V intermediate bytecode is located
     // std::string resource_directory("GraphicsTestResources/");
     std::string vertex_file_name("vertices.spv");
@@ -485,11 +448,6 @@ void Phyre::Graphics::DrawCube::LoadShaderModules() {
 }
 
 void Phyre::Graphics::DrawCube::LoadVertexBuffer() {
-    if (!p_device_) {
-        Logging::error("Failed to load vertex buffer: No logical device", kWho);
-        return;
-    }
-
     vk::BufferCreateInfo info;
     vk::DeviceSize data_size = Geometry::kVertexBufferSolidFaceColorData.size() * sizeof(Geometry::Vertex);
 
@@ -531,30 +489,14 @@ void Phyre::Graphics::DrawCube::LoadVertexBuffer() {
 }
 
 void Phyre::Graphics::DrawCube::LoadUniformBuffer() {
-    if (!p_device_) {
-        Logging::error("Failed to initialize uniform buffer: No logical device", kWho);
-        return;
-    }
     p_uniform_buffer_ = new VulkanUniformBuffer(*p_device_);
 }
 
 void Phyre::Graphics::DrawCube::LoadRenderPass() {
-    if (!p_device_) {
-        Logging::error("Failed to load render pass: No logical device", kWho);
-        return;
-    }
-    if (!p_swapchain_) {
-        Logging::error("Failed to load render pass: No swapchain", kWho);
-        return;
-    }
     p_render_pass_ = new VulkanRenderPass(*p_device_, *p_swapchain_);
 }
 
 void Phyre::Graphics::DrawCube::LoadDescriptorPool() {
-    if (!p_device_) {
-        Logging::error("Failed to load descriptor pool: No logical device", kWho);
-        return;
-    }
     vk::DescriptorPoolSize descriptor_pool_size;
     descriptor_pool_size.setType(vk::DescriptorType::eUniformBuffer);
     descriptor_pool_size.setDescriptorCount(1);
@@ -568,15 +510,6 @@ void Phyre::Graphics::DrawCube::LoadDescriptorPool() {
 }
 
 void Phyre::Graphics::DrawCube::LoadDescriptorSets() {
-    if (!p_uniform_buffer_) {
-        Logging::error("Failed to load descriptor set: No uniform buffer", kWho);
-        return;
-    }
-    if (!p_device_) {
-        Logging::error("Failed to load descriptor set: No logical device", kWho);
-        return;
-    }
-
     // Describes the descriptor set
     vk::DescriptorSetLayoutBinding descriptor_set_layout_binding;
     descriptor_set_layout_binding.setBinding(0); // We choose 0 because we only have one descriptor set which is indexed at 0
@@ -633,19 +566,6 @@ void Phyre::Graphics::DrawCube::LoadPipelineLayout() {
     create_info.setPSetLayouts(&descriptor_set_layout_);
 
     pipeline_layout_ = p_device_->get().createPipelineLayout(create_info);
-}
-
-bool Phyre::Graphics::DrawCube::AreDependenciesValid() const {
-    if (!p_active_gpu_) {
-        Logging::error("Failed to load logical device: No active GPU", kWho);
-        return false;
-    }
-    if (!p_window_) {
-        Logging::error("Failed to load logical device: No Window", kWho);
-        return false;
-    }
-
-    return true;
 }
 
 std::vector<uint32_t> Phyre::Graphics::DrawCube::ReadSpirV(const std::string spirv_shader_file_name) {

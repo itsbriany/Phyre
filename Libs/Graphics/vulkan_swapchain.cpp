@@ -1,8 +1,8 @@
 #include "vulkan_swapchain.h"
 #include "vulkan_memory_manager.h"
-#include "vulkan_errors.h"
 #include "vulkan_window.h"
 #include "vulkan_device.h"
+#include "logging.h"
 
 const std::string Phyre::Graphics::VulkanSwapchain::kWho = "[VulkanSwapchain]";
 

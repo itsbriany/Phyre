@@ -1,7 +1,8 @@
 #include "vulkan_uniform_buffer.h"
 #include <glm/gtc/matrix_transform.hpp>
-#include "vulkan_errors.h"
+#include "vulkan_memory_manager.h"
 #include "vulkan_device.h"
+#include "logging.h"
 
 const std::string Phyre::Graphics::VulkanUniformBuffer::kWho = "[VulkanUniformBuffer]";
 
@@ -39,12 +40,7 @@ vk::Buffer Phyre::Graphics::VulkanUniformBuffer::InitializeBuffer(const vk::Devi
     buffer_create_info.setSharingMode(vk::SharingMode::eExclusive);
     buffer_create_info.setFlags(vk::BufferCreateFlags());
 
-    vk::Buffer buffer;
-    vk::Result result = device.createBuffer(&buffer_create_info, nullptr, &buffer);
-    if (!ErrorCheck(result, kWho)) {
-        Logging::fatal("Failed to initilize uniform buffer", kWho);
-    }
-    return buffer;
+    return device.createBuffer(buffer_create_info);
 }
 
 void Phyre::Graphics::VulkanUniformBuffer::Initialize() {
@@ -57,10 +53,7 @@ void Phyre::Graphics::VulkanUniformBuffer::Initialize() {
     buffer_create_info.setSharingMode(vk::SharingMode::eExclusive);
     buffer_create_info.setFlags(vk::BufferCreateFlags());
 
-    vk::Result result = device_.get().createBuffer(&buffer_create_info, nullptr, &buffer_);
-    if (!ErrorCheck(result, kWho)) {
-        Logging::fatal("Failed to initilize uniform buffer", kWho);
-    }
+    buffer_ = device_.get().createBuffer(buffer_create_info);
 
     // Allocate buffer memory
     vk::MemoryRequirements memory_requirements = device_.get().getBufferMemoryRequirements(buffer_);

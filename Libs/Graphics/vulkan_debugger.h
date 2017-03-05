@@ -13,7 +13,7 @@ public:
     ~VulkanDebugger();
 
     // Let Vulkan know we want to receive reports from the debugging layer
-    bool InitializeDebugReport();
+    void InitializeDebugReport();
     
     // This will get invoked each time the vulkan debug layer calls back to us
     static VKAPI_ATTR vk::Bool32 VKAPI_CALL Callback(VkDebugReportFlagsEXT flags,

@@ -1,7 +1,6 @@
 #include "command_buffer_manager.h"
 #include "vulkan_device.h"
 #include "logging.h"
-#include "vulkan_errors.h"
 
 const std::string Phyre::Graphics::CommandBufferManager::kWho = "[CommandBufferManager]";
 
@@ -64,9 +63,6 @@ Phyre::Graphics::CommandBufferManager::AllocateCommandBuffer(CommandBufferVector
 
     command_buffers.resize(command_buffer_count);
     vk::Result result = device_.get().allocateCommandBuffers(&command_buffer_allocate_info, command_buffers.data());
-    if (!ErrorCheck(result, kWho)) {
-        Logging::fatal("Failed to allocate default command buffer", kWho);
-    }
 }
 
 void Phyre::Graphics::CommandBufferManager::BeginCommandBuffer(vk::CommandBuffer& command_buffer, vk::CommandBufferBeginInfo* info) const {

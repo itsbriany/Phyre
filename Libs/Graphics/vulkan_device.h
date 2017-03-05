@@ -2,10 +2,7 @@
 #include <vulkan.hpp>
 #include "vulkan_swapchain.h"
 #include "vulkan_gpu.h"
-#include "command_buffer_manager.h"
-#include "vulkan_memory_manager.h"
-#include "vulkan_pipeline.h"
-#include "vulkan_render_pass.h"
+#include "vulkan_window.h"
 
 namespace Phyre {
 namespace Graphics {
@@ -77,18 +74,6 @@ private:
 
     // The device queue used for presentation
     vk::Queue presentation_queue_;
-
-    // Manages memory and allocates buffers
-    //VulkanMemoryManager memory_manager_;
-
-    // Manages the command pools and buffers
-    //CommandBufferManager* p_command_buffer_manager_;
-
-    // Points the the swapchain for image handling
-    //VulkanSwapchainDeprecated* p_swapchain_;
-
-    // A pointer to the Vulkan Pipeline
-    //std::unique_ptr<VulkanPipeline> p_pipeline_;
 
     // For logging
     static const std::string kWho;

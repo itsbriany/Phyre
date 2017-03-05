@@ -4,6 +4,8 @@
 #include "vulkan_instance.h"
 #include "vulkan_gpu.h"
 #include "vulkan_window.h"
+#include "vulkan_uniform_buffer.h"
+#include "vulkan_render_pass.h"
 
 namespace Phyre {
 namespace Graphics {
@@ -52,9 +54,6 @@ private:
     void DestroyVertexBuffer() const;
 
     // ------------------------ Helpers -------------------------
-    // Returns true when the member dependencies are valid
-    bool AreDependenciesValid() const;
-
     // Load SPIR-V Bytecode from file
     static std::vector<uint32_t> ReadSpirV(const std::string spirv_shader_file_name);
 

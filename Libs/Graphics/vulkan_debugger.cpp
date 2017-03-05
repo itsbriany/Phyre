@@ -1,6 +1,6 @@
 #include "vulkan_debugger.h"
-#include "vulkan_errors.h"
 #include "vulkan_instance.h"
+#include "logging.h"
 
 static PFN_vkCreateDebugReportCallbackEXT s_create_debug_report_callback_proxy = nullptr;
 static PFN_vkDestroyDebugReportCallbackEXT s_destroy_debug_report_callback_proxy = nullptr;
@@ -34,14 +34,13 @@ Phyre::Graphics::VulkanDebugger::~VulkanDebugger() {
     Logging::trace("Destroyed", kWho);
 }
 
-bool Phyre::Graphics::VulkanDebugger::InitializeDebugReport() {
+void Phyre::Graphics::VulkanDebugger::InitializeDebugReport() {
     vk::DebugReportCallbackCreateInfoEXT debug_report_info;
     debug_report_info.setFlags(vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning);
     debug_report_info.setPfnCallback(Callback);
     debug_report_info.pUserData = reinterpret_cast<void *>(this);
 
-    vk::Result result = instance_.get().createDebugReportCallbackEXT(&debug_report_info, nullptr, &debug_report_callback_);
-    return ErrorCheck(result, kWho);
+    debug_report_callback_ = instance_.get().createDebugReportCallbackEXT(debug_report_info);
 }
 
 vk::Bool32 Phyre::Graphics::VulkanDebugger::Callback(VkDebugReportFlagsEXT flags,

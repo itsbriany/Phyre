@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include "networking_tests.h"
 #include "xmpp_tests.h"
-#include "graphics_tests.h"
 #include "logging.h"
 
 int main(int argc, char* argv[]) {
