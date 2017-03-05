@@ -39,7 +39,7 @@ void Phyre::Graphics::DrawCube::Start() {
     StartDebugger();
 #endif
     LoadGPUs();
-    LoadWindow(640, 480);
+    LoadWindow(500, 500);
     // TODO On other platforms, we may need to initialize a connection to the window
 
     LoadDevice();
@@ -55,10 +55,12 @@ void Phyre::Graphics::DrawCube::Start() {
     LoadPipelineCache();
     LoadPipelineLayout();
     LoadPipeline();
-    // Draw();
+    LoadVulkanFence();
+    Draw();
 }
 
 Phyre::Graphics::DrawCube::~DrawCube() {
+    p_device_->get().destroyFence(fence_);
     p_device_->get().destroyPipeline(pipeline_);
     p_device_->get().destroyPipelineLayout(pipeline_layout_);
     p_device_->get().destroyPipelineCache(pipeline_cache_);
@@ -300,6 +302,13 @@ void Phyre::Graphics::DrawCube::LoadPipeline() {
     pipeline_ = p_device_->get().createGraphicsPipeline(pipeline_cache_, graphics_pipeline_create_info);
 }
 
+void Phyre::Graphics::DrawCube::LoadVulkanFence() {
+    // Create a fence which we can use to know when the GPU is done rendering
+    // This is so that we can be guaranteed to display fully rendered images
+    vk::FenceCreateInfo fence_create_info;
+    fence_ = p_device_->get().createFence(fence_create_info);
+}
+
 void Phyre::Graphics::DrawCube::Draw() {
 
     // We cannot bind the vertex buffer until we begin a renderpass
@@ -396,11 +405,6 @@ void Phyre::Graphics::DrawCube::Draw() {
     // End command buffer
     command_buffer.end();
 
-    // Create a fence which we can use to know when the GPU is done rendering
-    // This is so that we can be guaranteed to display fully rendered images
-    vk::FenceCreateInfo fence_create_info;
-    vk::Fence fence = p_device_->get().createFence(fence_create_info);
-
     // Finally, submit the command buffer
     std::array<vk::CommandBuffer, 1> command_buffers { command_buffer };
     vk::PipelineStageFlags pipeline_stage_flags(vk::PipelineStageFlagBits::eBottomOfPipe); // The final stage in the pipeline where the commands finish execution
@@ -416,7 +420,7 @@ void Phyre::Graphics::DrawCube::Draw() {
     submit_info.setPSignalSemaphores(nullptr);
 
     // Submit to the queue
-    p_device_->graphics_queue().submit(1, &submit_info, fence);
+    p_device_->graphics_queue().submit(1, &submit_info, fence_);
 
     // Now present the image to the window
     vk::PresentInfoKHR present_info;
@@ -432,7 +436,7 @@ void Phyre::Graphics::DrawCube::Draw() {
     do {
         bool wait_all = true;
         uint64_t timeout = 100000000; // The amount of time in nanoseconds for a command buffer to complete
-        result = p_device_->get().waitForFences(1, &fence, wait_all, timeout);
+        result = p_device_->get().waitForFences(1, &fence_, wait_all, timeout);
     } while (result == vk::Result::eTimeout);
 
 
@@ -487,8 +491,10 @@ void Phyre::Graphics::DrawCube::LoadVertexBuffer() {
     }
 
     vk::BufferCreateInfo info;
+    vk::DeviceSize data_size = Geometry::kVertexBufferSolidFaceColorData.size() * sizeof(Geometry::Vertex);
+
     info.setUsage(vk::BufferUsageFlagBits::eVertexBuffer);
-    info.setSize(Geometry::kVertexBufferSolidFaceColorData.size());
+    info.setSize(data_size);
     info.setQueueFamilyIndexCount(0);
     info.setPQueueFamilyIndices(nullptr);
     info.setSharingMode(vk::SharingMode::eExclusive);
@@ -504,9 +510,11 @@ void Phyre::Graphics::DrawCube::LoadVertexBuffer() {
     vertex_buffer_.memory = p_device_->get().allocateMemory(allocate_info);
 
     void *p_data = p_device_->get().mapMemory(vertex_buffer_.memory, 0, memory_requirements.size);
-    memcpy(p_data, Geometry::kVertexBufferSolidFaceColorData.data(), Geometry::kVertexBufferSolidFaceColorData.size());
+    memcpy(p_data, Geometry::kVertexBufferSolidFaceColorData.data(), data_size);
     p_device_->get().unmapMemory(vertex_buffer_.memory);
+    p_device_->get().bindBufferMemory(vertex_buffer_.buffer, vertex_buffer_.memory, 0);
 
+    uint32_t stride = sizeof(Geometry::Vertex);
     vertex_input_binding_description_.setBinding(0);
     vertex_input_binding_description_.setInputRate(vk::VertexInputRate::eVertex);
     vertex_input_binding_description_.setStride(sizeof(Geometry::Vertex));
@@ -514,6 +522,7 @@ void Phyre::Graphics::DrawCube::LoadVertexBuffer() {
     vertex_input_attributes_[0].setBinding(0);
     vertex_input_attributes_[0].setLocation(0);
     vertex_input_attributes_[0].setFormat(vk::Format::eR32G32B32A32Sfloat);
+    vertex_input_attributes_[0].setOffset(0);
 
     vertex_input_attributes_[1].setBinding(0);
     vertex_input_attributes_[1].setLocation(1);

@@ -36,7 +36,7 @@ vk::RenderPass Phyre::Graphics::VulkanRenderPass::LoadRenderPass(const VulkanDev
     attachments[color].setStencilLoadOp(vk::AttachmentLoadOp::eDontCare);
     attachments[color].setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
     attachments[color].setInitialLayout(vk::ImageLayout::eUndefined);
-    attachments[color].setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal);
+    attachments[color].setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
 
     attachments[depth].setFormat(swapchain.depth_format());
     attachments[depth].setSamples(swapchain.samples());

@@ -44,6 +44,7 @@ private:
     void LoadPipelineCache();
     void LoadPipelineLayout();
     void LoadPipeline();
+    void LoadVulkanFence();
     void Draw();
 
     // ------------------- Cleanup Stages ----------------------
@@ -112,6 +113,9 @@ private:
     // The graphics pipeline and its layout
     vk::PipelineLayout pipeline_layout_;
     vk::Pipeline pipeline_;
+
+    // A fence that we use to know when the rendering is finished
+    vk::Fence fence_;
 
     // ---------------------- Logging ---------------------------
     static const std::string kWho;
