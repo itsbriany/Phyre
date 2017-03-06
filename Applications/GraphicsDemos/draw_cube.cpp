@@ -2,11 +2,15 @@
 #include "draw_cube.h"
 #include "geometry.h"
 #include "logging.h"
-#include "vulkan_memory_manager.h"
+#include "vulkan_utils.h"
 
 int main(int argc, const char* argv[]) {
     Phyre::Graphics::DrawCube app;
     app.Start();
+    while (app.Run()) {
+        app.BeginRender();
+        app.Draw();
+    }
     return 0;
 }
 
@@ -35,12 +39,18 @@ void Phyre::Graphics::DrawCube::DestroyVertexBuffer() const {
     p_device_->get().freeMemory(vertex_buffer_.memory);
 }
 
+void Phyre::Graphics::DrawCube::DestroyFramebuffers() {
+    for (const auto& framebuffer : framebuffers_) {
+        p_device_->get().destroyFramebuffer(framebuffer);
+    }
+}
+
 void Phyre::Graphics::DrawCube::Start() {
 #ifndef NDEBUG
     StartDebugger();
 #endif
     LoadGPUs();
-    LoadWindow(500, 500);
+    LoadWindow(500, 500, "Phyre");
     // TODO On other platforms, we may need to initialize a connection to the window
 
     LoadDevice();
@@ -53,20 +63,25 @@ void Phyre::Graphics::DrawCube::Start() {
     LoadDescriptorPool();
     LoadDescriptorSets();
     LoadRenderPass();
+    LoadFrameBuffers();
     LoadPipelineCache();
     LoadPipelineLayout();
     LoadPipeline();
     LoadVulkanFence();
-    Draw();
+}
+
+bool Phyre::Graphics::DrawCube::Run() const {
+    return p_window_->Update();
 }
 
 Phyre::Graphics::DrawCube::~DrawCube() {
-    p_device_->get().destroyFence(fence_);
+    p_device_->get().destroyFence(swapchain_image_available_fence_);
     p_device_->get().destroyPipeline(pipeline_);
     p_device_->get().destroyPipelineLayout(pipeline_layout_);
     p_device_->get().destroyPipelineCache(pipeline_cache_);
     p_device_->get().destroyDescriptorSetLayout(descriptor_set_layout_);
     p_device_->get().destroyDescriptorPool(descriptor_pool_);
+    DestroyFramebuffers();
     delete p_render_pass_;
     delete p_uniform_buffer_;
     DestroyVertexBuffer();
@@ -100,8 +115,8 @@ void Phyre::Graphics::DrawCube::LoadGPUs() {
     p_active_gpu_ = &gpus_[0];
 }
 
-void Phyre::Graphics::DrawCube::LoadWindow(uint32_t width, uint32_t height) {
-    p_window_ = new VulkanWindow(width, height, instance_, *p_active_gpu_);
+void Phyre::Graphics::DrawCube::LoadWindow(uint32_t width, uint32_t height, const std::string& title) {
+    p_window_ = new VulkanWindow(width, height, title, instance_, *p_active_gpu_);
 }
 
 void Phyre::Graphics::DrawCube::LoadDevice() {
@@ -115,6 +130,10 @@ void Phyre::Graphics::DrawCube::LoadCommandPool() {
     * because memory is coarsly allocated in large chunks between the CPU and GPU.
     */
     vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlags(), p_device_->graphics_queue_family_index());
+
+    // The command buffers allocated from this pool will be freed after a relatively short period of time.
+    // We may also reuse these command buffers multiple times
+    command_pool_create_info.setFlags(vk::CommandPoolCreateFlagBits::eTransient | vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
     command_pool_ = p_device_->get().createCommandPool(command_pool_create_info);
 }
 
@@ -137,7 +156,6 @@ void Phyre::Graphics::DrawCube::ExecuteBeginCommandBuffer(size_t command_buffer_
     vk::CommandBufferBeginInfo info;
     info.setPInheritanceInfo(nullptr);
     command_buffers_[command_buffer_index].begin(&info);
-    Logging::trace("Command buffer begin", kWho);
 }
 
 void Phyre::Graphics::DrawCube::LoadSwapchain() {
@@ -275,7 +293,7 @@ void Phyre::Graphics::DrawCube::LoadVulkanFence() {
     // Create a fence which we can use to know when the GPU is done rendering
     // This is so that we can be guaranteed to display fully rendered images
     vk::FenceCreateInfo fence_create_info;
-    fence_ = p_device_->get().createFence(fence_create_info);
+    swapchain_image_available_fence_ = p_device_->get().createFence(fence_create_info);
 }
 
 void Phyre::Graphics::DrawCube::Draw() {
@@ -293,7 +311,7 @@ void Phyre::Graphics::DrawCube::Draw() {
     // Prepare the begin render pass
     vk::RenderPassBeginInfo begin_info;
     begin_info.setRenderPass(p_render_pass_->get());
-    begin_info.setFramebuffer(p_render_pass_->current_frame_buffer());
+    begin_info.setFramebuffer(framebuffers_[p_swapchain_->current_frame_index()]);
 
     vk::Offset2D offset;
     vk::Extent2D extent(p_swapchain_->image_width(), p_swapchain_->image_height());
@@ -379,7 +397,7 @@ void Phyre::Graphics::DrawCube::Draw() {
 
     vk::SubmitInfo submit_info;
     submit_info.setWaitSemaphoreCount(1);
-    submit_info.setPWaitSemaphores(&p_render_pass_->image_acquired_semaphore()); // This forces a wait until the image is ready before drawing so that we know when the swapchain image is available
+    submit_info.setPWaitSemaphores(&p_swapchain_->image_acquired_semaphore()); // This forces a wait until the image is ready before drawing so that we know when the swapchain image is available
                                                                 // When the GPU is done executing commands, it signals the fence to indicate that the drawing is complete
     submit_info.setPWaitDstStageMask(&pipeline_stage_flags);
     submit_info.setCommandBufferCount(command_buffers.size());
@@ -388,13 +406,13 @@ void Phyre::Graphics::DrawCube::Draw() {
     submit_info.setPSignalSemaphores(nullptr);
 
     // Submit to the queue
-    p_device_->graphics_queue().submit(1, &submit_info, fence_);
+    p_device_->graphics_queue().submit(1, &submit_info, swapchain_image_available_fence_);
 
     // Now present the image to the window
     vk::PresentInfoKHR present_info;
     present_info.setSwapchainCount(1);
     present_info.setPSwapchains(&p_swapchain_->swapchain());
-    present_info.setPImageIndices(&p_render_pass_->swapchain_current_index());
+    present_info.setPImageIndices(&p_swapchain_->current_frame_index());
     present_info.setWaitSemaphoreCount(0);
     present_info.setPWaitSemaphores(nullptr);
     present_info.setPResults(nullptr);
@@ -402,14 +420,17 @@ void Phyre::Graphics::DrawCube::Draw() {
     // Make sure the command buffer finished before presenting
     vk::Result result = vk::Result::eTimeout;
     do {
-        bool wait_all = true;
-        uint64_t timeout = 100000000; // The amount of time in nanoseconds for a command buffer to complete
-        result = p_device_->get().waitForFences(1, &fence_, wait_all, timeout);
+        result = p_device_->get().waitForFences(1, &swapchain_image_available_fence_, true, UINT64_MAX);
     } while (result == vk::Result::eTimeout);
 
-
     p_device_->presentation_queue().presentKHR(&present_info);
-    Sleep(1000);
+}
+
+void Phyre::Graphics::DrawCube::BeginRender() {
+    p_swapchain_->LoadCurrentFrameIndex();
+   // p_device_->get().waitForFences(1, &swapchain_image_available_fence_, true, UINT64_MAX);
+    p_device_->get().resetFences(1, &swapchain_image_available_fence_);
+    p_device_->graphics_queue().waitIdle();
 }
 
 void Phyre::Graphics::DrawCube::LoadShaderModules() {
@@ -462,7 +483,7 @@ void Phyre::Graphics::DrawCube::LoadVertexBuffer() {
     vk::MemoryAllocateInfo allocate_info;
     vk::MemoryPropertyFlags flags(vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
     allocate_info.setAllocationSize(memory_requirements.size);
-    if (!VulkanMemoryManager::CanFindMemoryTypeFromProperties(p_device_->gpu(), memory_requirements.memoryTypeBits, flags, allocate_info.memoryTypeIndex)) {
+    if (!VulkanUtils::CanFindMemoryTypeFromProperties(p_device_->gpu(), memory_requirements.memoryTypeBits, flags, allocate_info.memoryTypeIndex)) {
         Logging::fatal("Failed to get memory type from properties while allocating vertex buffer", kWho);
     }
     vertex_buffer_.memory = p_device_->get().allocateMemory(allocate_info);
@@ -490,6 +511,27 @@ void Phyre::Graphics::DrawCube::LoadVertexBuffer() {
 
 void Phyre::Graphics::DrawCube::LoadUniformBuffer() {
     p_uniform_buffer_ = new VulkanUniformBuffer(*p_device_);
+}
+
+void Phyre::Graphics::DrawCube::LoadFrameBuffers() {
+    uint32_t color = 0;
+    uint32_t depth = 1;
+    std::array<vk::ImageView, 2> attachments;
+    attachments[depth] = p_swapchain_->depth_image().image_view;
+
+    vk::FramebufferCreateInfo info;
+    info.setRenderPass(p_render_pass_->get());
+    info.setAttachmentCount(attachments.size()); // 2 Because we are using image and depth
+    info.setPAttachments(attachments.data());
+    info.setWidth(p_swapchain_->image_width());
+    info.setHeight(p_swapchain_->image_height());
+    info.setLayers(1);
+
+    framebuffers_ = std::vector<vk::Framebuffer>(p_swapchain_->swapchain_images().size());
+    for (uint32_t i = 0; i < p_swapchain_->swapchain_images().size(); ++i) {
+        attachments[color] = p_swapchain_->swapchain_images()[i].image_view;
+        framebuffers_[i] = p_device_->get().createFramebuffer(info);
+    }
 }
 
 void Phyre::Graphics::DrawCube::LoadRenderPass() {

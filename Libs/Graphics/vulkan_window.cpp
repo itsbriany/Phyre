@@ -9,12 +9,14 @@ const std::string Phyre::Graphics::VulkanWindow::kWho = "[VulkanWindow]";
 // Dynamically loaded functions
 static PFN_vkDestroySurfaceKHR  s_destroy_surface_khr_ = nullptr;
 
-Phyre::Graphics::VulkanWindow::VulkanWindow(uint32_t width, uint32_t height, const VulkanInstance& instance, const VulkanGPU& gpu) :
+Phyre::Graphics::VulkanWindow::VulkanWindow(uint32_t width, uint32_t height, const std::string& window_title, const VulkanInstance& instance, const VulkanGPU& gpu) :
     width_(width),
     height_(height),
     instance_(instance),
     gpu_(gpu),
-    surface_(InitializeSurface(width_, height_, instance_.get())),
+    p_window_(InitializeWindow(width, height, window_title)),
+    is_running_(true),
+    surface_(InitializeSurface(p_window_, instance_.get())),
     surface_capabilities_(InitializeSurfaceCapabilities(gpu_, surface_)),
     surface_present_modes_(InitializePresentModes(gpu_, surface_)),
     surface_formats_(InitializeSurfaceFormats(gpu_, surface_)),
@@ -28,6 +30,18 @@ Phyre::Graphics::VulkanWindow::~VulkanWindow() {
     Logging::trace("Destroyed", kWho);
 }
 
+bool Phyre::Graphics::VulkanWindow::Update() {
+    glfwPollEvents();
+    if (!p_window_ || glfwWindowShouldClose(p_window_)) {
+        Close();
+    }
+    return is_running_;
+}
+
+void Phyre::Graphics::VulkanWindow::Close() {
+    is_running_ = false;
+}
+
 void Phyre::Graphics::VulkanWindow::DestroySurface() const {
     s_destroy_surface_khr_ = reinterpret_cast<PFN_vkDestroySurfaceKHR>(vkGetInstanceProcAddr(instance_.get(), "vkDestroySurfaceKHR"));
     if (s_destroy_surface_khr_) {
@@ -37,18 +51,20 @@ void Phyre::Graphics::VulkanWindow::DestroySurface() const {
     }
 }
 
-vk::SurfaceKHR Phyre::Graphics::VulkanWindow::InitializeSurface(uint32_t width, uint32_t height, const vk::Instance& instance) {
-    std::string error_message;
+GLFWwindow* Phyre::Graphics::VulkanWindow::InitializeWindow(uint32_t width, uint32_t height, const std::string& window_title) {
     if (!glfwInit()) {
-        error_message = "Could not initialize GLFW!";
+        std::string error_message = "Could not initialize GLFW!";
         Logging::error(error_message, kWho);
         throw std::runtime_error(error_message);
     }
 
     // Cross platform window handle
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    const char window_title[] = "Phyre";
-    GLFWwindow* window = glfwCreateWindow(width, height, window_title, nullptr, nullptr);
+    return glfwCreateWindow(width, height, window_title.c_str(), nullptr, nullptr);
+}
+
+vk::SurfaceKHR Phyre::Graphics::VulkanWindow::InitializeSurface(GLFWwindow* window, const vk::Instance& instance) {
+    std::string error_message;
 
     // The surface where we render our output 
     // Underneath the covers, this calls the appropriate Vk<PLATFORM>SurfaceCreateInfoKHR

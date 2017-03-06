@@ -1,6 +1,6 @@
 #include "vulkan_uniform_buffer.h"
 #include <glm/gtc/matrix_transform.hpp>
-#include "vulkan_memory_manager.h"
+#include "vulkan_utils.h"
 #include "vulkan_device.h"
 #include "logging.h"
 
@@ -61,7 +61,7 @@ void Phyre::Graphics::VulkanUniformBuffer::Initialize() {
     vk::MemoryPropertyFlags requirements_mask(vk::MemoryPropertyFlagBits::eHostVisible |  // Memory is accessible to host
                                           vk::MemoryPropertyFlagBits::eHostCoherent); // Writes to this memory are visible to both host and device
     allocate_info.setAllocationSize(memory_requirements.size);
-    if (!VulkanMemoryManager::CanFindMemoryTypeFromProperties(device_.gpu(), memory_requirements.memoryTypeBits, requirements_mask, allocate_info.memoryTypeIndex)) {
+    if (!VulkanUtils::CanFindMemoryTypeFromProperties(device_.gpu(), memory_requirements.memoryTypeBits, requirements_mask, allocate_info.memoryTypeIndex)) {
         Logging::fatal("Failed to satisfy physical device memory requirements for allocating buffer", kWho);
     }
     device_.get().allocateMemory(&allocate_info, nullptr, &device_memory_);

@@ -18,6 +18,15 @@ public:
     // Returns true if the rendering system started correctly
     void Start();
 
+    // Run the game loop
+    bool Run() const;
+
+    // Render a frame
+    void Draw();
+
+    // Repare to render a frame
+    void BeginRender();
+
 private:
     struct VertexBuffer {
         vk::Buffer buffer;
@@ -31,7 +40,7 @@ private:
     // This will only be enabled in debug mode and when the debug layers are active
     void StartDebugger();
     void LoadGPUs();
-    void LoadWindow(uint32_t width, uint32_t height);
+    void LoadWindow(uint32_t width, uint32_t height, const std::string& title);
     void LoadDevice();
     void LoadCommandPool();
     void LoadCommandBuffers();
@@ -41,17 +50,18 @@ private:
     void LoadVertexBuffer();
     void LoadUniformBuffer();
     void LoadRenderPass();
+    void LoadFrameBuffers();
     void LoadDescriptorPool();
     void LoadDescriptorSets();
     void LoadPipelineCache();
     void LoadPipelineLayout();
     void LoadPipeline();
     void LoadVulkanFence();
-    void Draw();
 
     // ------------------- Cleanup Stages ----------------------
     void DestroyShaderModules();
     void DestroyVertexBuffer() const;
+    void DestroyFramebuffers();
 
     // ------------------------ Helpers -------------------------
     // Load SPIR-V Bytecode from file
@@ -94,6 +104,11 @@ private:
     // The render pass used in the graphics pipeline
     VulkanRenderPass *p_render_pass_;
 
+    // Memory attachments used by the render pass instance such as the color image buffer
+    // and the depth image buffer.
+    // In other words, the framebuffers connect these resources to the render pass
+    std::vector<vk::Framebuffer> framebuffers_;
+
     // Descriptors allow the shaders to access the image and buffer resources
     vk::DescriptorPool descriptor_pool_;
 
@@ -114,7 +129,7 @@ private:
     vk::Pipeline pipeline_;
 
     // A fence that we use to know when the rendering is finished
-    vk::Fence fence_;
+    vk::Fence swapchain_image_available_fence_;
 
     // ---------------------- Logging ---------------------------
     static const std::string kWho;

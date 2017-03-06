@@ -5,7 +5,7 @@
 namespace Phyre {
 namespace Graphics {
 
-class VulkanMemoryManager {
+class VulkanUtils {
 public:
     typedef vk::Flags<vk::MemoryPropertyFlagBits> MemoryPropertyFlags;
 

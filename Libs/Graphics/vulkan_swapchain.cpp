@@ -1,5 +1,5 @@
 #include "vulkan_swapchain.h"
-#include "vulkan_memory_manager.h"
+#include "vulkan_utils.h"
 #include "vulkan_window.h"
 #include "vulkan_device.h"
 #include "logging.h"
@@ -18,11 +18,15 @@ Phyre::Graphics::VulkanSwapchain::VulkanSwapchain(const VulkanDevice& device, co
     swapchain_(InitializeSwapchain(device_, window_, swapchain_extent_, pre_transform_)),
     swapchain_images_(InitializeSwapchainImages(device_.get(), swapchain_, window_.preferred_surface_format().format)),
     samples_(vk::SampleCountFlagBits::e1),
-    depth_image_(InitializeDepthImage(device_, window_.width(), window_.height(), samples_)) {
+    depth_image_(InitializeDepthImage(device_, window_.width(), window_.height(), samples_)),
+    image_acquired_semaphore_(LoadImageAcquiredSemaphore(device)),
+    current_frame_index_(UINT32_MAX)
+{
     Logging::trace("Instantiated", kWho);
 }
 
 Phyre::Graphics::VulkanSwapchain::~VulkanSwapchain() {
+    device_.get().destroySemaphore(image_acquired_semaphore_);
     device_.get().destroyImage(depth_image_.image);
     device_.get().destroyImageView(depth_image_.image_view);
     device_.get().freeMemory(depth_image_.device_memory);
@@ -201,7 +205,7 @@ Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::I
     /* Use the memory properties to determine the type of memory required */
     vk::MemoryAllocateInfo memory_allocate_info;
     vk::MemoryPropertyFlagBits requirements_mask = vk::MemoryPropertyFlagBits::eDeviceLocal;
-    if(!VulkanMemoryManager::CanFindMemoryTypeFromProperties(device.gpu(), memory_requirements.memoryTypeBits, requirements_mask, memory_allocate_info.memoryTypeIndex)) {
+    if(!VulkanUtils::CanFindMemoryTypeFromProperties(device.gpu(), memory_requirements.memoryTypeBits, requirements_mask, memory_allocate_info.memoryTypeIndex)) {
         std::string error_message = "Could not satisfy memory requirements for image";
         Logging::fatal(error_message, kWho);
         throw std::runtime_error(error_message);
@@ -241,4 +245,14 @@ Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::I
     vk::ImageView depth_image_view = device.get().createImageView(depth_image_view_create_info);
 
     return DepthImage(depth_image, depth_image_view, depth_format, device_memory);
+}
+
+vk::Semaphore Phyre::Graphics::VulkanSwapchain::LoadImageAcquiredSemaphore(const VulkanDevice& device) {
+    vk::SemaphoreCreateInfo semaphore_create_info;
+    return device.get().createSemaphore(semaphore_create_info);
+}
+
+void Phyre::Graphics::VulkanSwapchain::LoadCurrentFrameIndex() {
+    vk::ResultValue<uint32_t> result = device_.get().acquireNextImageKHR(swapchain_, UINT64_MAX, image_acquired_semaphore_, nullptr);
+    current_frame_index_ = result.value;
 }

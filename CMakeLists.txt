@@ -57,13 +57,9 @@ endif()
 find_package(Boost 1.60 REQUIRED COMPONENTS system log thread random)
 
 if(NOT Boost_FOUND)
-    message(FATAL "Could not find boost")
+    message(FATAL_ERROR "Could not find boost, please set the BOOST_ROOT environment variable to your boost installation directory")
 endif()
 
-find_package(Vulkan REQUIRED)
-if(NOT Vulkan_FOUND)
-    message(FATAL "Could not find Vulkan")
-endif()
 
 # Where all third party dependencies reside
 set(PHYRE_THIRD_PARTY "$ENV{PHYRE_ROOT}/ThirdParty")
@@ -111,6 +107,16 @@ set(PHYRE_LOGGING "${PHYRE_LIBS}/Logging")
 set(PHYRE_NETWORKING "${PHYRE_LIBS}/Networking")
 set(PHYRE_XMPP "${PHYRE_NETWORKING}/XMPP")
 set(PHYRE_GRAPHICS "${PHYRE_LIBS}/Graphics")
+
+# Vulkan SDK
+set(VULKAN_ROOT "$ENV{VULKAN_ROOT}")
+if (NOT VULKAN_ROOT)
+    message(FATAL_ERROR "Could not find vulkan, please set the VULKAN_ROOT environment variable to point to the location of your Vulkan SDK installation")
+    exit()
+endif()
+set(VULKAN_INCLUDE_DIR "${VULKAN_ROOT}/Include")
+set(VULKAN_LIBRARY_DIR "${VULKAN_ROOT}/Lib")
+file(GLOB VULKAN_LIBRARIES "${VULKAN_LIBRARY_DIR}/vulkan-1.lib")
 
 # Vulkan C++ Bindings
 set(VULKAN_CPP_BINDINGS "${PHYRE_THIRD_PARTY}/Vulkan-Hpp/vulkan")

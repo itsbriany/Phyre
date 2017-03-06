@@ -1,5 +1,6 @@
 #pragma once
 #include <vulkan.hpp>
+#include <GLFW/glfw3.h>
 
 namespace Phyre {
 namespace Graphics {
@@ -8,10 +9,17 @@ class VulkanInstance;
 class VulkanDevice;
 class VulkanWindow {
 public:
-    explicit VulkanWindow(uint32_t width, uint32_t height, const VulkanInstance& instance, const VulkanGPU& gpu);
+    explicit VulkanWindow(uint32_t width, uint32_t height, const std::string& window_title, const VulkanInstance& instance, const VulkanGPU& gpu);
     
     // Clean up vulkan resources
     ~VulkanWindow();
+
+    // Let the window live and respond to events continuously
+    // Returns false on exit
+    bool Update();
+    
+    // Close the window
+    void Close();
 
     // -------------------- Accessors -----------------------
     const uint32_t& width() const { return width_; }
@@ -23,10 +31,13 @@ public:
     const vk::SurfaceFormatKHR& preferred_surface_format() const { return preferred_surface_format_; }
     const vk::PresentModeKHR& preferred_present_mode() const { return preferred_present_mode_; }
 
+
 private:
     // -------------------- Initializers --------------------
+    static GLFWwindow* InitializeWindow(uint32_t width, uint32_t height, const std::string& window_title);
+
     // Throws a runtime exception if the surface could not properly be initialized
-    static vk::SurfaceKHR InitializeSurface(uint32_t width, uint32_t height, const vk::Instance& instance);
+    static vk::SurfaceKHR InitializeSurface(GLFWwindow* window, const vk::Instance& instance);
 
     // Initialize surface capabilities
     static vk::SurfaceCapabilitiesKHR InitializeSurfaceCapabilities(const VulkanGPU& gpu, const vk::SurfaceKHR& surface);
@@ -59,6 +70,12 @@ private:
 
     // A reference to the vulkan gpu
     const VulkanGPU& gpu_;
+
+    // The underlying window implementation
+    GLFWwindow* p_window_;
+
+    // Is the window alive and running?
+    bool is_running_;
 
     // The surface we are using to render images
     vk::SurfaceKHR surface_;

@@ -7,7 +7,7 @@ namespace Phyre {
 namespace Graphics {
 class VulkanDevice;
 class VulkanWindow;
-class VulkanMemoryManager;
+class VulkanUtils;
 
 class VulkanSwapchain {
 public:
@@ -28,6 +28,10 @@ public:
 
     explicit VulkanSwapchain(const VulkanDevice& device, const VulkanWindow& window);
 
+    void LoadCurrentFrameIndex();
+
+
+    // ------------------------ Accessors -----------------------------------
     const VulkanWindow& window() const { return window_; }
     const SwapchainImageVector& swapchain_images() const { return swapchain_images_; }
     vk::Format depth_format() const { return depth_image_.format; }
@@ -36,6 +40,8 @@ public:
     uint32_t image_height() const { return image_height_; }
     const DepthImage& depth_image() const { return depth_image_; }
     const vk::SwapchainKHR& swapchain() const { return swapchain_; }
+    const vk::Semaphore& image_acquired_semaphore() const { return image_acquired_semaphore_; }
+    uint32_t& current_frame_index() { return current_frame_index_; }
 
     ~VulkanSwapchain();
 
@@ -70,6 +76,8 @@ private:
                                            uint32_t height,
                                            vk::SampleCountFlagBits samples);
 
+    static vk::Semaphore LoadImageAcquiredSemaphore(const VulkanDevice& device);
+
     // -------------------Data members -----------------
     // A reference to our window
     const VulkanWindow& window_;
@@ -103,6 +111,13 @@ private:
 
     // The depth image
     DepthImage depth_image_;
+
+    // We need to get an image from the swapchain in order to draw anything
+    // Semaphores are used to ensure that all images in the swapchain are currently available
+    vk::Semaphore image_acquired_semaphore_;
+
+    // The index of the swapchain image which is currently available for rendering
+    uint32_t current_frame_index_;
 };
 
 }

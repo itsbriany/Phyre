@@ -1,11 +1,11 @@
-#include "vulkan_memory_manager.h"
+#include "vulkan_utils.h"
 
-const std::string Phyre::Graphics::VulkanMemoryManager::kWho = "[VulkanMemoryManager]";
+const std::string Phyre::Graphics::VulkanUtils::kWho = "[VulkanUtils]";
 
-bool Phyre::Graphics::VulkanMemoryManager::CanFindMemoryTypeFromProperties(const VulkanGPU& gpu,
-                                                                           uint32_t memory_type_bits,
-                                                                           MemoryPropertyFlags requirements_mask,
-                                                                           uint32_t& memory_type_index) {
+bool Phyre::Graphics::VulkanUtils::CanFindMemoryTypeFromProperties(const VulkanGPU& gpu,
+                                                                   uint32_t memory_type_bits,
+                                                                   MemoryPropertyFlags requirements_mask,
+                                                                   uint32_t& memory_type_index) {
     const vk::PhysicalDeviceMemoryProperties& memory_properties = gpu.memory_properties();
     // Search memtypes to find first index with those properties
     for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++) {
