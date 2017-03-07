@@ -25,7 +25,13 @@ public:
     void Draw();
 
     // Repare to render a frame
-    void BeginRender();
+    void BeginRender() const;
+
+    // Signals that we have finished rendering a frame
+    void EndRender() const;
+
+    // Records the FPS
+    void LogFPS() const;
 
 private:
     struct VertexBuffer {

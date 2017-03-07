@@ -1,4 +1,5 @@
 #include <fstream>
+#include <chrono>
 #include "draw_cube.h"
 #include "geometry.h"
 #include "logging.h"
@@ -7,9 +8,12 @@
 int main(int argc, const char* argv[]) {
     Phyre::Graphics::DrawCube app;
     app.Start();
+
     while (app.Run()) {
         app.BeginRender();
+        app.LogFPS();
         app.Draw();
+        app.EndRender();
     }
     return 0;
 }
@@ -407,7 +411,15 @@ void Phyre::Graphics::DrawCube::Draw() {
 
     // Submit to the queue
     p_device_->graphics_queue().submit(1, &submit_info, swapchain_image_available_fence_);
+}
 
+void Phyre::Graphics::DrawCube::BeginRender() const {
+    p_swapchain_->LoadCurrentFrameIndex();
+    p_device_->get().resetFences(1, &swapchain_image_available_fence_);
+    p_device_->graphics_queue().waitIdle();
+}
+
+void Phyre::Graphics::DrawCube::EndRender() const {
     // Now present the image to the window
     vk::PresentInfoKHR present_info;
     present_info.setSwapchainCount(1);
@@ -426,11 +438,22 @@ void Phyre::Graphics::DrawCube::Draw() {
     p_device_->presentation_queue().presentKHR(&present_info);
 }
 
-void Phyre::Graphics::DrawCube::BeginRender() {
-    p_swapchain_->LoadCurrentFrameIndex();
-   // p_device_->get().waitForFences(1, &swapchain_image_available_fence_, true, UINT64_MAX);
-    p_device_->get().resetFences(1, &swapchain_image_available_fence_);
-    p_device_->graphics_queue().waitIdle();
+void Phyre::Graphics::DrawCube::LogFPS() const {
+    using std::chrono::high_resolution_clock;
+    using std::chrono::duration;
+    using std::chrono::seconds;
+    
+    static uint32_t frames = 0;
+    ++frames;
+    static high_resolution_clock::time_point start = high_resolution_clock::now();
+    high_resolution_clock::time_point now = high_resolution_clock::now();
+    if (now - start > seconds(1)) {
+        std::ostringstream oss;
+        oss << "FPS: " << frames;
+        Logging::info(oss.str(), kWho);
+        start = now;
+        frames = 0;
+    }   
 }
 
 void Phyre::Graphics::DrawCube::LoadShaderModules() {
