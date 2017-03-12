@@ -1,3 +1,4 @@
+add_subdirectory(Configuration)
 add_subdirectory(Logging)
 add_subdirectory(Graphics)
 add_subdirectory(Networking)

@@ -1,3 +1,4 @@
+add_subdirectory(ConfigurationDemos)
 add_subdirectory(LoggingDemos)
 add_subdirectory(NetworkingDemos)
 add_subdirectory(GraphicsDemos)
