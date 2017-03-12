@@ -1,5 +1,5 @@
+#include <Logging/logging.h>
 #include "vulkan_render_pass.h"
-#include "logging.h"
 #include "vulkan_window.h"
 #include "vulkan_device.h"
 #include "vulkan_swapchain.h"
@@ -62,7 +62,7 @@ vk::RenderPass Phyre::Graphics::VulkanRenderPass::LoadRenderPass(const VulkanDev
     subpass.setPPreserveAttachments(nullptr);
 
     vk::RenderPassCreateInfo info;
-    info.setAttachmentCount(attachments.size());
+    info.setAttachmentCount(static_cast<uint32_t>(attachments.size()));
     info.setPAttachments(attachments.data());
     info.setSubpassCount(1);
     info.setPSubpasses(&subpass);

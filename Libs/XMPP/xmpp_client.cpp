@@ -1,4 +1,4 @@
-#include "logging.h"
+#include <Logging/logging.h>
 #include "sasl.h"
 #include "xmpp_client.h"
 

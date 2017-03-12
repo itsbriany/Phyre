@@ -2,6 +2,7 @@
 #include <boost/assign/list_of.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
+#include <boost/log/detail/header.hpp>
 
 namespace Phyre {
 namespace Logging {

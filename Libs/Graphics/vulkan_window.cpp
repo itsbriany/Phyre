@@ -1,6 +1,6 @@
+#include <Logging/logging.h>
 #include "vulkan_window.h"
 #include "vulkan_instance.h"
-#include "logging.h"
 #include "vulkan_gpu.h"
 #include <GLFW/glfw3.h>
 
@@ -9,7 +9,7 @@ const std::string Phyre::Graphics::VulkanWindow::kWho = "[VulkanWindow]";
 // Dynamically loaded functions
 static PFN_vkDestroySurfaceKHR  s_destroy_surface_khr_ = nullptr;
 
-Phyre::Graphics::VulkanWindow::VulkanWindow(uint32_t width, uint32_t height, const std::string& window_title, const VulkanInstance& instance, const VulkanGPU& gpu) :
+Phyre::Graphics::VulkanWindow::VulkanWindow(float width, float height, const std::string& window_title, const VulkanInstance& instance, const VulkanGPU& gpu) :
     width_(width),
     height_(height),
     instance_(instance),
@@ -22,6 +22,7 @@ Phyre::Graphics::VulkanWindow::VulkanWindow(uint32_t width, uint32_t height, con
     surface_formats_(InitializeSurfaceFormats(gpu_, surface_)),
     preferred_present_mode_(InitializePreferredPresentMode(surface_present_modes_)),
     preferred_surface_format_(InitializePreferredSurfaceFormat(surface_formats_)) {
+    InitializeCallbacks();
     Logging::trace("Instantiated", kWho);
 }
 
@@ -51,7 +52,14 @@ void Phyre::Graphics::VulkanWindow::DestroySurface() const {
     }
 }
 
-GLFWwindow* Phyre::Graphics::VulkanWindow::InitializeWindow(uint32_t width, uint32_t height, const std::string& window_title) {
+void Phyre::Graphics::VulkanWindow::OSFramebufferResizeCallback(OSWindow*, int width, int height) {
+    std::ostringstream oss;
+    oss << "Window dimensions: (" << width << "x" << height << ')';
+    Logging::info(oss.str(), kWho);
+}
+
+Phyre::Graphics::VulkanWindow::OSWindow* 
+Phyre::Graphics::VulkanWindow::InitializeWindow(float width, float height, const std::string& window_title) {
     if (!glfwInit()) {
         std::string error_message = "Could not initialize GLFW!";
         Logging::error(error_message, kWho);
@@ -60,10 +68,10 @@ GLFWwindow* Phyre::Graphics::VulkanWindow::InitializeWindow(uint32_t width, uint
 
     // Cross platform window handle
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    return glfwCreateWindow(width, height, window_title.c_str(), nullptr, nullptr);
+    return glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), window_title.c_str(), nullptr, nullptr);
 }
 
-vk::SurfaceKHR Phyre::Graphics::VulkanWindow::InitializeSurface(GLFWwindow* window, const vk::Instance& instance) {
+vk::SurfaceKHR Phyre::Graphics::VulkanWindow::InitializeSurface(OSWindow* window, const vk::Instance& instance) {
     std::string error_message;
 
     // The surface where we render our output 
@@ -140,4 +148,8 @@ vk::SurfaceFormatKHR Phyre::Graphics::VulkanWindow::InitializePreferredSurfaceFo
 
     surface_format.colorSpace = surface_formats.front().colorSpace;
     return surface_format;
+}
+
+void Phyre::Graphics::VulkanWindow::InitializeCallbacks() const {
+    glfwSetFramebufferSizeCallback(p_window_, &OSFramebufferResizeCallback);
 }

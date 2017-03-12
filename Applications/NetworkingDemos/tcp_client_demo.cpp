@@ -1,7 +1,7 @@
 #include <boost/asio/io_service.hpp>
-#include "tcp_client.h"
-#include "host_resolver.h"
-#include "logging.h"
+#include <Networking/tcp_client.h>
+#include <Networking/host_resolver.h>
+#include <Logging/logging.h>
 
 
 namespace Phyre {
@@ -28,7 +28,7 @@ class TCPClientDemo : public TCPClient {
 }
 }
 
-int main(int argc, char* argv[]) {
+int main() {
     Phyre::Logging::set_log_level();
     boost::asio::io_service io_service;
     Phyre::Networking::TCPClientDemo client(io_service);

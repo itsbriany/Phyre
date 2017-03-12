@@ -2,7 +2,7 @@
 #include <boost/asio.hpp>
 #include <boost/bind/bind.hpp>
 #include <queue>
-#include "logging.h"
+#include <Logging/logging.h>
 
 namespace Phyre
 {

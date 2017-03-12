@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include "tcp_client.h"
+#include <Networking/tcp_client.h>
 #include "xmpp_state.h"
 
 namespace Phyre {

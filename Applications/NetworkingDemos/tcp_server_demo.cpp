@@ -1,6 +1,6 @@
 #include <boost/asio/io_service.hpp>
-#include "tcp_server.h"
-#include "logging.h"
+#include <Networking/tcp_server.h>
+#include <Logging/logging.h>
 
 
 namespace Phyre
@@ -26,7 +26,7 @@ namespace Networking
 }
 }
 
-int main(int argc, char* argv[])
+int main()
 {
     Phyre::Networking::TCPServerDemo();
     return 0;

@@ -1,5 +1,5 @@
+#include <Logging/logging.h>
 #include "vulkan_instance.h"
-#include "logging.h"
 
 const std::string Phyre::Graphics::VulkanInstance::kWho = "[VulkanInstance]";
 
@@ -53,9 +53,9 @@ void Phyre::Graphics::VulkanInstance::InitializeInstance() {
 
     vk::InstanceCreateInfo instance_create_info;
     instance_create_info.setPApplicationInfo(&application_info);
-    instance_create_info.setEnabledExtensionCount(kExtensionNames.size());
+    instance_create_info.setEnabledExtensionCount(static_cast<uint32_t>(kExtensionNames.size()));
     instance_create_info.setPpEnabledExtensionNames(kExtensionNames.data());
-    instance_create_info.setEnabledLayerCount(kLayerNames.size());
+    instance_create_info.setEnabledLayerCount(static_cast<uint32_t>(kLayerNames.size()));
     instance_create_info.setPpEnabledLayerNames(kLayerNames.data());
     instance_ = vk::createInstance(instance_create_info);
 }

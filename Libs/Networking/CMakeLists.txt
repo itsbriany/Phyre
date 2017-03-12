@@ -1,23 +1,11 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.6)
 
-include_directories(${Boost_INCLUDE_DIRS} ${PHYRE_LOGGING})
-add_library(Networking host_resolver.h host_resolver.cpp
-    tcp_server.h tcp_server.cpp tcp_socket.h tcp_socket.cpp
-    tcp_client.h tcp_client.cpp tcp_server_connection.h
-    tcp_server_connection.cpp networking_tests.h fake_tcp_clients.h)
+include_directories(${PHYRE_INCLUDE_DIRS})
+file(GLOB networking_SRC "*.h" "*.cpp")
+add_library(Networking ${networking_SRC})
 target_link_libraries(Networking ${Boost_LIBRARIES} Logging)
 
-# The executable must run with gmock.dll in the same directory
-if (WIN32)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PHYRE_TESTING_BIN_DIR})
-endif()
-include_directories(${Boost_INCLUDE_DIRS} ${GMOCK_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS} ${TEST_DEPENDENCY_DIRS})
+include_directories(${PHYRE_INCLUDE_DIRS})
 link_directories(${GMOCK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} ${GTEST_LIBRARY_DIRS} ${TEST_DEPENDENCY_DIRS})
 add_executable(NetworkingTests networking_tests.h fake_tcp_clients.h networking_test_runner.cpp)
 target_link_libraries(NetworkingTests ${Boost_LIBRARIES} gmock gtest Networking)
-if (WIN32)
-    set_target_properties(NetworkingTests PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PHYRE_TESTING_BIN_DIR}")
-    unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-endif()
-
-add_subdirectory(XMPP)

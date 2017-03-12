@@ -1,21 +1,20 @@
 #pragma once
 #include <boost/assign.hpp>
+#include <boost/lexical_cast.hpp>
 #include <gtest/gtest.h>
+#include <Logging/logging.h>
 #include "fake_tcp_clients.h"
-#include "logging.h"
 #include "tcp_client.h"
 #include "tcp_server.h"
 
-namespace Phyre
-{
-namespace Networking
-{
+namespace Phyre {
+namespace Networking {
     class TCPClientTest : public ::testing::Test {
     protected:
         TCPClientTest():
             host_("127.0.0.1"),
             port_or_service_("1234"),
-            tcp_server_(TCPServer(io_service_, std::stoi(port_or_service_))) { }
+            tcp_server_(TCPServer(io_service_, boost::lexical_cast<uint16_t>(port_or_service_))) { }
 
         virtual ~TCPClientTest() { }
 
@@ -67,7 +66,7 @@ namespace Networking
         boost::assign::push(message_queue)("first")("second")("third")("fourth")("fith");
         std::string port_or_service = "1235";
 
-        tcp_server_ = TCPServer(io_service_, std::stoi(port_or_service), message_queue);
+        tcp_server_ = TCPServer(io_service_, boost::lexical_cast<uint16_t>(port_or_service), message_queue);
         TCPClientReadQueuedMessages client(io_service_, message_queue);
 
         tcp_server_.StartAccept();

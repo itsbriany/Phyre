@@ -54,7 +54,7 @@ namespace base64
 			do
 			{
 				istream_in.read(plaintext, N);
-				plainlength = istream_in.gcount();
+				plainlength = static_cast<int>(istream_in.gcount());
 				//
 				codelength = encode(plaintext, plainlength, code);
 				ostream_in.write(code, codelength);

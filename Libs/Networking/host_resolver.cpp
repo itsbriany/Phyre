@@ -1,5 +1,5 @@
+#include <Logging/logging.h>
 #include "host_resolver.h"
-#include "logging.h"
 
 namespace Phyre
 {

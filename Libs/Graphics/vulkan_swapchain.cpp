@@ -1,8 +1,8 @@
+#include <Logging/logging.h>
 #include "vulkan_swapchain.h"
 #include "vulkan_utils.h"
 #include "vulkan_window.h"
 #include "vulkan_device.h"
-#include "logging.h"
 
 const std::string Phyre::Graphics::VulkanSwapchain::kWho = "[VulkanSwapchain]";
 
@@ -64,7 +64,7 @@ vk::SwapchainKHR Phyre::Graphics::VulkanSwapchain::InitializeSwapchain(const Vul
         // the queues, or we have to share image resources between them
         std::array<uint32_t, 2> queueFamilyIndices = { device.graphics_queue_family_index(), device.presentation_queue_family_index() };
         info.setImageSharingMode(vk::SharingMode::eConcurrent);
-        info.setQueueFamilyIndexCount(queueFamilyIndices.size());
+        info.setQueueFamilyIndexCount(static_cast<uint32_t>(queueFamilyIndices.size()));
         info.setPQueueFamilyIndices(queueFamilyIndices.data());
     }
     return device.get().createSwapchainKHR(info);
@@ -75,8 +75,8 @@ vk::Extent2D Phyre::Graphics::VulkanSwapchain::InitializeSwapchainExtent(const V
     vk::Extent2D extent;
     const vk::SurfaceCapabilitiesKHR& surface_capabilities = window.surface_capabilities();
     if (surface_capabilities.currentExtent.width == 0xFFFFFFFF) {
-        extent.width = window.width();
-        extent.height = window.height();
+        extent.width = static_cast<uint32_t>(window.width());
+        extent.height = static_cast<uint32_t>(window.height());
 
         // We make a sanity check to optimize the extent of our swapchain buffers
         if (extent.width < surface_capabilities.minImageExtent.width) {
@@ -153,8 +153,8 @@ Phyre::Graphics::VulkanSwapchain::SwapchainImageVector Phyre::Graphics::VulkanSw
 }
 
 Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::InitializeDepthImage(const VulkanDevice& device,
-                                                                                                    uint32_t width,
-                                                                                                    uint32_t height,
+                                                                                                    float width,
+                                                                                                    float height,
                                                                                                     vk::SampleCountFlagBits samples) {
     // Create a depth buffer image so that we can eventually have 3D rendering.
     vk::ImageCreateInfo image_create_info;
@@ -178,8 +178,8 @@ Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::I
     image_create_info.setFormat(depth_format);
 
     vk::Extent3D extent;
-    extent.setWidth(width);
-    extent.setHeight(height);
+    extent.setWidth(static_cast<uint32_t>(width));
+    extent.setHeight(static_cast<uint32_t>(height));
     extent.setDepth(1);
     image_create_info.setExtent(extent);
 

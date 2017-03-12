@@ -1,8 +1,8 @@
+#include <Logging/logging.h>
 #include "vulkan_uniform_buffer.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include "vulkan_utils.h"
 #include "vulkan_device.h"
-#include "logging.h"
 
 const std::string Phyre::Graphics::VulkanUniformBuffer::kWho = "[VulkanUniformBuffer]";
 

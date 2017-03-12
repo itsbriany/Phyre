@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
-#include "networking_tests.h"
-#include "xmpp_tests.h"
-#include "logging.h"
+#include <Networking/networking_tests.h>
+#include <XMPP/xmpp_tests.h>
+#include <Logging/logging.h>
 
 int main(int argc, char* argv[]) {
     Phyre::Logging::set_log_level(Phyre::Logging::kError);

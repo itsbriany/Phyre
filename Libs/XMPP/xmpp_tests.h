@@ -4,9 +4,9 @@
 #include <boost/property_tree/ptree.hpp>
 #include <fstream>
 #include <gtest/gtest.h>
-#include "logging.h"
+#include <Logging/logging.h>
+#include <Networking/tcp_server.h>
 #include "sasl.h"
-#include "tcp_server.h"
 #include "xmpp_client.h"
 
 namespace Phyre

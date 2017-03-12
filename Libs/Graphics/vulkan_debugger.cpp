@@ -1,6 +1,6 @@
+#include <Logging/logging.h>
 #include "vulkan_debugger.h"
 #include "vulkan_instance.h"
-#include "logging.h"
 
 static PFN_vkCreateDebugReportCallbackEXT s_create_debug_report_callback_proxy = nullptr;
 static PFN_vkDestroyDebugReportCallbackEXT s_destroy_debug_report_callback_proxy = nullptr;
@@ -44,13 +44,13 @@ void Phyre::Graphics::VulkanDebugger::InitializeDebugReport() {
 }
 
 vk::Bool32 Phyre::Graphics::VulkanDebugger::Callback(VkDebugReportFlagsEXT flags,
-                                                     VkDebugReportObjectTypeEXT object_type,
-                                                     uint64_t obj,
-                                                     size_t location,
-                                                     int32_t code,
+                                                     VkDebugReportObjectTypeEXT /*object_type*/,
+                                                     uint64_t /*obj*/,
+                                                     size_t /*location*/,
+                                                     int32_t /*code*/,
                                                      const char* layer_prefix,
                                                      const char* message,
-                                                     void* userData) {
+                                                     void* /*userData*/) {
     std::ostringstream who_stream;
     who_stream << "[Vulkan::Validation]" << '[' << layer_prefix << ']';
     if (flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) {

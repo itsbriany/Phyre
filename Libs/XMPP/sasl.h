@@ -4,8 +4,8 @@
 #include <b64/decode.h>
 #include <unordered_set>
 #include <unordered_map>
+#include <Logging/logging.h>
 #include "xmpp_state.h"
-#include "logging.h"
 
 namespace Phyre {
 namespace Networking {

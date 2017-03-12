@@ -1,6 +1,6 @@
+#include <Logging/logging.h>
 #include "vulkan_device.h"
 #include "vulkan_instance.h"
-#include "logging.h"
 
 const std::string Phyre::Graphics::VulkanDevice::kWho = "[VulkanDevice]";
 
@@ -29,16 +29,16 @@ vk::Device Phyre::Graphics::VulkanDevice::InitializeLogicalDevice(const vk::Phys
     std::vector<const char*> device_extension_names = DeviceExtentionNames();
     std::vector<const char*> device_layer_names;
     device_create_info.setPpEnabledExtensionNames(device_extension_names.data());
-    device_create_info.setEnabledExtensionCount(device_extension_names.size());
+    device_create_info.setEnabledExtensionCount(static_cast<uint32_t>(device_extension_names.size()));
     device_create_info.setPpEnabledLayerNames(device_layer_names.data());
-    device_create_info.setEnabledLayerCount(device_layer_names.size());
-    device_create_info.setQueueCreateInfoCount(device_queue_create_infos.size());
+    device_create_info.setEnabledLayerCount(static_cast<uint32_t>(device_layer_names.size()));
+    device_create_info.setQueueCreateInfoCount(static_cast<uint32_t>(device_queue_create_infos.size()));
     device_create_info.setPQueueCreateInfos(device_queue_create_infos.data());
 
 #ifndef NDEBUG
     device_layer_names.emplace_back(VulkanInstance::kLunarGStandardValidation);
     device_create_info.setPpEnabledLayerNames(device_layer_names.data());
-    device_create_info.setEnabledLayerCount(device_layer_names.size());
+    device_create_info.setEnabledLayerCount(static_cast<uint32_t>(device_layer_names.size()));
 #endif
 
     return gpu.createDevice(device_create_info);

@@ -49,7 +49,7 @@ namespace base64
 			do
 			{
 				istream_in.read((char*)code, N);
-				codelength = istream_in.gcount();
+				codelength = static_cast<int>(istream_in.gcount());
 				plainlength = decode(code, codelength, plaintext);
 				ostream_in.write((const char*)plaintext, plainlength);
 			}

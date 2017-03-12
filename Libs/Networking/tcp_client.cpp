@@ -1,9 +1,9 @@
+#include <array>
 #include <boost/asio.hpp>
 #include <boost/bind/bind.hpp>
-#include <array>
+#include <Logging/logging.h>
 #include "tcp_client.h"
 #include "tcp_socket.h"
-#include "logging.h"
 
 namespace Phyre
 {

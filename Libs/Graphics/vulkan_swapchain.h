@@ -36,8 +36,8 @@ public:
     const SwapchainImageVector& swapchain_images() const { return swapchain_images_; }
     vk::Format depth_format() const { return depth_image_.format; }
     vk::SampleCountFlagBits samples() const { return samples_; }
-    uint32_t image_width() const { return image_width_; }
-    uint32_t image_height() const { return image_height_; }
+    float image_width() const { return image_width_; }
+    float image_height() const { return image_height_; }
     const DepthImage& depth_image() const { return depth_image_; }
     const vk::SwapchainKHR& swapchain() const { return swapchain_; }
     const vk::Semaphore& image_acquired_semaphore() const { return image_acquired_semaphore_; }
@@ -72,8 +72,8 @@ private:
 
     // Throws a runtime exception if the depth buffer image failed to instantiate
     static DepthImage InitializeDepthImage(const VulkanDevice& device,
-                                           uint32_t width,
-                                           uint32_t height,
+                                           float width,
+                                           float height,
                                            vk::SampleCountFlagBits samples);
 
     static vk::Semaphore LoadImageAcquiredSemaphore(const VulkanDevice& device);
@@ -86,10 +86,10 @@ private:
     const vk::SurfaceKHR& surface_;
     
     // A reference to the window's width
-    const uint32_t& image_width_;
+    const float& image_width_;
 
     // A reference to the window's height
-    const uint32_t& image_height_;
+    const float& image_height_;
 
     // A reference to the vulkan device
     const VulkanDevice& device_;

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
+#include <Logging/logging.h>
 #include "networking_tests.h"
-#include "logging.h"
 
 int main(int argc, char* argv[]) {
     Phyre::Logging::set_log_level();

@@ -1,11 +1,9 @@
 #include <boost/bind/bind.hpp>
+#include <Logging/logging.h>
 #include "tcp_socket.h"
-#include "logging.h"
 
-namespace Phyre
-{
-namespace Networking
-{
+namespace Phyre {
+namespace Networking {
 
     using boost::asio::ip::tcp;
 

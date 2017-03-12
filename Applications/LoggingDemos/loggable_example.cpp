@@ -1,4 +1,4 @@
-#include "logging.h"
+#include <Logging/logging.h>
 
 using namespace Phyre::Logging;
 
@@ -13,7 +13,7 @@ class Foo : public LoggableInterface {
         }
 };
 
-int main(int argc, char const* argv[])
+int main()
 {
     set_log_level();
     Foo foo;

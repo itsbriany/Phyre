@@ -1,7 +1,7 @@
-#include "xmpp_client.h"
-#include "tcp_socket.h"
-#include "host_resolver.h"
-#include "logging.h"
+#include <XMPP/xmpp_client.h>
+#include <Networking/tcp_socket.h>
+#include <Networking/host_resolver.h>
+#include <Logging/logging.h>
 
 
 namespace Phyre
@@ -24,7 +24,7 @@ namespace Networking
 }
 }
 
-int main(int argc, char* argv[])
+int main()
 {
     Phyre::Logging::set_log_level();
     Phyre::Networking::XMPPClientDemo();

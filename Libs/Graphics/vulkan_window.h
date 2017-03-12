@@ -1,6 +1,7 @@
 #pragma once
 #include <vulkan.hpp>
 #include <GLFW/glfw3.h>
+#include <functional>
 
 namespace Phyre {
 namespace Graphics {
@@ -9,7 +10,7 @@ class VulkanInstance;
 class VulkanDevice;
 class VulkanWindow {
 public:
-    explicit VulkanWindow(uint32_t width, uint32_t height, const std::string& window_title, const VulkanInstance& instance, const VulkanGPU& gpu);
+    explicit VulkanWindow(float width, float height, const std::string& window_title, const VulkanInstance& instance, const VulkanGPU& gpu);
     
     // Clean up vulkan resources
     ~VulkanWindow();
@@ -22,8 +23,8 @@ public:
     void Close();
 
     // -------------------- Accessors -----------------------
-    const uint32_t& width() const { return width_; }
-    const uint32_t& height() const { return height_; }
+    const float& width() const { return width_; }
+    const float& height() const { return height_; }
     const vk::SurfaceKHR& surface() const { return surface_; }
     const vk::SurfaceCapabilitiesKHR& surface_capabilities() const { return surface_capabilities_; }
     const std::vector<vk::PresentModeKHR>& present_modes() const { return surface_present_modes_; }
@@ -33,11 +34,14 @@ public:
 
 
 private:
+    // -------------------- Type Definitions --------------------
+    typedef GLFWwindow OSWindow;
+
     // -------------------- Initializers --------------------
-    static GLFWwindow* InitializeWindow(uint32_t width, uint32_t height, const std::string& window_title);
+    static OSWindow* InitializeWindow(float width, float height, const std::string& window_title);
 
     // Throws a runtime exception if the surface could not properly be initialized
-    static vk::SurfaceKHR InitializeSurface(GLFWwindow* window, const vk::Instance& instance);
+    static vk::SurfaceKHR InitializeSurface(OSWindow* window, const vk::Instance& instance);
 
     // Initialize surface capabilities
     static vk::SurfaceCapabilitiesKHR InitializeSurfaceCapabilities(const VulkanGPU& gpu, const vk::SurfaceKHR& surface);
@@ -54,16 +58,22 @@ private:
     // Returns the optimal surface format given the ones available
     static vk::SurfaceFormatKHR InitializePreferredSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& surface_formats);
 
+    // -------------------- Post-Initializers --------------------
+    void InitializeCallbacks() const;
+
     // -------------------- Destroyers ----------------------
     // Destroys the SurfaceKHR
     void DestroySurface() const;
 
+    // -------------------- Callbacks ----------------------
+    static void OSFramebufferResizeCallback(OSWindow*, int width, int height);
+
     // ------------------ Data Members ---------------------
     // Width of the window
-    uint32_t width_;
+    float width_;
 
     // Height of the window
-    uint32_t height_;
+    float height_;
 
     // A reference to the vulkan instance
     const VulkanInstance& instance_;
@@ -71,8 +81,8 @@ private:
     // A reference to the vulkan gpu
     const VulkanGPU& gpu_;
 
-    // The underlying window implementation
-    GLFWwindow* p_window_;
+    // The underlying window implementation provided by the operating system
+    OSWindow* p_window_;
 
     // Is the window alive and running?
     bool is_running_;

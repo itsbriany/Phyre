@@ -1,11 +1,11 @@
 #include <fstream>
 #include <chrono>
+#include <Graphics/geometry.h>
+#include <Graphics/vulkan_utils.h>
+#include <Logging/logging.h>
 #include "draw_cube.h"
-#include "geometry.h"
-#include "logging.h"
-#include "vulkan_utils.h"
 
-int main(int argc, const char* argv[]) {
+int main() {
     Phyre::Graphics::DrawCube app;
     app.Start();
 
@@ -119,7 +119,7 @@ void Phyre::Graphics::DrawCube::LoadGPUs() {
     p_active_gpu_ = &gpus_[0];
 }
 
-void Phyre::Graphics::DrawCube::LoadWindow(uint32_t width, uint32_t height, const std::string& title) {
+void Phyre::Graphics::DrawCube::LoadWindow(float width, float height, const std::string& title) {
     p_window_ = new VulkanWindow(width, height, title, instance_, *p_active_gpu_);
 }
 
@@ -176,7 +176,7 @@ void Phyre::Graphics::DrawCube::LoadPipeline() {
     vk::PipelineVertexInputStateCreateInfo vertex_input_state_create_info;
     vertex_input_state_create_info.setVertexBindingDescriptionCount(1);
     vertex_input_state_create_info.setPVertexBindingDescriptions(&vertex_input_binding_description_);
-    vertex_input_state_create_info.setVertexAttributeDescriptionCount(vertex_input_attributes_.size());
+    vertex_input_state_create_info.setVertexAttributeDescriptionCount(static_cast<uint32_t>(vertex_input_attributes_.size()));
     vertex_input_state_create_info.setPVertexAttributeDescriptions(vertex_input_attributes_.data());
     
     // Vertex Input Assembly State
@@ -217,7 +217,7 @@ void Phyre::Graphics::DrawCube::LoadPipeline() {
     color_blend_attachment_states[0].setDstAlphaBlendFactor(vk::BlendFactor::eZero);
     color_blend_attachment_states[0].setDstColorBlendFactor(vk::BlendFactor::eZero);
     
-    color_blend_state_create_info.setAttachmentCount(color_blend_attachment_states.size());
+    color_blend_state_create_info.setAttachmentCount(static_cast<uint32_t>(color_blend_attachment_states.size()));
     color_blend_state_create_info.setPAttachments(color_blend_attachment_states.data());
     color_blend_state_create_info.setLogicOpEnable(false);
     color_blend_state_create_info.setLogicOp(vk::LogicOp::eNoOp);
@@ -267,7 +267,7 @@ void Phyre::Graphics::DrawCube::LoadPipeline() {
     
     // Now set the dynamic state info
     vk::PipelineDynamicStateCreateInfo dynamic_state_create_info;
-    dynamic_state_create_info.setDynamicStateCount(dynamic_states.size());
+    dynamic_state_create_info.setDynamicStateCount(static_cast<uint32_t>(dynamic_states.size()));
     dynamic_state_create_info.setPDynamicStates(dynamic_states.data());
     
     // Put all the pieces together
@@ -286,7 +286,7 @@ void Phyre::Graphics::DrawCube::LoadPipeline() {
     graphics_pipeline_create_info.setPViewportState(&viewport_state_create_info);
     graphics_pipeline_create_info.setPDepthStencilState(&depth_stencil_state_create_info);
     graphics_pipeline_create_info.setPStages(shader_stages_.data());
-    graphics_pipeline_create_info.setStageCount(shader_stages_.size());
+    graphics_pipeline_create_info.setStageCount(static_cast<uint32_t>(shader_stages_.size()));
     graphics_pipeline_create_info.setSubpass(0);
     graphics_pipeline_create_info.setRenderPass(p_render_pass_->get());
     
@@ -318,11 +318,11 @@ void Phyre::Graphics::DrawCube::Draw() {
     begin_info.setFramebuffer(framebuffers_[p_swapchain_->current_frame_index()]);
 
     vk::Offset2D offset;
-    vk::Extent2D extent(p_swapchain_->image_width(), p_swapchain_->image_height());
+    vk::Extent2D extent(static_cast<uint32_t>(p_swapchain_->image_width()), static_cast<uint32_t>(p_swapchain_->image_height()));
     vk::Rect2D render_area(offset, extent);
     begin_info.setRenderArea(render_area);
 
-    begin_info.setClearValueCount(clear_values.size());
+    begin_info.setClearValueCount(static_cast<uint32_t>(clear_values.size()));
     begin_info.setPClearValues(clear_values.data());
 
     // We can only connect vertex buffers between the begin and end stages of a render pass
@@ -368,8 +368,8 @@ void Phyre::Graphics::DrawCube::Draw() {
     // Bind the scissors
     vk::Rect2D scissor;
     vk::Extent2D scissor_extent;
-    scissor_extent.setWidth(p_swapchain_->image_width());
-    scissor_extent.setHeight(p_swapchain_->image_height());
+    scissor_extent.setWidth(static_cast<uint32_t>(p_swapchain_->image_width()));
+    scissor_extent.setHeight(static_cast<uint32_t>(p_swapchain_->image_height()));
 
     vk::Offset2D scissor_offset;
     scissor_offset.setX(0);
@@ -404,7 +404,7 @@ void Phyre::Graphics::DrawCube::Draw() {
     submit_info.setPWaitSemaphores(&p_swapchain_->image_acquired_semaphore()); // This forces a wait until the image is ready before drawing so that we know when the swapchain image is available
                                                                 // When the GPU is done executing commands, it signals the fence to indicate that the drawing is complete
     submit_info.setPWaitDstStageMask(&pipeline_stage_flags);
-    submit_info.setCommandBufferCount(command_buffers.size());
+    submit_info.setCommandBufferCount(static_cast<uint32_t>(command_buffers.size()));
     submit_info.setPCommandBuffers(command_buffers.data());
     submit_info.setSignalSemaphoreCount(0);
     submit_info.setPSignalSemaphores(nullptr);
@@ -447,7 +447,7 @@ void Phyre::Graphics::DrawCube::LogFPS() const {
     ++frames;
     static high_resolution_clock::time_point start = high_resolution_clock::now();
     high_resolution_clock::time_point now = high_resolution_clock::now();
-    if (now - start > seconds(1)) {
+    if (now - start > std::chrono::milliseconds(1000)) {
         std::ostringstream oss;
         oss << "FPS: " << frames;
         Logging::info(oss.str(), kWho);
@@ -519,7 +519,7 @@ void Phyre::Graphics::DrawCube::LoadVertexBuffer() {
     uint32_t stride = sizeof(Geometry::Vertex);
     vertex_input_binding_description_.setBinding(0);
     vertex_input_binding_description_.setInputRate(vk::VertexInputRate::eVertex);
-    vertex_input_binding_description_.setStride(sizeof(Geometry::Vertex));
+    vertex_input_binding_description_.setStride(stride);
 
     vertex_input_attributes_[0].setBinding(0);
     vertex_input_attributes_[0].setLocation(0);
@@ -544,10 +544,10 @@ void Phyre::Graphics::DrawCube::LoadFrameBuffers() {
 
     vk::FramebufferCreateInfo info;
     info.setRenderPass(p_render_pass_->get());
-    info.setAttachmentCount(attachments.size()); // 2 Because we are using image and depth
+    info.setAttachmentCount(static_cast<uint32_t>(attachments.size())); // 2 Because we are using image and depth
     info.setPAttachments(attachments.data());
-    info.setWidth(p_swapchain_->image_width());
-    info.setHeight(p_swapchain_->image_height());
+    info.setWidth(static_cast<uint32_t>(p_swapchain_->image_width()));
+    info.setHeight(static_cast<uint32_t>(p_swapchain_->image_height()));
     info.setLayers(1);
 
     framebuffers_ = std::vector<vk::Framebuffer>(p_swapchain_->swapchain_images().size());

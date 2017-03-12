@@ -106,10 +106,10 @@ std::string SASL::GenerateNonce() {
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "1234567890");
     boost::random::random_device rng;
-    boost::random::uniform_int_distribution<> index_dist(0, chars.size() - 1);
+    boost::random::uniform_int_distribution<> index_dist(0, static_cast<int>(chars.size() - 1));
     std::string nonce;
-    for (int i = 0; i < 32; ++i) {
-        nonce += chars[index_dist(rng)];
+    for (size_t i = 0; i < 32; ++i) {
+        nonce += chars[static_cast<int>(index_dist(rng))];
     }
     return nonce;
 }

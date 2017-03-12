@@ -1,7 +1,8 @@
 #pragma once
-#include <gtest/gtest.h>
+
 #include <queue>
-#include "logging.h"
+#include <gtest/gtest.h>
+#include <Logging/logging.h>
 #include "tcp_client.h"
 
 namespace Phyre {

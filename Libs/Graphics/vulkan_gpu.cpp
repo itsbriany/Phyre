@@ -1,5 +1,5 @@
+#include <Logging/logging.h>
 #include "vulkan_gpu.h"
-#include "logging.h"
 
 const std::string Phyre::Graphics::VulkanGPU::kWho = "[VulkanGPU]";
 

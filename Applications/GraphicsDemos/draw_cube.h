@@ -1,11 +1,11 @@
 #pragma once
-#include "vulkan_debugger.h"
-#include "vulkan_device.h"
-#include "vulkan_instance.h"
-#include "vulkan_gpu.h"
-#include "vulkan_window.h"
-#include "vulkan_uniform_buffer.h"
-#include "vulkan_render_pass.h"
+#include <Graphics/vulkan_debugger.h>
+#include <Graphics/vulkan_device.h>
+#include <Graphics/vulkan_instance.h>
+#include <Graphics/vulkan_gpu.h>
+#include <Graphics/vulkan_window.h>
+#include <Graphics/vulkan_uniform_buffer.h>
+#include <Graphics/vulkan_render_pass.h>
 
 namespace Phyre {
 namespace Graphics {
@@ -46,7 +46,7 @@ private:
     // This will only be enabled in debug mode and when the debug layers are active
     void StartDebugger();
     void LoadGPUs();
-    void LoadWindow(uint32_t width, uint32_t height, const std::string& title);
+    void LoadWindow(float width, float height, const std::string& title);
     void LoadDevice();
     void LoadCommandPool();
     void LoadCommandBuffers();
