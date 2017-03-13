@@ -12,12 +12,12 @@ Phyre::Graphics::VulkanDevice::VulkanDevice(const VulkanGPU& gpu, const VulkanWi
     graphics_queue_(InitializeGraphicsQueue(device_, graphics_queue_family_index_)),
     presentation_queue_(InitializePresentationQueue(device_, graphics_queue_, graphics_queue_family_index_, presentation_queue_family_index_))
 {
-    Logging::trace("Instantiated", kWho);
+    PHYRE_LOG(trace, kWho) << "Instantiated";
 }
 
 Phyre::Graphics::VulkanDevice::~VulkanDevice() {
     device_.destroy();
-    Logging::trace("Destroyed", kWho);
+    PHYRE_LOG(trace, kWho) << "Destroyed";
 }
 
 vk::Device Phyre::Graphics::VulkanDevice::InitializeLogicalDevice(const vk::PhysicalDevice& gpu) {
@@ -74,7 +74,7 @@ vk::DeviceQueueCreateInfo Phyre::Graphics::VulkanDevice::PrepareGraphicsQueueInf
             }
         }
     }
-    Logging::warning("Could not find a queue family which supports graphics", kWho);
+    PHYRE_LOG(warning, kWho) << "Could not find a queue family which supports graphics";
     return device_queue_create_info;
 }
 
@@ -95,7 +95,7 @@ uint32_t Phyre::Graphics::VulkanDevice::InitializeGraphicsQueueIndex(const vk::P
     }
 
     // Not found
-    Logging::warning("Could not find a graphics queue index", kWho);
+    PHYRE_LOG(warning, kWho) << "Could not find a graphics queue index";
     return UINT32_MAX;
 }
 
@@ -132,7 +132,7 @@ uint32_t Phyre::Graphics::VulkanDevice::InitializePresentationQueueIndex(const v
     }
 
     // Not found
-    Logging::warning("Could not find a presentation queue index", kWho);
+    PHYRE_LOG(warning, kWho) << "Could not find a presentation queue index";
     return presentation_queue_index;
 }
 

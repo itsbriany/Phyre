@@ -5,6 +5,8 @@
 namespace Phyre {
 namespace Networking {
 
+    const std::string XMPPClient::kWho = "[XMPPClient]";
+
 XMPPClient::XMPPClient(boost::asio::io_service& io_service,
                        const std::string& host,
                        const std::string& username,
@@ -21,13 +23,13 @@ void XMPPClient::OnConnect() {
 
 void XMPPClient::OnRead(const std::string& bytes_read) {
     std::string message = "From server: \n" + std::string(bytes_read);
-    Logging::debug(message, *this);
+    PHYRE_LOG(debug, kWho) << message;
     buffer_ += bytes_read;
     ptr_state_->Update();
 }
 
 void XMPPClient::OnError(const boost::system::error_code& ec) {
-    Logging::error(ec.message(), *this);
+    PHYRE_LOG(error, kWho) << ec.message();
 }
 
 }

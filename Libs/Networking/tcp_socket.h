@@ -49,6 +49,8 @@ namespace Networking
         OnConnectCallback on_connect_callback_;
         OnReadCallback on_read_callback_;
         bool is_connected_;
+
+        static const std::string kWho;
     };
 }
 }

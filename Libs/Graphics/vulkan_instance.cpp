@@ -28,20 +28,20 @@ const std::vector<const char*> Phyre::Graphics::VulkanInstance::kExtensionNames 
 
 Phyre::Graphics::VulkanInstance::VulkanInstance() {
     InitializeInstance();
-    Logging::trace("Initialized", kWho);
+    PHYRE_LOG(trace, kWho) << "Instantiated";
 }
 
 Phyre::Graphics::VulkanInstance::~VulkanInstance() {
     instance_.destroy();
-    Logging::trace("Destroyed", kWho);
+    PHYRE_LOG(trace, kWho) << "Destroyed";
 }
 
 void Phyre::Graphics::VulkanInstance::InitializeInstance() {
     if (!HasLayerSupport()) {
-        Logging::fatal("Some layers are not supported", kWho);
+        PHYRE_LOG(error, kWho) << "Some layers could not be supported";
     }
     if (!HasExtensionSupport()) {
-        Logging::fatal("Some extensions are not supported", kWho);
+        PHYRE_LOG(error, kWho) << "Some extensions could not be supported";
     }
 
     vk::ApplicationInfo application_info;

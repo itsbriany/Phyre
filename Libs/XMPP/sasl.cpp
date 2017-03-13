@@ -8,6 +8,8 @@
 namespace Phyre {
 namespace Networking {
 
+const std::string SASL::kWho = "[SASL]";
+
 std::unordered_map<SASL::Mechanism, std::string> SASL::s_digest_map = boost::assign::map_list_of
 (kSHA1, "SCRAM-SHA-1")
 (kMD5, "DIGEST-MD5")
@@ -27,7 +29,7 @@ void SASL::Update() {
             HandleDecodeBase64Challenge();
             break;
         default:
-            Logging::error("Unknown Transaction State", *this);
+            PHYRE_LOG(error, kWho) << "Unknown Transaction State";
             client_.Disconnect();
             return;
     }
@@ -46,12 +48,12 @@ void SASL::HandleSelectAuthenticationMechanism() {
     std::unordered_set<std::string> authentication_mechanism_set = ParseAuthenticationMechanisms(authentication_mechanism_response);
     Mechanism mechanism = SetAuthenticationMechanism(authentication_mechanism_set);
     if (mechanism == kNone) {
-        Logging::error("Only SRCAM-SHA1 and MD5 SASL authentication mechanism is supported", *this);
+        PHYRE_LOG(error, kWho) << "Only SRCAM-SHA1 and MD5 SASL authentication mechanism is supported";
         client_.Disconnect();
     }
 
     transaction_state_ = kDecodeBase64Challenge;
-    Logging::debug("Initiating authentication exchange...", *this);
+    PHYRE_LOG(debug,kWho) << "Initiating authentication exchange...";
     client_.Write(InitiateAuthenticationStream(mechanism));
 }
 

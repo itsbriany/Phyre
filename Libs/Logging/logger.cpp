@@ -7,7 +7,7 @@
 namespace Phyre {
 namespace Logging {
 
-std::map<LogLevel, std::string> Logger::s_string_to_log_level_map = boost::assign::map_list_of
+std::map<LogLevel, std::string> Logger::kStringToLogLevelMap = boost::assign::map_list_of
 (kTrace, "trace")
 (kDebug, "debug")
 (kInfo, "info")
@@ -15,7 +15,7 @@ std::map<LogLevel, std::string> Logger::s_string_to_log_level_map = boost::assig
 (kError, "error")
 (kFatal, "fatal");
 
-std::map<std::string, LogLevel> Logger::s_level_to_string_map = boost::assign::map_list_of
+std::map<std::string, LogLevel> Logger::kLevelToStringMap = boost::assign::map_list_of
 ("trace", kTrace)
 ("debug", kDebug)
 ("info", kInfo)

@@ -2,7 +2,7 @@
 # We may wish to ignore various compiler warnings
 # We also want to set warnings as errors
 if (MSVC)
-    set(COMPILER_WARNING_FLAGS "/WX /wd4714 /wd4201")
+    set(COMPILER_WARNING_FLAGS "/WX /wd4714 /wd4201 /wd4100")
 else()
     set(COMPILER_WARNING_FLAGS "-Wall -Werror -Wno-unused-function -Wno-deprecated-declarations -Wno-inconsistent-missing-override")
 endif()

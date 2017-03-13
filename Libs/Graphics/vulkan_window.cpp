@@ -23,12 +23,12 @@ Phyre::Graphics::VulkanWindow::VulkanWindow(float width, float height, const std
     preferred_present_mode_(InitializePreferredPresentMode(surface_present_modes_)),
     preferred_surface_format_(InitializePreferredSurfaceFormat(surface_formats_)) {
     InitializeCallbacks();
-    Logging::trace("Instantiated", kWho);
+    PHYRE_LOG(trace, kWho) << "Instantiated";
 }
 
 Phyre::Graphics::VulkanWindow::~VulkanWindow() {
     DestroySurface();
-    Logging::trace("Destroyed", kWho);
+    PHYRE_LOG(trace, kWho) << "Destroyed";
 }
 
 bool Phyre::Graphics::VulkanWindow::Update() {
@@ -48,21 +48,19 @@ void Phyre::Graphics::VulkanWindow::DestroySurface() const {
     if (s_destroy_surface_khr_) {
         s_destroy_surface_khr_(instance_.get(), surface_, nullptr);
     } else {
-        Logging::warning("Could not delete surface", kWho);
+        PHYRE_LOG(warning, kWho) << "Could not delete surface";
     }
 }
 
 void Phyre::Graphics::VulkanWindow::OSFramebufferResizeCallback(OSWindow*, int width, int height) {
-    std::ostringstream oss;
-    oss << "Window dimensions: (" << width << "x" << height << ')';
-    Logging::info(oss.str(), kWho);
+    PHYRE_LOG(info, kWho) << "Window dimensions: (" << width << "x" << height << ')';
 }
 
 Phyre::Graphics::VulkanWindow::OSWindow* 
 Phyre::Graphics::VulkanWindow::InitializeWindow(float width, float height, const std::string& window_title) {
     if (!glfwInit()) {
         std::string error_message = "Could not initialize GLFW!";
-        Logging::error(error_message, kWho);
+        PHYRE_LOG(error, kWho) << error_message;
         throw std::runtime_error(error_message);
     }
 
@@ -80,12 +78,12 @@ vk::SurfaceKHR Phyre::Graphics::VulkanWindow::InitializeSurface(OSWindow* window
     VkResult error = glfwCreateWindowSurface(instance, window, nullptr, &surface);
     if (error == VK_ERROR_EXTENSION_NOT_PRESENT) {
         error_message = "Failed to instantiate vulkan surface: Instance WSI extensions not present";
-        Logging::error(error_message, kWho);
+        PHYRE_LOG(error, kWho) << error_message;
         throw std::runtime_error(error_message);
     }
     if (error != VK_SUCCESS) {
         error_message = "Failed to instantiate vulkan surface";
-        Logging::error(error_message, kWho);
+        PHYRE_LOG(error, kWho) << error_message;
         throw std::runtime_error(error_message);
     }
 
@@ -99,7 +97,7 @@ vk::SurfaceCapabilitiesKHR Phyre::Graphics::VulkanWindow::InitializeSurfaceCapab
 std::vector<vk::PresentModeKHR> Phyre::Graphics::VulkanWindow::InitializePresentModes(const VulkanGPU& gpu, const vk::SurfaceKHR& surface) {
     std::vector<vk::PresentModeKHR> present_modes = gpu.get().getSurfacePresentModesKHR(surface);
     if (present_modes.empty()) {
-        Logging::warning("No present modes found for the surface on the active GPU", kWho);
+        PHYRE_LOG(warning, kWho) << "No present modes found for the surface on the active GPU";
     }
     return present_modes;
 }
@@ -107,7 +105,7 @@ std::vector<vk::PresentModeKHR> Phyre::Graphics::VulkanWindow::InitializePresent
 std::vector<vk::SurfaceFormatKHR> Phyre::Graphics::VulkanWindow::InitializeSurfaceFormats(const VulkanGPU& gpu, const vk::SurfaceKHR& surface) {
     std::vector<vk::SurfaceFormatKHR> surface_formats = gpu.get().getSurfaceFormatsKHR(surface);
     if (surface_formats.empty()) {
-        Logging::warning("No surface formats available on GPU", kWho);
+        PHYRE_LOG(warning, kWho) << "No surface formats available on GPU";
     }
     return surface_formats;
 }
@@ -134,7 +132,7 @@ vk::PresentModeKHR Phyre::Graphics::VulkanWindow::InitializePreferredPresentMode
 
 vk::SurfaceFormatKHR Phyre::Graphics::VulkanWindow::InitializePreferredSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& surface_formats) {
     if (surface_formats.empty()) {
-        Logging::warning("No surface formats detected!", kWho);
+        PHYRE_LOG(warning, kWho) << "No surface formats detected!";
     }
 
     // The first image format is the preferred one

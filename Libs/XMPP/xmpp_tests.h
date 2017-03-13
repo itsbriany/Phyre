@@ -76,7 +76,7 @@ TEST_F(XMLParseTest, CanParseXML) {
     EXPECT_TRUE(sked[1].cancelled);
 }
 
-class SASLTest : public ::testing::Test, public Logging::LoggableInterface {
+class SASLTest : public ::testing::Test {
     protected:
         SASLTest():
             host_("localhost"),
@@ -116,7 +116,7 @@ class SASLTest : public ::testing::Test, public Logging::LoggableInterface {
             std::ifstream input(file_name);
             std::ostringstream oss;
             if (!input) {
-                Logging::error("Could not read file!", *this);
+                PHYRE_LOG(error, log()) << "Could not read file!";
                 return "";
             }
 
@@ -133,7 +133,7 @@ class SASLTest : public ::testing::Test, public Logging::LoggableInterface {
 			ptr_sasl_ = std::make_unique<SASL>(*ptr_xmpp_client_);
         }
 
-        std::string log() override {
+        std::string log() {
             return "[SASLTest]";
         }
 

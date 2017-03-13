@@ -12,12 +12,12 @@ Phyre::Graphics::VulkanRenderPass::VulkanRenderPass(const VulkanDevice& device, 
     swapchain_(swapchain),
     render_pass_(LoadRenderPass(device_, swapchain_))
 {
-    Logging::trace("Initialized", kWho);
+    PHYRE_LOG(trace, kWho) << "Instantiated";
 }
 
 Phyre::Graphics::VulkanRenderPass::~VulkanRenderPass() {
     device_.get().destroyRenderPass(render_pass_);
-    Logging::trace("Destroyed", kWho);
+    PHYRE_LOG(trace, kWho) << "Destroyed";
 }
 
 vk::RenderPass Phyre::Graphics::VulkanRenderPass::LoadRenderPass(const VulkanDevice& device, const VulkanSwapchain& swapchain) {

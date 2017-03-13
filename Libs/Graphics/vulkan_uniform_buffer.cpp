@@ -22,13 +22,13 @@ Phyre::Graphics::VulkanUniformBuffer::VulkanUniformBuffer(const VulkanDevice& de
     MVP_(clip_*projection_*view_*model_)      // A 4x4 matrix
 {
     Initialize(); // Post-Initialization
-    Logging::trace("Instantiated", kWho);
+    PHYRE_LOG(trace, kWho) << "Instantiated";
 }
 
 Phyre::Graphics::VulkanUniformBuffer::~VulkanUniformBuffer() {
     device_.get().destroyBuffer(buffer_);
     device_.get().freeMemory(device_memory_);
-    Logging::trace("Destroyed", kWho);
+    PHYRE_LOG(trace, kWho) << "Destroyed";
 }
 
 vk::Buffer Phyre::Graphics::VulkanUniformBuffer::InitializeBuffer(const vk::Device& device, const glm::mat4& MVP) {
@@ -62,7 +62,7 @@ void Phyre::Graphics::VulkanUniformBuffer::Initialize() {
                                           vk::MemoryPropertyFlagBits::eHostCoherent); // Writes to this memory are visible to both host and device
     allocate_info.setAllocationSize(memory_requirements.size);
     if (!VulkanUtils::CanFindMemoryTypeFromProperties(device_.gpu(), memory_requirements.memoryTypeBits, requirements_mask, allocate_info.memoryTypeIndex)) {
-        Logging::fatal("Failed to satisfy physical device memory requirements for allocating buffer", kWho);
+        PHYRE_LOG(fatal, kWho) << "Failed to satisfy physical device memory requirements for allocating buffer";
     }
     device_.get().allocateMemory(&allocate_info, nullptr, &device_memory_);
 

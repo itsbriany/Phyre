@@ -29,7 +29,7 @@ Phyre::Graphics::DrawCube::DrawCube() :
     p_swapchain_(nullptr),
     p_uniform_buffer_(nullptr),
     p_render_pass_(nullptr) {
-    Logging::trace("Instantiated", kWho);
+    PHYRE_LOG(trace, kWho) << "Instantiated";
 }
 
 void Phyre::Graphics::DrawCube::DestroyShaderModules() {
@@ -94,7 +94,7 @@ Phyre::Graphics::DrawCube::~DrawCube() {
     p_device_->get().destroyCommandPool(command_pool_);
     delete p_window_;
     delete p_device_;
-    Logging::trace("Destroyed", kWho);
+    PHYRE_LOG(trace, kWho) << "Destroyed";
 }
 
 void Phyre::Graphics::DrawCube::StartDebugger() {
@@ -106,14 +106,12 @@ void Phyre::Graphics::DrawCube::LoadGPUs() {
     std::vector<vk::PhysicalDevice> physical_device_vector = instance_.get().enumeratePhysicalDevices();
     for (const vk::PhysicalDevice& physical_device : physical_device_vector) {
         const vk::PhysicalDeviceProperties properties = physical_device.getProperties();
-        std::ostringstream oss;
-        oss << "Found device: " << properties.deviceName;
-        Logging::info(oss.str(), kWho);
+        PHYRE_LOG(info, kWho) << "Found device: " << properties.deviceName;
         gpus_.emplace_back(VulkanGPU(physical_device));
     }
     if (gpus_.empty()) {
         std::string error_message = "Could not locate any GPUs";
-        Logging::fatal(error_message, kWho);
+        PHYRE_LOG(fatal, kWho) << error_message;
         throw std::runtime_error(error_message);
     }
     p_active_gpu_ = &gpus_[0];
@@ -153,7 +151,7 @@ void Phyre::Graphics::DrawCube::LoadCommandBuffers() {
 
 void Phyre::Graphics::DrawCube::ExecuteBeginCommandBuffer(size_t command_buffer_index) {
     if (command_buffer_index > command_buffers_.size()) {
-        Logging::error("Failed to begin command buffer: index out of bounds", kWho);
+        PHYRE_LOG(error, kWho) << "Failed to begin command buffer: index out of bounds";
         return;
     }
 
@@ -448,9 +446,7 @@ void Phyre::Graphics::DrawCube::LogFPS() const {
     static high_resolution_clock::time_point start = high_resolution_clock::now();
     high_resolution_clock::time_point now = high_resolution_clock::now();
     if (now - start > std::chrono::milliseconds(1000)) {
-        std::ostringstream oss;
-        oss << "FPS: " << frames;
-        Logging::info(oss.str(), kWho);
+        PHYRE_LOG(info, kWho) << "FPS: " << frames;
         start = now;
         frames = 0;
     }   
@@ -507,7 +503,7 @@ void Phyre::Graphics::DrawCube::LoadVertexBuffer() {
     vk::MemoryPropertyFlags flags(vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
     allocate_info.setAllocationSize(memory_requirements.size);
     if (!VulkanUtils::CanFindMemoryTypeFromProperties(p_device_->gpu(), memory_requirements.memoryTypeBits, flags, allocate_info.memoryTypeIndex)) {
-        Logging::fatal("Failed to get memory type from properties while allocating vertex buffer", kWho);
+        PHYRE_LOG(fatal, kWho) << "Failed to get memory type from properties while allocating vertex buffer";
     }
     vertex_buffer_.memory = p_device_->get().allocateMemory(allocate_info);
 
@@ -621,7 +617,7 @@ void Phyre::Graphics::DrawCube::LoadPipelineCache() {
 
 void Phyre::Graphics::DrawCube::LoadPipelineLayout() {
     if (!p_device_) {
-        Logging::error("Failed to load pipeline layout: No logical device", kWho);
+        PHYRE_LOG(error, kWho) << "Failed to load pipeline layout: No logical device";
         return;
     }
     vk::PipelineLayoutCreateInfo create_info;
@@ -636,9 +632,7 @@ void Phyre::Graphics::DrawCube::LoadPipelineLayout() {
 std::vector<uint32_t> Phyre::Graphics::DrawCube::ReadSpirV(const std::string spirv_shader_file_name) {
     std::ifstream shader_file(spirv_shader_file_name, std::ios::binary);
     if (!shader_file) {
-        std::ostringstream oss;
-        oss << "Could not open " << spirv_shader_file_name;
-        Logging::error(oss.str(), kWho);
+        PHYRE_LOG(error, kWho) << "Could not open " << spirv_shader_file_name;
         return std::vector<uint32_t>();
     }
     // get length of file:
@@ -649,9 +643,7 @@ std::vector<uint32_t> Phyre::Graphics::DrawCube::ReadSpirV(const std::string spi
     // Spir-V byte alignment should represent the size of a uint32_t
     std::vector<uint32_t> vertex_shader_bytecode(length / sizeof(uint32_t));
     shader_file.read(reinterpret_cast<char*>(vertex_shader_bytecode.data()), length);
-    std::ostringstream oss;
-    oss << "Read " << vertex_shader_bytecode.size() << " SPIR-V data blocks";
-    Logging::debug(oss.str(), kWho);
+    PHYRE_LOG(debug, kWho) << "Read " << vertex_shader_bytecode.size() << " SPIR-V data blocks";
     shader_file.close();
 
     return vertex_shader_bytecode;

@@ -22,7 +22,7 @@ Phyre::Graphics::VulkanSwapchain::VulkanSwapchain(const VulkanDevice& device, co
     image_acquired_semaphore_(LoadImageAcquiredSemaphore(device)),
     current_frame_index_(UINT32_MAX)
 {
-    Logging::trace("Instantiated", kWho);
+    PHYRE_LOG(trace, kWho) << "Instantiated";
 }
 
 Phyre::Graphics::VulkanSwapchain::~VulkanSwapchain() {
@@ -34,7 +34,7 @@ Phyre::Graphics::VulkanSwapchain::~VulkanSwapchain() {
         device_.get().destroyImageView(swapchain_image.image_view);
     }
     device_.get().destroySwapchainKHR(swapchain_, nullptr);
-    Logging::trace("Destroyed", kWho);
+    PHYRE_LOG(trace, kWho) << "Destroyed";
 }
 
 vk::SwapchainKHR Phyre::Graphics::VulkanSwapchain::InitializeSwapchain(const VulkanDevice& device,
@@ -170,7 +170,7 @@ Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::I
     } else {
         /* Try other depth formats? */
         std::string error_message = "VK_FORMAT_D16_UNORM Unsupported";
-        Logging::fatal(error_message, kWho);
+        PHYRE_LOG(fatal, kWho) << error_message;
         throw std::runtime_error(error_message);
     }
 
@@ -207,7 +207,7 @@ Phyre::Graphics::VulkanSwapchain::DepthImage Phyre::Graphics::VulkanSwapchain::I
     vk::MemoryPropertyFlagBits requirements_mask = vk::MemoryPropertyFlagBits::eDeviceLocal;
     if(!VulkanUtils::CanFindMemoryTypeFromProperties(device.gpu(), memory_requirements.memoryTypeBits, requirements_mask, memory_allocate_info.memoryTypeIndex)) {
         std::string error_message = "Could not satisfy memory requirements for image";
-        Logging::fatal(error_message, kWho);
+        PHYRE_LOG(fatal, kWho) << error_message;
         throw std::runtime_error(error_message);
     }
     

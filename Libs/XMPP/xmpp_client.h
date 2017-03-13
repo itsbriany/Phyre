@@ -30,10 +30,6 @@ class XMPPClient : public TCPClient {
 
         std::string password() const { return password_; }
 
-        std::string log() override {
-            return "[XMPPClient]";
-        }
-
     private:
         // All data read from endpoint ends up here
         std::string buffer_;
@@ -49,6 +45,8 @@ class XMPPClient : public TCPClient {
 
         // The current state in the lifetime of the XMPP protocol
         std::unique_ptr<XMPPState> ptr_state_;
+
+        static const std::string kWho;
 };
 
 }

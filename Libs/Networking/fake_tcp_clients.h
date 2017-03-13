@@ -47,12 +47,6 @@ class TCPClientRead : public FakeTCPClient {
             FakeTCPClient(io_service),
             payload_(payload) { }
 
-
-        std::string log() override {
-            return "[TCPClientRead]";
-        }
-
-
         std::string payload_;
 
     protected:
@@ -63,7 +57,7 @@ class TCPClientRead : public FakeTCPClient {
         }
 
         void OnRead(const std::string& data) override {
-            Logging::info(data, *this);
+            PHYRE_LOG(info, "[TCPClientRead]") << data;
             io_service_.stop();
         }
 };
@@ -73,8 +67,6 @@ class TCPClientReadQueuedMessages : public FakeTCPClient {
         TCPClientReadQueuedMessages(boost::asio::io_service& io_service, const std::queue<std::string>& message_queue):
             FakeTCPClient(io_service),
             message_queue_(message_queue) { }
-
-        std::string log() override { return "[TCPClientReadQueuedMessages]"; }
 
         std::queue<std::string> message_queue_;
 
@@ -91,7 +83,7 @@ class TCPClientReadQueuedMessages : public FakeTCPClient {
                 return;
             }
 
-            Logging::info(data, *this);
+            PHYRE_LOG(info, "[TCPClientReadQueuedMessages]") << data;
 
             // Parse the received data so that we know if we need to request
             // more. This is because we may receive data in chunks.

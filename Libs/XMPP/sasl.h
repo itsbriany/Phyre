@@ -78,6 +78,8 @@ class SASL : public XMPPState, public Logging::LoggableInterface {
 
         // Internal transactional state
         TransactionState transaction_state_;
+
+        static const std::string kWho;
 };
 
 }

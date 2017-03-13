@@ -2,16 +2,21 @@
 
 using namespace Phyre::Logging;
 
-class Foo : public LoggableInterface {
+class Foo {
     public:
         Foo() {
             std::string message = "I am alive!";
-            info(message, *this);
+            PHYRE_LOG(trace, kWho) << message;
+            PHYRE_LOG(info, kWho) << message;
+            PHYRE_LOG(warning, kWho) << message;
+            PHYRE_LOG(error, kWho) << message;
+            PHYRE_LOG(fatal, kWho) << message;
         }
-        std::string log() override {
-            return "[Foo] ";
-        }
+    
+    const std::string kWho = "[Foo]";
 };
+
+
 
 int main()
 {

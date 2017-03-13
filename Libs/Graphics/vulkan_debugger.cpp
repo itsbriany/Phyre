@@ -22,7 +22,7 @@ VKAPI_ATTR VkResult VKAPI_CALL vkCreateDebugReportCallbackEXT(
 const std::string Phyre::Graphics::VulkanDebugger::kWho = "[VulkanDebugger]";
 
 Phyre::Graphics::VulkanDebugger::VulkanDebugger(const VulkanInstance& instance) : instance_(instance), debug_report_callback_(nullptr) {
-    Logging::trace("Intantiated", kWho);
+    PHYRE_LOG(trace, kWho) << "Instantiated";
 }
 
 // Comment out this definition to see if the debugger works.
@@ -31,7 +31,7 @@ Phyre::Graphics::VulkanDebugger::~VulkanDebugger() {
     if (s_destroy_debug_report_callback_proxy) {
        s_destroy_debug_report_callback_proxy(instance_.get(), debug_report_callback_, nullptr);
     }
-    Logging::trace("Destroyed", kWho);
+    PHYRE_LOG(trace, kWho) << "Destroyed";
 }
 
 void Phyre::Graphics::VulkanDebugger::InitializeDebugReport() {
@@ -54,18 +54,16 @@ vk::Bool32 Phyre::Graphics::VulkanDebugger::Callback(VkDebugReportFlagsEXT flags
     std::ostringstream who_stream;
     who_stream << "[Vulkan::Validation]" << '[' << layer_prefix << ']';
     if (flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) {
-        Logging::info(message, who_stream.str());
+        PHYRE_LOG(info, who_stream.str()) << message;
     }
     if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT) {
-        Logging::warning(message, who_stream.str());
+        PHYRE_LOG(warning, who_stream.str()) << message;
     }
     if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT) {
-        std::ostringstream oss;
-        oss << "(Performnce warning) " << message;
-        Logging::warning(oss.str(), who_stream.str());
+        PHYRE_LOG(warning, who_stream.str()) << "(Performnce warning) " << message;
     }
     if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
-        Logging::error(message, who_stream.str());
+        PHYRE_LOG(error, who_stream.str()) << message;
     }
     return false;
 }

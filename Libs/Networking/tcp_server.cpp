@@ -9,6 +9,8 @@ namespace Networking
     using boost::asio::ip::tcp;
     using std::queue;
     using std::string;
+    
+    const string TCPServer::kWho = "[TCPServer]";
 
     TCPServer::TCPServer(boost::asio::io_service& io_service, uint16_t listen_port, const queue<string>& message_queue):
         acceptor_(io_service, tcp::endpoint(tcp::v4(), listen_port)),
@@ -19,7 +21,7 @@ namespace Networking
     void TCPServer::StartAccept() {
         ptr_connection_ = TCPServerConnection::Create(acceptor_.get_io_service(), message_queue_);
         if (!ptr_connection_) {
-            Logging::error("No connection available", *this);
+            PHYRE_LOG(error, kWho) << "No connection available";
             return;
         }
 

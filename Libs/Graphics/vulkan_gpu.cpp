@@ -7,11 +7,11 @@ Phyre::Graphics::VulkanGPU::VulkanGPU(const vk::PhysicalDevice& physical_device)
     gpu_(physical_device),
     properties_(InitializePhysicalDeviceProperties(gpu_)),
     memory_properties_(InitializePhysicalDeviceMemoryProperties(gpu_)) {
-    Logging::trace("Instantiated", kWho);
+    PHYRE_LOG(trace, kWho) << "Instantiated";
 }
 
 Phyre::Graphics::VulkanGPU::~VulkanGPU() {
-    Logging::trace("Destroyed", kWho);
+    PHYRE_LOG(trace, kWho) << "Destroyed";
 }
 
 vk::PhysicalDeviceProperties Phyre::Graphics::VulkanGPU::InitializePhysicalDeviceProperties(const vk::PhysicalDevice& physical_device) {

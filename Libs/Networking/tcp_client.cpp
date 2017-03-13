@@ -5,12 +5,11 @@
 #include "tcp_client.h"
 #include "tcp_socket.h"
 
-namespace Phyre
-{
-namespace Networking
-{
+namespace Phyre {
+namespace Networking {
 
     using boost::asio::ip::tcp;
+    const std::string TCPClient::kWho = "[TCPClient]";
 
     TCPClient::TCPClient(boost::asio::io_service& io_service) :
         io_service_(io_service),
@@ -26,7 +25,7 @@ namespace Networking
 
     void TCPClient::Connect(const std::string& host, const std::string& service)
     {
-        Logging::info("Connecting to " + host + ':' + service, *this);
+        PHYRE_LOG(info, kWho) << "Connecting to " << host << ':' << service;
         HostResolver::OnHostResolvedCallback callback = boost::bind(&TCPClient::ResolveHostHandler,
                                                                     this,
                                                                     boost::asio::placeholders::error,
@@ -35,11 +34,11 @@ namespace Networking
     }
 
     void TCPClient::OnConnect() {
-        Logging::info("Connected", *this);
+        PHYRE_LOG(info, kWho) << "Connected";
     }
 
     void TCPClient::OnDisconnect() {
-        Logging::info("Disconnected from endpoint", *this);
+        PHYRE_LOG(info, kWho) << ": Disconnected from endpoint";
     }
 
     void TCPClient::Disconnect()
@@ -54,7 +53,7 @@ namespace Networking
             return;
         }
 
-        Logging::info("Connection established", *this);
+        PHYRE_LOG(info, kWho) << ": Connection established";
         OnConnect();
     }
 
@@ -74,7 +73,7 @@ namespace Networking
     }
 
     void TCPClient::OnError(const boost::system::error_code& ec) {
-        Logging::error(ec.message(), *this);
+        PHYRE_LOG(error, kWho) << ec.message();
     }
 
     void TCPClient::ErrorHandler(const boost::system::error_code& ec) {
@@ -86,18 +85,15 @@ namespace Networking
         if (is_connected()) {
             std::string data(data_stream.str());
             ptr_tcp_socket_->Write(data);
-            std::ostringstream log_output;
-            log_output << "Sent " << data.size() << " bytes to endpoint:\n";
-            log_output << data;
-            Logging::info(log_output.str(), *this);
+            PHYRE_LOG(info, kWho) << "Sent " << data.size() << " bytes to endpoint:\n";
             return;
         }
 
-        Logging::warning("Attempting to write when no connection has been established", *this);
+        PHYRE_LOG(warning, kWho) << "Attempting to write when no connection has been established";
     }
 
     void TCPClient::OnHostResolved() {
-        Logging::info("Host resolved", *this);
+        PHYRE_LOG(info, kWho) << "Host resolved";
     }
 
     void TCPClient::ResolveHostHandler(const boost::system::error_code& ec, tcp::resolver::iterator it) {

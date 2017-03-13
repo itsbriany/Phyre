@@ -7,6 +7,8 @@ namespace Networking {
 
     using boost::asio::ip::tcp;
 
+    const std::string TCPSocket::kWho = "[TCPSocket]";
+
     TCPSocket::TCPSocket(boost::asio::io_service& io_service,
                          OnConnectCallback on_connect_callback,
                          OnReadCallback on_read_callback) :
@@ -24,7 +26,7 @@ namespace Networking {
 
     void TCPSocket::Connect(tcp::resolver::iterator it)
     {
-        Logging::trace("Opening connection", *this);
+        PHYRE_LOG(trace, kWho) << "Opening connection";
         socket_.async_connect(*it, boost::bind(&TCPSocket::OnConnect, this, boost::asio::placeholders::error));
     }
 
@@ -36,7 +38,7 @@ namespace Networking {
 
     void TCPSocket::Close()
     {
-        Logging::debug("Closing TCP connection", *this);
+        PHYRE_LOG(debug, kWho) << "Closing TCP connection";
         socket_.close();
         is_connected_ = false;
     }
@@ -58,7 +60,7 @@ namespace Networking {
     {
         if (!is_connected_)
         {
-            Logging::warning("Cannot write to closed socket", *this);
+            PHYRE_LOG(warning, kWho) << "Cannot write to closed socket";
             return;
         }
         write(socket_, boost::asio::buffer(data));
@@ -69,7 +71,7 @@ namespace Networking {
     {
         if (!is_connected_)
         {
-            Logging::warning("Cannot read from closed socket", *this);
+            PHYRE_LOG(warning, kWho) << "Cannot read from closed socket";
             return;
         }
         socket_.async_read_some(boost::asio::buffer(buffer_),

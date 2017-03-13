@@ -7,7 +7,7 @@ namespace Phyre
 {
 namespace Networking
 {
-    class TCPClient : public Logging::LoggableInterface
+    class TCPClient
     {
 
     public:
@@ -19,10 +19,6 @@ namespace Networking
         void Write(const std::ostringstream& data_stream);
 
         bool is_connected() const { return ptr_tcp_socket_->is_connected(); }
-
-        std::string log() override {
-            return "[TCPClient]";
-        }
 
     protected:
         virtual void OnConnect();
@@ -41,6 +37,7 @@ namespace Networking
 
         HostResolver host_resolver_;
         std::unique_ptr<TCPSocket> ptr_tcp_socket_;
+        static const std::string kWho;
     };
 }
 }

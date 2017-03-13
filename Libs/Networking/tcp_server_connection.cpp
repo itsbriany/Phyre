@@ -3,6 +3,8 @@
 namespace Phyre {
 namespace Networking {
 
+    const std::string TCPServerConnection::kWho = "[TCPServerConnection]";
+
     TCPServerConnection::TCPServerConnection(boost::asio::io_service& io_service, const std::queue<std::string>& message_queue):
         socket_(io_service),
         default_message_("Greetings From TCPServerConnection!\r\n"),
@@ -15,7 +17,7 @@ namespace Networking {
     }
 
     void TCPServerConnection::HandleError(const boost::system::error_code& error) {
-        Logging::error(error.message(), *this);
+        PHYRE_LOG(error, kWho) << error.message();
         socket_.close();
     }
 
@@ -26,7 +28,7 @@ namespace Networking {
         }
         std::ostringstream oss;
         oss.write(buffer_.data(), bytes_transferred);
-        Logging::info(oss.str(), *this);
+        PHYRE_LOG(info, kWho) << oss.str();
         Write();
     }
 
