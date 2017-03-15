@@ -159,7 +159,7 @@ std::unordered_set<std::string> SASL::ParseAuthenticationMechanisms(std::istream
 }
 
 void SASL::ParseAuthenticationMechanismsRecursive(const boost::property_tree::ptree& pt,
-                                                        std::unordered_set<std::string>& authentication_mechanism_set) {
+                                                  std::unordered_set<std::string>& authentication_mechanism_set) {
     for (boost::property_tree::ptree::const_iterator it = pt.begin(); it != pt.end(); ++it) {
         if (it->first == "mechanism") {
             std::string mechanism_value = it->second.get_value<std::string>();
