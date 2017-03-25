@@ -5,9 +5,9 @@
 const std::string Phyre::Configuration::ConfigurationLoader::kWho = "[ConfigurationLoader]";
 
 bool Phyre::Configuration::ConfigurationLoader::LoadConfigurationFromFile(const std::string& path_to_phyre_config) const {
-    boost::property_tree::ptree pt;
-    // read_json(path_to_phyre_config, pt);
-    return ParseConfiguration(pt);
+    PHYRE_LOG(warning, kWho) << "Input file is " << path_to_phyre_config
+                             << ", but this method is NOT IMPLEMENTED";
+    return false;
 }
 
 bool Phyre::Configuration::ConfigurationLoader::LoadConfigurationFromContents(const std::string& file_contents) const {
@@ -37,9 +37,7 @@ bool Phyre::Configuration::ConfigurationLoader::ParseConfiguration(boost::proper
         PHYRE_LOG(info, kWho) << value.first;
     }
     return true;
- 
-    
-    
+
     //for (boost::property_tree::ptree::const_iterator it = pt.begin(); it != pt.end(); ++it) {
     //    PHYRE_LOG(info, kWho) << '(' << it->first << ", " << it->second << ')';
     //   /* if (it->first == "mechanism") {

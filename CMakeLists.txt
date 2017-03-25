@@ -62,11 +62,11 @@ if (NOT CORES)
     include(ProcessorCount)
     ProcessorCount(CORES)
 endif()
-message("Enabling parallel build with ${CORES} cores...")
 if (MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP${CORES}")
+   message("Enabling parallel build with ${CORES} cores...")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP${CORES}")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -j${CORES}")
+   message("Your CPU supports ${CORES} logical cores for parallel building")
 endif()
 
 message("Adding preprocessor definitions: ${PREPROCESSOR_DEFINITIONS}")
@@ -75,7 +75,7 @@ add_definitions(${PREPROCESSOR_DEFINITIONS})
 set(USE_MSVC_RUNTIME_LIBRARY_DLL OFF CACHE BOOL "GLFW builds with /MD, we want /MT")
 
 # Where all third party dependencies reside
-set(PHYRE_THIRD_PARTY "ThirdParty")     
+set(PHYRE_THIRD_PARTY "ThirdParty")
 
 # Add third party dependencies
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -85,8 +85,8 @@ add_subdirectory(${PHYRE_THIRD_PARTY}/libb64-1.2)
 
 # Add Static Linking
 if (MSVC)
-   # set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG} /MTd)
-    #set(CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE} /MT)
+   set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG} /MTd)
+   set(CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE} /MT)
 endif()
 
 # Add Gmock & Gtest libraries
@@ -124,30 +124,31 @@ set(GLM_ROOT "${PHYRE_THIRD_PARTY}/glm")
 set(GLM_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/${GLM_ROOT}")
 
 # Vulkan SDK
-set(VULKAN_ROOT "$ENV{VULKAN_ROOT}")
-if (NOT VULKAN_ROOT)
-    message(FATAL_ERROR "Could not find vulkan, please set the VULKAN_ROOT environment variable to point to the location of your Vulkan SDK installation")
-    exit()
-endif()
-set(VULKAN_INCLUDE_DIR "${VULKAN_ROOT}/Include")
-set(VULKAN_LIBRARY_DIR "${VULKAN_ROOT}/Lib")
-file(GLOB VULKAN_LIBRARIES "${VULKAN_LIBRARY_DIR}/vulkan-1.lib")
+if (NOT APPLE)
+   set(VULKAN_ROOT "$ENV{VULKAN_ROOT}")
+   if (NOT VULKAN_ROOT)
+       message(FATAL_ERROR "Could not find vulkan, please set the VULKAN_ROOT environment variable to point to the location of your Vulkan SDK installation")
+       exit()
+   endif()
+   set(VULKAN_INCLUDE_DIR "${VULKAN_ROOT}/Include")
+   set(VULKAN_LIBRARY_DIR "${VULKAN_ROOT}/Lib")
+   file(GLOB VULKAN_LIBRARIES "${VULKAN_LIBRARY_DIR}/vulkan-1.lib")
 
-# Vulkan C++ Bindings
-set(VULKAN_CPP_BINDINGS "${PROJECT_SOURCE_DIR}/${PHYRE_THIRD_PARTY}/Vulkan-Hpp/vulkan")
+   # Vulkan C++ Bindings
+   set(VULKAN_CPP_BINDINGS "${PROJECT_SOURCE_DIR}/${PHYRE_THIRD_PARTY}/Vulkan-Hpp/vulkan")
+endif()
+
 
 
 # Library paths and output
 set(PHYRE_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/Libs ${Boost_INCLUDE_DIRS}
-                       ${GMOCK_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS} 
+                       ${GMOCK_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS}
                        ${BASE64_INCLUDE_DIR} ${GLFW_INCLUDE_DIR} ${GLM_INCLUDE_DIR}
                        ${VULKAN_CPP_BINDINGS} ${VULKAN_INCLUDE_DIR})
 
 # We only care about warnings for this project
-message("Setting warning flags...") 
-if (MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILER_WARNING_FLAGS}")
-endif()
+message("Setting warning flags...")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILER_WARNING_FLAGS}")
 
 add_subdirectory(Libs)
 add_subdirectory(Applications)

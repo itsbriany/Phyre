@@ -278,3 +278,12 @@ Build
 
 # Visual Studio generated file
 .vs
+
+# Clang Complete
+.clang_complete
+
+# Miscellanious MacOS stuff
+.DS_STORE
+
+# Where build binaries usually end up
+[Bb]uild

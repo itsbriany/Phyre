@@ -6,6 +6,6 @@ add_library(Networking ${networking_SRC})
 target_link_libraries(Networking ${Boost_LIBRARIES} Logging)
 
 include_directories(${PHYRE_INCLUDE_DIRS})
-link_directories(${GMOCK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} ${GTEST_LIBRARY_DIRS} ${TEST_DEPENDENCY_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
 add_executable(NetworkingTests networking_tests.h fake_tcp_clients.h networking_test_runner.cpp)
 target_link_libraries(NetworkingTests ${Boost_LIBRARIES} gmock gtest Networking)

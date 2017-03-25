@@ -67,12 +67,12 @@ TEST_F(XMLParseTest, CanParseXML) {
     ss << "</sked>";
 
     Sked sked = read(ss);
-    EXPECT_EQ(sked.size(), 2);
+    EXPECT_EQ(sked.size(), 2u);
     EXPECT_EQ(sked[0].carrier, "BA");
-    EXPECT_EQ(sked[0].number, 4001);
+    EXPECT_EQ(sked[0].number, 4001u);
     EXPECT_FALSE(sked[0].cancelled);
     EXPECT_EQ(sked[1].carrier, "BA");
-    EXPECT_EQ(sked[1].number, 4002);
+    EXPECT_EQ(sked[1].number, 4002u);
     EXPECT_TRUE(sked[1].cancelled);
 }
 

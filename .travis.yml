@@ -11,10 +11,6 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm38 ; fi
     - export PHYRE_ROOT=/Users/travis/build/itsbriany/Phyre
-    - export GTEST_ROOT=$PHYRE_ROOT/ThirdParty/googletest/googletest
-    - export GMOCK_ROOT=$PHYRE_ROOT/ThirdParty/googletest/googlemock
-    - export GOOGLE_TEST_DISTRIBUTION=$PHYRE_ROOT/ThirdParty/googletest
-    - export PROTOBUF_ROOT=$PHYRE_ROOT/ThirdParty/protobuf
 
 install:
     - ./install.sh

@@ -1,5 +1,7 @@
 add_subdirectory(Configuration)
 add_subdirectory(Logging)
-add_subdirectory(Graphics)
+if (NOT APPLE)
+   add_subdirectory(Graphics)
+endif()
 add_subdirectory(Networking)
 add_subdirectory(XMPP)
