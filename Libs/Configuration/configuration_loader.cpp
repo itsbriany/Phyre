@@ -23,6 +23,15 @@ bool Phyre::Configuration::ConfigurationLoader::LoadConfigurationFromContents(co
     }
 }
 
+Phyre::Configuration::Application* Phyre::Configuration::ConfigurationLoader::LoadApplication(const std::string& application_name) const {
+    ApplicationMap::const_iterator cit = application_map_.find(application_name);
+    ApplicationMap::const_iterator cend = application_map_.cend();
+    if (cit != cend) {
+        return nullptr;
+    }
+    return new Application(cit->second);
+}
+
 bool Phyre::Configuration::ConfigurationLoader::ParseConfiguration(boost::property_tree::ptree& pt) const {
     for (boost::property_tree::ptree::value_type& value : pt.get_child("Phyre")) {
         PHYRE_LOG(info, kWho) << value.first;

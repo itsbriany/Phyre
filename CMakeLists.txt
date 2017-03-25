@@ -49,11 +49,10 @@ else ()
     set(Boost_USE_STATIC_LIBS ON)
 endif()
 set(Boost_USE_MULTITHREADED ON)
-
 if (DEBUG_BOOST)
     set(Boost_DEBUG ON)
 endif()
-find_package(Boost 1.60 REQUIRED COMPONENTS system log thread random)
+find_package(Boost REQUIRED COMPONENTS system log thread random)
 if(NOT Boost_FOUND)
     message(FATAL_ERROR "Could not find boost, please set the BOOST_ROOT environment variable to your boost installation directory")
 endif()
@@ -79,9 +78,16 @@ set(USE_MSVC_RUNTIME_LIBRARY_DLL OFF CACHE BOOL "GLFW builds with /MD, we want /
 set(PHYRE_THIRD_PARTY "ThirdParty")     
 
 # Add third party dependencies
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 add_subdirectory(${PHYRE_THIRD_PARTY}/googletest)
 add_subdirectory(${PHYRE_THIRD_PARTY}/glfw)
 add_subdirectory(${PHYRE_THIRD_PARTY}/libb64-1.2)
+
+# Add Static Linking
+if (MSVC)
+   # set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG} /MTd)
+    #set(CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE} /MT)
+endif()
 
 # Add Gmock & Gtest libraries
 set(TEST_ROOT "${PHYRE_THIRD_PARTY}/googletest")
@@ -139,7 +145,7 @@ set(PHYRE_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/Libs ${Boost_INCLUDE_DIRS}
 
 # We only care about warnings for this project
 message("Setting warning flags...") 
-if (MSVC)    
+if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILER_WARNING_FLAGS}")
 endif()
 
