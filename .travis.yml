@@ -3,6 +3,9 @@ compiler: clang
 os:
     - osx
 
+git:
+    submodules: false
+
 before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export CXX="/usr/local/bin/clang++-3.8 -stdlib=libc++"; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/llvm38/lib/llvm-3.8/include/c++/v1"; fi
