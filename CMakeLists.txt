@@ -147,3 +147,4 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILER_WARNING_FLAGS}")
 
 add_subdirectory(Libs)
 add_subdirectory(Applications)
+add_subdirectory(Tests)

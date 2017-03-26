@@ -9,8 +9,10 @@ set_target_properties(Configuration PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${PHYRE_
 
 # Visual Studio will not generate PDB file if we use the add_subdirectory trick
 # and place the CMakeLists.txt file under the Test directory
-include_directories(${PHYRE_INCLUDE_DIRS})
-file(GLOB configuration_test_SRC "Test/*.h" "Test/*.cpp")
-add_executable(ConfigurationTests ${configuration_test_SRC})
-target_link_libraries(ConfigurationTests ${Boost_LIBRARIES} gmock gtest Configuration)
-set_target_properties(ConfigurationTests PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PHYRE_RUNTIME})
+# include_directories(${PHYRE_INCLUDE_DIRS})
+# file(GLOB configuration_test_SRC "Test/*.h" "Test/*.cpp")
+# add_executable(ConfigurationTests ${configuration_test_SRC})
+# target_link_libraries(ConfigurationTests ${Boost_LIBRARIES} gmock gtest Configuration)
+# set_target_properties(ConfigurationTests PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PHYRE_RUNTIME})
+
+add_subdirectory(Test)

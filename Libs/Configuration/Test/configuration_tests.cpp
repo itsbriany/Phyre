@@ -1,15 +1,16 @@
 #include <gtest/gtest.h>
 #include <Configuration/loader.h>
-#include <Logging/logging.h>
+#include "configuration_tests.h"
 
-// We need to somehow access the command line arguments
-std::string path_to_phyre_config;
+namespace {
+    std::string gPathToPhyreConfig;
+}
 
 class ConfigurationLoaderTest : public ::testing::Test {
 protected:
     //-------------------- Setup & TearDown --------------------
     ConfigurationLoaderTest() : target_("ConfigurationLoaderTest") {
-        p_loader_.reset(new Phyre::Configuration::Loader(path_to_phyre_config));
+        p_loader_.reset(new Phyre::Configuration::Loader(gPathToPhyreConfig));
     }
 
     virtual ~ConfigurationLoaderTest() {}
@@ -41,13 +42,6 @@ TEST_F(ConfigurationLoaderTest, GetContentsNoSuchResource) {
     EXPECT_TRUE(contents.empty());
 }
 
-int main(int argc, char* argv[]) {
-    Phyre::Logging::set_log_level(Phyre::Logging::kTrace);
-    testing::InitGoogleTest(&argc, argv);
-    if (argc < 2) {
-        PHYRE_LOG(fatal, "[ConfigurationTests]") << "Please specify a phyre config file!";
-        exit(EXIT_FAILURE);
-    }
-    path_to_phyre_config = argv[1];
-    return RUN_ALL_TESTS();
+void Phyre::Configuration::Tests::SetConfigurationFilePath(const std::string& phyre_configuration_path) {
+    gPathToPhyreConfig = phyre_configuration_path;
 }

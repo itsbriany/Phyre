@@ -6,6 +6,7 @@
 #include <Networking/tcp_client.h>
 #include <Networking/tcp_server.h>
 #include "fake_tcp_clients.h"
+#include "networking_tests.h"
 
 namespace Phyre {
 namespace Networking {
@@ -74,11 +75,8 @@ namespace Networking {
         io_service_.run();
     }
 
+    void Tests::Load() {
+        
+    }
 }
-}
-
-int main(int argc, char* argv[]) {
-    Phyre::Logging::set_log_level();
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }

@@ -9,11 +9,11 @@
 #include <Networking/tcp_server.h>
 #include <XMPP/sasl.h>
 #include <XMPP/xmpp_client.h>
+#include "xmpp_tests.h"
 
-static std::string path_to_phyre_config;
-
-namespace Phyre {
-namespace Networking {
+namespace {
+    std::string gPathToPhyreConfig;
+}
 
 // Simple examples to learn boost::property_tree
 class XMLParseTest : public ::testing::Test {
@@ -85,36 +85,36 @@ class SASLTest : public ::testing::Test {
             port_or_service_("1234"),
             username_("admin"),
             password_("password"),
-            tcp_server_(TCPServer(io_service_, boost::lexical_cast<uint16_t>(port_or_service_)))
+            tcp_server_(Phyre::Networking::TCPServer(io_service_, boost::lexical_cast<uint16_t>(port_or_service_)))
     {
-        p_loader_.reset(new Phyre::Configuration::Loader(path_to_phyre_config));
+        p_loader_.reset(new Phyre::Configuration::Loader(gPathToPhyreConfig));
     }
 
         virtual ~SASLTest() { }
 
-        std::string generic_xml() {
+        std::string generic_xml() const {
             return p_loader_->GetContents(target_, "generic.xml");
         }
 
-        std::string authentication_mechanism_response() {
+        std::string authentication_mechanism_response() const {
             return p_loader_->GetContents(target_, "authentication_selection.xml");
         }
 
-        std::string authentication_mechanism_response_first_chunk() {
+        std::string authentication_mechanism_response_first_chunk() const {
             return p_loader_->GetContents(target_, "authentication_selection_chunk1.xml");
         }
 
-        std::string authentication_mechanism_response_second_chunk() {
+        std::string authentication_mechanism_response_second_chunk() const {
             return p_loader_->GetContents(target_, "authentication_selection_chunk2.xml");
         }
 
-        std::string base64_challenge() {
+        std::string base64_challenge() const {
             return p_loader_->GetContents(target_, "base64_challenge.xml");
         }
 
         void SetUp() override {
-            ptr_xmpp_client_ = std::make_unique<XMPPClient>(io_service_, host_, username_, password_);
-			ptr_sasl_ = std::make_unique<SASL>(*ptr_xmpp_client_);
+            ptr_xmpp_client_ = std::make_unique<Phyre::Networking::XMPPClient>(io_service_, host_, username_, password_);
+			ptr_sasl_ = std::make_unique<Phyre::Networking::SASL>(*ptr_xmpp_client_);
         }
 
         std::string log() {
@@ -128,9 +128,9 @@ class SASLTest : public ::testing::Test {
         std::string port_or_service_;
         std::string username_;
         std::string password_;
-        TCPServer tcp_server_;
-        std::unique_ptr<XMPPClient> ptr_xmpp_client_;
-        std::unique_ptr<SASL> ptr_sasl_;
+        Phyre::Networking::TCPServer tcp_server_;
+        std::unique_ptr<Phyre::Networking::XMPPClient> ptr_xmpp_client_;
+        std::unique_ptr<Phyre::Networking::SASL> ptr_sasl_;
 };
 
 TEST_F(SASLTest, ExtractXML) {
@@ -199,20 +199,20 @@ TEST_F(SASLTest, ParsesAuthenticationMechanisms) {
 }
 
 TEST_F(SASLTest, HandlesStreamInitialization) {
-    EXPECT_EQ(ptr_sasl_->transaction_state(), SASL::TransactionState::kInitializeStream);
+    EXPECT_EQ(ptr_sasl_->transaction_state(), Phyre::Networking::SASL::TransactionState::kInitializeStream);
 
 	ptr_sasl_->Update();
-    EXPECT_EQ(ptr_sasl_->transaction_state(), SASL::TransactionState::kSelectAuthenticationMechanism);
+    EXPECT_EQ(ptr_sasl_->transaction_state(), Phyre::Networking::SASL::TransactionState::kSelectAuthenticationMechanism);
 }
 
 TEST_F(SASLTest, HandlesAuthenticationMeachanismSelection) {
     std::string payload = authentication_mechanism_response();
     ASSERT_FALSE(payload.empty());
-    ptr_sasl_->set_transaction_state(SASL::TransactionState::kSelectAuthenticationMechanism);
+    ptr_sasl_->set_transaction_state(Phyre::Networking::SASL::TransactionState::kSelectAuthenticationMechanism);
 
     ptr_xmpp_client_->buffer() += payload;
     ptr_sasl_->Update();
-    EXPECT_EQ(ptr_sasl_->transaction_state(), SASL::TransactionState::kDecodeBase64Challenge);
+    EXPECT_EQ(ptr_sasl_->transaction_state(), Phyre::Networking::SASL::TransactionState::kDecodeBase64Challenge);
 }
 
 TEST_F(SASLTest, ParsesBase64Challenge) {
@@ -243,19 +243,19 @@ TEST_F(SASLTest, EncodesBase64) {
 }
 
 TEST_F(SASLTest, InitiateAuthenticationStreamMD5) {
-    std::string authentication_payload = ptr_sasl_->InitiateAuthenticationStream(SASL::Mechanism::kMD5).str();
+    std::string authentication_payload = ptr_sasl_->InitiateAuthenticationStream(Phyre::Networking::SASL::Mechanism::kMD5).str();
     std::string expected = "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='DIGEST-MD5'/>";
     EXPECT_STREQ(authentication_payload.c_str(), expected.c_str());
 }
 
 TEST_F(SASLTest, InitiateAuthenticationStreamOther) {
-    std::string authentication_payload = ptr_sasl_->InitiateAuthenticationStream(SASL::Mechanism::kNone).str();
+    std::string authentication_payload = ptr_sasl_->InitiateAuthenticationStream(Phyre::Networking::SASL::Mechanism::kNone).str();
     std::string expected = "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='PLAIN'/>";
     EXPECT_STREQ(authentication_payload.c_str(), expected.c_str());
 }
 
 TEST_F(SASLTest, InitiateAuthenticationStreamSHA1) {
-    std::string authentication_payload = ptr_sasl_->InitiateAuthenticationStream(SASL::Mechanism::kSHA1).str();
+    std::string authentication_payload = ptr_sasl_->InitiateAuthenticationStream(Phyre::Networking::SASL::Mechanism::kSHA1).str();
     EXPECT_TRUE(authentication_payload.find("SCRAM-SHA-1") != std::string::npos);
 
     size_t initial_message_start = authentication_payload.find('>');
@@ -268,16 +268,6 @@ TEST_F(SASLTest, InitiateAuthenticationStreamSHA1) {
     EXPECT_STREQ(initial_message.substr(0, 4).c_str(), expected_first_characters.c_str());
 }
 
-}
-}
-
-int main(int argc, char* argv[]) {
-    Phyre::Logging::set_log_level(Phyre::Logging::kTrace);
-    testing::InitGoogleTest(&argc, argv);
-    if (argc < 2) {
-        PHYRE_LOG(fatal, "[XMPPTests]") << "Please specify a phyre config file!";
-        exit(EXIT_FAILURE);
-    }
-    path_to_phyre_config = argv[1];
-    return RUN_ALL_TESTS();
+void Phyre::XMPP::Tests::SetConfigurationFilePath(const std::string& phyre_configuration_path) {
+    gPathToPhyreConfig = phyre_configuration_path;
 }
