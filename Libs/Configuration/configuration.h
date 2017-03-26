@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <unordered_set>
 
 namespace Phyre {
@@ -14,7 +15,7 @@ public:
 
     //------------------ Construction -----------------------
     Configuration(const ApplicationSet& application_set);
-    
+
     //--------------------- Interface -----------------------
     const ApplicationSet& applications() const { return application_set_; }
 

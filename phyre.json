@@ -3,8 +3,16 @@
         "Applications": [
             {
                 "ConfigurationLoaderTest": {
-                    "Path": "Libs\\Configuration\\Test",
+                    "Path": "Libs/Configuration/Test",
                     "Resources": ["Example.txt"]
+                },
+                "XMPPTests": {
+                    "Path": "Libs/XMPP/Test",
+                    "Resources": ["authentication_selection.xml",
+                                "authentication_selection_chunk1.xml",
+                                "authentication_selection_chunk2.xml",
+                                "base64_challenge.xml",
+                                "generic.xml"]
                 }
             }
         ]

@@ -1,11 +1,11 @@
-#pragma once
+#include <gtest/gtest.h>
+
 #include <boost/assign.hpp>
 #include <boost/lexical_cast.hpp>
-#include <gtest/gtest.h>
 #include <Logging/logging.h>
+#include <Networking/tcp_client.h>
+#include <Networking/tcp_server.h>
 #include "fake_tcp_clients.h"
-#include "tcp_client.h"
-#include "tcp_server.h"
 
 namespace Phyre {
 namespace Networking {
@@ -75,4 +75,10 @@ namespace Networking {
     }
 
 }
+}
+
+int main(int argc, char* argv[]) {
+    Phyre::Logging::set_log_level();
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

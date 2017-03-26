@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.6)
 
 include_directories(${PHYRE_INCLUDE_DIRS})
-file(GLOB networking_SRC "*.h" "*.cpp")
-add_library(Networking ${networking_SRC})
+file(GLOB NETWORKING_SRC "*.h" "*.cpp")
+add_library(Networking ${NETWORKING_SRC})
 target_link_libraries(Networking ${Boost_LIBRARIES} Logging)
+set_target_properties(Networking PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${PHYRE_LIBS}
+                                            LIBRARY_OUTPUT_DIRECTORY ${PHYRE_LIBS})
 
-include_directories(${PHYRE_INCLUDE_DIRS})
-link_directories(${Boost_LIBRARY_DIRS})
-add_executable(NetworkingTests networking_tests.h fake_tcp_clients.h networking_test_runner.cpp)
-target_link_libraries(NetworkingTests ${Boost_LIBRARIES} gmock gtest Networking)
+add_subdirectory(Test)

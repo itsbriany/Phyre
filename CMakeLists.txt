@@ -132,13 +132,14 @@ if (NOT APPLE)
    set(VULKAN_CPP_BINDINGS "${PROJECT_SOURCE_DIR}/${PHYRE_THIRD_PARTY}/Vulkan-Hpp/vulkan")
 endif()
 
-
-
 # Library paths and output
 set(PHYRE_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/Libs ${Boost_INCLUDE_DIRS}
                        ${GMOCK_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS}
                        ${BASE64_INCLUDE_DIR} ${GLFW_INCLUDE_DIR} ${GLM_INCLUDE_DIR}
                        ${VULKAN_CPP_BINDINGS} ${VULKAN_INCLUDE_DIR})
+
+set(PHYRE_RUNTIME ${CMAKE_BINARY_DIR}/Bin)
+set(PHYRE_LIBS ${CMAKE_BINARY_DIR}/Archive)
 
 # We only care about warnings for this project
 message("Setting warning flags...")
@@ -146,4 +147,3 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILER_WARNING_FLAGS}")
 
 add_subdirectory(Libs)
 add_subdirectory(Applications)
-add_subdirectory(Testing)
