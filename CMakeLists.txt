@@ -83,12 +83,6 @@ add_subdirectory(${PHYRE_THIRD_PARTY}/googletest)
 add_subdirectory(${PHYRE_THIRD_PARTY}/glfw)
 add_subdirectory(${PHYRE_THIRD_PARTY}/libb64-1.2)
 
-# Add Static Linking
-if (MSVC)
-   set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG} /MTd)
-   set(CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE} /MT)
-endif()
-
 # Add Gmock & Gtest libraries
 set(TEST_ROOT "${PHYRE_THIRD_PARTY}/googletest")
 set(GMOCK_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/${TEST_ROOT}/googlemock/include")

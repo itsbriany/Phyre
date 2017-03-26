@@ -1,4 +1,3 @@
-add_subdirectory(ConfigurationDemos)
 add_subdirectory(LoggingDemos)
 add_subdirectory(NetworkingDemos)
 if (NOT APPLE)

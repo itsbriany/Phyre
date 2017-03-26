@@ -1,7 +1,12 @@
 {
     "Phyre": {
         "Applications": [
-            
+            {
+                "ConfigurationLoaderTest": {
+                    "Path": "Libs\\Configuration\\Test",
+                    "Resources": ["Example.txt"]
+                }
+            }
         ]
     }
 }
