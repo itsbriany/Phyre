@@ -7,5 +7,4 @@ add_library(XMPP ${XMPP_SRC})
 target_link_libraries(XMPP ${Boost_LIBRARIES} Networking b64)
 set_target_properties(XMPP PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PHYRE_LIBS}
                                       ARCHIVE_OUTPUT_DIRECTORY ${PHYRE_LIBS})
-
-add_subdirectory(Test)
+add_subdirectory(Test)          
