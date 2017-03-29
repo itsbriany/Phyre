@@ -3,7 +3,7 @@ git submodule update --init --recursive
 
 pushd %PHYRE_ROOT%\ThirdParty\Vulkan-LoaderAndValidationLayers
 update_external_sources.bat --all
-build_windows_targets.bat
+build_windows_targets.bat 64 %CONFIGURATION%
 popd
 
 pushd %PHYRE_ROOT%

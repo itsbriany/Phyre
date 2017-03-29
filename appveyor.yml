@@ -14,13 +14,13 @@ environment:
   BOOST_ROOT: C:\Libraries\boost_1_60_0
   BOOST_LIBRARYDIR: C:\Libraries\boost_1_60_0\lib64-msvc-14.0
   PHYRE_ROOT: C:\projects\Phyre
-  VULKAN_ROOT: C:\VulkanSDK\1.0.39.1
   PYTHON_PATH: C:\Python35
   PYTHON_PACKAGE_PATH: C:\Python35\Scripts
 
 install:
-  - ps: (new-object net.webclient).DownloadFile('https://vulkan.lunarg.com/sdk/home#sdk/downloadConfirm/1.0.39.1/windows/VulkanSDK-1.0.39.1-Installer.exe', 'vulkan.msi')
-  - ps: msiexec /i vulkan.msi /quiet /qn /norestart /log install.log
+  -  ps: (new-object net.webclient).DownloadFile('https://bootstrap.pypa.io/get-pip.py', 'C:/get-pip.py')
+  - "%PYTHON_PATH%/python.exe C:/get-pip.py"
+  - "%PYTHON_PACKAGE_PATH%/pip.exe install nose"
   - cmd: Tools\install.bat
 
 test_script:
