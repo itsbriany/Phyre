@@ -6,10 +6,10 @@
 	url = https://github.com/google/protobuf.git
 [submodule "ThirdParty/Vulkan-Hpp"]
 	path = ThirdParty/Vulkan-Hpp
-	url = git@github.com:KhronosGroup/Vulkan-Hpp.git
+	url = https://github.com/KhronosGroup/Vulkan-Hpp.git
 [submodule "ThirdParty/glfw"]
 	path = ThirdParty/glfw
-	url = git@github.com:glfw/glfw.git
+	url = https://github.com/glfw/glfw.git
 [submodule "ThirdParty/glm"]
 	path = ThirdParty/glm
-	url = git@github.com:g-truc/glm.git
+	url = https://github.com/g-truc/glm.git

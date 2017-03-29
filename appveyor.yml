@@ -1,7 +1,7 @@
 os: Visual Studio 2015
 
 platform:
-  - Win32
+  - Win64
 
 configuration:
   - Debug
@@ -9,18 +9,17 @@ configuration:
 
 clone_folder: C:\projects\Phyre
 
-install:
-  - ps: .\install.ps1
-
 environment:
   MSVC_DEFAULT_OPTIONS: ON
   BOOST_ROOT: C:\Libraries\boost_1_60_0
   BOOST_LIBRARYDIR: C:\Libraries\boost_1_60_0\lib64-msvc-14.0
   PHYRE_ROOT: C:\projects\Phyre
+  VULKAN_ROOT: C:\VulkanSDK\1.0.39.1
 
-build:
-  parallel: true
-  project: C:\projects\Phyre\Build\Phyre.sln
+install:
+  - ps: (new-object net.webclient).DownloadFile('https://vulkan.lunarg.com/sdk/home#sdk/downloadConfirm/1.0.39.1/windows/VulkanSDK-1.0.39.1-Installer.exe', 'vulkan.msi')
+  - ps: msiexec /i vulkan.msi /quiet /qn /norestart /log install.log
+  - cmd: Tools\install.bat
 
 test_script:
-  - ps: .\run_tests.ps1
+  - cmd: C:\projects\Phyre\Build\%CONFIGURATION%\PhyreTests.exe %PHYRE_ROOT%\phyre.json
