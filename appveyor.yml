@@ -23,5 +23,8 @@ install:
   - "%PYTHON_PACKAGE_PATH%/pip.exe install nose"
   - cmd: Tools\install.bat
 
+build:
+  project: C:\projects\Phyre\Build\Phyre.sln
+
 test_script:
   - cmd: C:\projects\Phyre\Build\%CONFIGURATION%\PhyreTests.exe %PHYRE_ROOT%\phyre.json
