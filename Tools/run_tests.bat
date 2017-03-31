@@ -1,0 +1,1 @@
+%PHYRE_ROOT%\Build\Bin\%CONFIGURATION%\PhyreTests.exe %PHYRE_ROOT%\phyre.json

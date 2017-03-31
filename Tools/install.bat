@@ -1,18 +1,13 @@
 set PATH=C:\Python35;C:\Python35\Scripts;%PATH%
 git submodule update --init --recursive
 
-REM pushd %PHYRE_ROOT%\ThirdParty\Vulkan-LoaderAndValidationLayers
+REM cd %PHYRE_ROOT%\ThirdParty\Vulkan-LoaderAndValidationLayers
 REM update_external_sources.bat --all
-REM build_windows_targets.bat 64 %CONFIGURATION%
-REM popd
+REM build_windows_targets.bat 64
 
-pushd %PHYRE_ROOT%
-dir
+cd %PHYRE_ROOT%
 mkdir Build
-pushd Build
-dir
+cd Build
 cmake -G "Visual Studio 14 Win64" ..
-cmake --build . --target ALL_BUILD --config %CONFIGURATION%
-dir
-popd
-popd
+REM cmake --build . --target ALL_BUILD --config %CONFIGURATION%
+cd %PHYRE_ROOT%

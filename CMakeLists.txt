@@ -55,8 +55,10 @@ set(USE_MSVC_RUNTIME_LIBRARY_DLL OFF CACHE BOOL "GLFW builds with /MD, we want /
 # Where all third party dependencies reside
 set(PHYRE_THIRD_PARTY "ThirdParty")
 
-# Add third party dependencies
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+# Add third party dependencies configure them
+option(GLFW_BUILD_DOCS OFF)
+option(GLFW_BUILD_TESTS OFF)
+option(GLFW_BUILD_EXAMPLES OFF)
 add_subdirectory(${PHYRE_THIRD_PARTY}/googletest)
 add_subdirectory(${PHYRE_THIRD_PARTY}/glfw)
 add_subdirectory(${PHYRE_THIRD_PARTY}/libb64-1.2)
@@ -119,17 +121,17 @@ set(GLM_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/${GLM_ROOT}")
 
 # Vulkan SDK
 if (NOT APPLE)
-   set(VULKAN_ROOT "${PROJECT_SOURCE_DIR}/${PHYRE_THIRD_PARTY}/Vulkan-LoaderAndValidationLayers")
-   set(VULKAN_INCLUDE_DIR "${VULKAN_ROOT}/include")
-   set(VULKAN_LAYER_LIBRARY_DIR "${VULKAN_ROOT}/build/layers")
-   set(VULKAN_JSON_LIBRARY_DIR "${VULKAN_ROOT}/build/libs/vkjson")
-   set(VULKAN_LOADER_LIBRARY_DIR "${VULKAN_ROOT}/build/loader")
-   set(GLSLANG_LIBRARY_DIR "${VULKAN_ROOT}/external/glslang/build/install")
-   set(VULKAN_LIBRARY_DIRS ${VULKAN_LAYER_LIBRARY_DIR} ${VULKAN_JSON_LIBRARY_DIR} ${VULKAN_LOADER_LIBRARY_DIR} ${GLSLANG_LIBRARY_DIR})
-   set(VULKAN_LIBRARIES vulkan-1.lib)
+    set(VULKAN_ROOT "${PROJECT_SOURCE_DIR}/${PHYRE_THIRD_PARTY}/Vulkan-LoaderAndValidationLayers")
+    set(VULKAN_INCLUDE_DIR "${VULKAN_ROOT}/include")
+    set(VULKAN_LAYER_LIBRARY_DIR "${VULKAN_ROOT}/build/layers")
+    set(VULKAN_JSON_LIBRARY_DIR "${VULKAN_ROOT}/build/libs/vkjson")
+    set(VULKAN_LOADER_LIBRARY_DIR "${VULKAN_ROOT}/build/loader")
+    set(GLSLANG_LIBRARY_DIR "${VULKAN_ROOT}/external/glslang/build/install")
+    set(VULKAN_LIBRARY_DIRS ${VULKAN_LAYER_LIBRARY_DIR} ${VULKAN_JSON_LIBRARY_DIR} ${VULKAN_LOADER_LIBRARY_DIR} ${GLSLANG_LIBRARY_DIR})
+    set(VULKAN_LIBRARIES vulkan-1.lib)
 
-   # Vulkan C++ Bindings
-   set(VULKAN_CPP_BINDINGS "${PROJECT_SOURCE_DIR}/${PHYRE_THIRD_PARTY}/Vulkan-Hpp/vulkan")
+    # Vulkan C++ Bindings
+    set(VULKAN_CPP_BINDINGS "${PROJECT_SOURCE_DIR}/${PHYRE_THIRD_PARTY}/Vulkan-Hpp/vulkan")
 endif()
 
 # Library paths and output
@@ -137,7 +139,7 @@ set(PHYRE_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/Libs ${Boost_INCLUDE_DIRS}
                        ${GMOCK_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS}
                        ${BASE64_INCLUDE_DIR} ${GLFW_INCLUDE_DIR} ${GLM_INCLUDE_DIR}
                        ${VULKAN_CPP_BINDINGS} ${VULKAN_INCLUDE_DIR})
-set(PHYRE_LIBRARY_DIRS ${Boost_LIBRARY_DIRS} ${VULKAN_LIBRARY_DIRS} ${GLFW_LIBRARY_DIR})
+set(PHYRE_LIBRARY_DIRS ${Boost_LIBRARY_DIRS} ${GLFW_LIBRARY_DIR} ${VULKAN_LIBRARY_DIRS})
 
 set(PHYRE_RUNTIME ${CMAKE_BINARY_DIR}/Bin)
 set(PHYRE_LIBS ${CMAKE_BINARY_DIR}/Archive)

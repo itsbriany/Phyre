@@ -264,9 +264,6 @@ tags
 # Lib files
 *.a
 
-# Test Binaries
-*Tests
-
 # Example Binaries
 *Demo
 

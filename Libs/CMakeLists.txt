@@ -1,7 +1,7 @@
 add_subdirectory(Configuration)
 add_subdirectory(Logging)
 if (NOT APPLE)
-   add_subdirectory(Graphics)
+   # add_subdirectory(Graphics)
 endif()
 add_subdirectory(Networking)
 add_subdirectory(Utils)

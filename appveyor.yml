@@ -21,10 +21,20 @@ install:
   -  ps: (new-object net.webclient).DownloadFile('https://bootstrap.pypa.io/get-pip.py', 'C:/get-pip.py')
   - "%PYTHON_PATH%/python.exe C:/get-pip.py"
   - "%PYTHON_PACKAGE_PATH%/pip.exe install nose"
-  - cmd: Tools\install.bat
+  - cmd: set PATH=C:\Python35;C:\Python35\Scripts;%PATH%
+  - git submodule update --init --recursive
+  - REM cd %PHYRE_ROOT%\ThirdParty\Vulkan-LoaderAndValidationLayers
+  - REM update_external_sources.bat --all
+  - REM build_windows_targets.bat 64
+  - cd %PHYRE_ROOT%
+  - mkdir Build
+  - cd Build
+  - cmake -G "Visual Studio 14 Win64" ..
+  - cd %PHYRE_ROOT%
 
 build:
-  project: C:\projects\Phyre\Build\Phyre.sln
+  parallel: true
+  project: C:\projects\Phyre\Build\ALL_BUILD.vcxproj
 
 test_script:
-  - cmd: C:\projects\Phyre\Build\%CONFIGURATION%\PhyreTests.exe %PHYRE_ROOT%\phyre.json
+  - cmd: C:\projects\Phyre\Tools\run_tests.bat
