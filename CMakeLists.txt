@@ -127,7 +127,7 @@ set(GLM_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/${GLM_ROOT}")
 # Vulkan SDK
 if (NOT APPLE)
     message("Searching for a Vulkan SDK...")
-    find_package(Vulkan REQUIRED)
+    find_package(Vulkan)
     if (NOT Vulkan_FOUND)
         message("No Vulkan SDK found... Using the Khronos Vulkan SDK")
         set(VULKAN_ROOT "${PROJECT_SOURCE_DIR}/${PHYRE_THIRD_PARTY}/Vulkan-LoaderAndValidationLayers")
