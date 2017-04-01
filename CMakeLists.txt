@@ -56,11 +56,16 @@ set(USE_MSVC_RUNTIME_LIBRARY_DLL OFF CACHE BOOL "GLFW builds with /MD, we want /
 set(PHYRE_THIRD_PARTY "ThirdParty")
 
 # Add third party dependencies configure them
+message("Adding Google Test...")
+add_subdirectory(${PHYRE_THIRD_PARTY}/googletest)
+
+message("Adding GLFW...")
 option(GLFW_BUILD_DOCS OFF)
 option(GLFW_BUILD_TESTS OFF)
 option(GLFW_BUILD_EXAMPLES OFF)
-add_subdirectory(${PHYRE_THIRD_PARTY}/googletest)
 add_subdirectory(${PHYRE_THIRD_PARTY}/glfw)
+
+message("Adding libb64...")
 add_subdirectory(${PHYRE_THIRD_PARTY}/libb64-1.2)
 
 # Bear in mind that when compiling C files, we are expected to set CMAKE_C_FLAGS
@@ -121,18 +126,29 @@ set(GLM_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/${GLM_ROOT}")
 
 # Vulkan SDK
 if (NOT APPLE)
-    set(VULKAN_ROOT "${PROJECT_SOURCE_DIR}/${PHYRE_THIRD_PARTY}/Vulkan-LoaderAndValidationLayers")
-    set(VULKAN_INCLUDE_DIR "${VULKAN_ROOT}/include")
-    set(VULKAN_LAYER_LIBRARY_DIR "${VULKAN_ROOT}/build/layers")
-    set(VULKAN_JSON_LIBRARY_DIR "${VULKAN_ROOT}/build/libs/vkjson")
-    set(VULKAN_LOADER_LIBRARY_DIR "${VULKAN_ROOT}/build/loader")
-    set(GLSLANG_LIBRARY_DIR "${VULKAN_ROOT}/external/glslang/build/install")
-    set(VULKAN_LIBRARY_DIRS ${VULKAN_LAYER_LIBRARY_DIR} ${VULKAN_JSON_LIBRARY_DIR} ${VULKAN_LOADER_LIBRARY_DIR} ${GLSLANG_LIBRARY_DIR})
-    set(VULKAN_LIBRARIES vulkan-1.lib)
-
+    message("Searching for a Vulkan SDK...")
+    find_package(Vulkan REQUIRED)
+    if (NOT Vulkan_FOUND)
+        message("No Vulkan SDK found... Using the Khronos Vulkan SDK")
+        set(VULKAN_ROOT "${PROJECT_SOURCE_DIR}/${PHYRE_THIRD_PARTY}/Vulkan-LoaderAndValidationLayers")
+        set(VULKAN_INCLUDE_DIR "${VULKAN_ROOT}/include")
+        set(VULKAN_LAYER_LIBRARY_DIR "${VULKAN_ROOT}/build/layers")
+        set(VULKAN_JSON_LIBRARY_DIR "${VULKAN_ROOT}/build/libs/vkjson")
+        set(VULKAN_LOADER_LIBRARY_DIR "${VULKAN_ROOT}/build/loader")
+        set(GLSLANG_LIBRARY_DIR "${VULKAN_ROOT}/external/glslang/build/install")
+        set(VULKAN_LIBRARY_DIRS ${VULKAN_LAYER_LIBRARY_DIR} ${VULKAN_JSON_LIBRARY_DIR} ${VULKAN_LOADER_LIBRARY_DIR} ${GLSLANG_LIBRARY_DIR})
+        set(VULKAN_LIBRARY vulkan-1.lib)
+        message("Vulkan SDK found: ${VULKAN_LIBRARY}")
+    else()
+        message("Vulkan SDK found: ${VULKAN_LIBRARY}")
+    endif()
     # Vulkan C++ Bindings
     set(VULKAN_CPP_BINDINGS "${PROJECT_SOURCE_DIR}/${PHYRE_THIRD_PARTY}/Vulkan-Hpp/vulkan")
 endif()
+
+# VULKAN_LIBRARY is the absolute path tPhyo the Vulkan SDK; VULKAN_LIBRARIES is used
+# when falling back to the Khronos Vulkan SDK when VULKAN_SDK could not be found
+set(THIRD_PARTY_GRAPHICS_LIBRARIES ${VULKAN_LIBRARIES} ${VULKAN_LIBRARY} glfw)
 
 # Library paths and output
 set(PHYRE_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/Libs ${Boost_INCLUDE_DIRS}
@@ -148,6 +164,12 @@ set(PHYRE_LIBS ${CMAKE_BINARY_DIR}/Archive)
 message("Setting warning flags...")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILER_WARNING_FLAGS}")
 
+# Add the Phyre core components
+message("Adding Libraries...")
 add_subdirectory(Libs)
+
+message("Adding Applications...")
 add_subdirectory(Applications)
+
+message("Adding Tests...")
 add_subdirectory(Tests)

@@ -10,22 +10,18 @@ configuration:
 clone_folder: C:\projects\Phyre
 
 environment:
-  MSVC_DEFAULT_OPTIONS: ON
   BOOST_ROOT: C:\Libraries\boost_1_60_0
   BOOST_LIBRARYDIR: C:\Libraries\boost_1_60_0\lib64-msvc-14.0
   PHYRE_ROOT: C:\projects\Phyre
-  PYTHON_PATH: C:\Python35
-  PYTHON_PACKAGE_PATH: C:\Python35\Scripts
+  PYTHON_PATH: "C:/Python35"
+  PYTHON_PACKAGE_PATH: "C:/Python35/Scripts"
 
 install:
-  -  ps: (new-object net.webclient).DownloadFile('https://bootstrap.pypa.io/get-pip.py', 'C:/get-pip.py')
-  - "%PYTHON_PATH%/python.exe C:/get-pip.py"
-  - "%PYTHON_PACKAGE_PATH%/pip.exe install nose"
-  - cmd: set PATH=C:\Python35;C:\Python35\Scripts;%PATH%
+  - cmd: "SET PATH=C:\\Python35;C:\\Python35\\Scripts;%PATH%"
   - git submodule update --init --recursive
-  - REM cd %PHYRE_ROOT%\ThirdParty\Vulkan-LoaderAndValidationLayers
-  - REM update_external_sources.bat --all
-  - REM build_windows_targets.bat 64
+  - cd %PHYRE_ROOT%\ThirdParty\Vulkan-LoaderAndValidationLayers
+  - update_external_sources.bat --all
+  - build_windows_targets.bat 64
   - cd %PHYRE_ROOT%
   - mkdir Build
   - cd Build
@@ -37,4 +33,4 @@ build:
   project: C:\projects\Phyre\Build\ALL_BUILD.vcxproj
 
 test_script:
-  - cmd: C:\projects\Phyre\Tools\run_tests.bat
+  - cmd: C:\projects\Phyre\CI\Tools\run_tests.bat

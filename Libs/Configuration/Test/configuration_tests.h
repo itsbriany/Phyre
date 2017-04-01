@@ -27,11 +27,7 @@ TEST_F(ConfigurationLoaderTest, GetContents) {
     std::string resource("Example.txt");
     std::string contents = p_provider_->GetContents(target_, resource);
     EXPECT_FALSE(contents.empty());
-#if defined(_MSC_VER)
-    EXPECT_STREQ("Hello\r\nworld", contents.c_str());
-#else
-    EXPECT_STREQ("Hello\nworld", contents.c_str());
-#endif
+    EXPECT_STREQ("Hello world", contents.c_str());
 }
 
 TEST_F(ConfigurationLoaderTest, GetContentsNoSuchResource) {
