@@ -5,6 +5,7 @@ include(cmake/vars.cmake)
 
 option(DEBUG_BOOST "Enable this if cmake is having trouble finding your boost libraries" OFF)
 option(CORES "Tweak this if you want more control over your parallel build, 0 means maximum cores" 0)
+option(BOOST_LOG_DYN_LINK "Turn this ON if you are dynamically linking against boost log" OFF)
 
 # Certain versions of clang do not support C++14
 message("Asserting compatible compiler version...")
@@ -19,7 +20,7 @@ message("Enabling boost...")
 # find_package Boost is very picky, so if you have not built the
 # boost libraries conforming to these runtime configurations,
 # it will say that it could not find the libraries.
-if (BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS OR BOOST_LOG_DYN_LINK)
     set(Boost_USE_STATIC_RUNTIME OFF)
     set(Boost_USE_STATIC_LIBS OFF)
 else ()

@@ -10,5 +10,12 @@ fi
 
 BIN_DIR=$PHYRE_ROOT/Build/Bin
 PHYRE_CONFIG=$PHYRE_ROOT/phyre.json
+PHYRE_TESTS=$BIN_DIR/PhyreTests
 
-$BIN_DIR/PhyreTests $PHYRE_CONFIG
+if [ -f $PHYRE_TESTS ]; then
+    $PHYRE_TESTS $PHYRE_CONFIG
+else
+    echo "$PHYRE_TESTS could not be found!"
+    exit 1
+fi
+

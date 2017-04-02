@@ -16,6 +16,4 @@ before_install:
 
 script:
     - Tools/install.sh
-
-after_script:
     - Tools/run_tests.sh

@@ -15,12 +15,16 @@ if (MSVC)
 else()
     set(PREPROCESSOR_DEFINITIONS ${BASE64_DEFINITIONS})
 endif()
+
+if (BOOST_LOG_DYN_LINK)
+    set(PREPROCESSOR_DEFINITIONS ${PREPROCESSOR_DEFINITIONS} -DBOOST_LOG_DYN_LINK)
+endif()
 ########################################################
 # Use C++ 14
 set(CMAKE_CXX_STANDARD 14)
 ########################################################
 # Set compiler flags
 if (NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -fvisibility-inlines-hidden")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -fvisibility=hidden -fvisibility-inlines-hidden")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
 endif()
