@@ -1,7 +1,7 @@
 os: Visual Studio 2015
 
 platform:
-  - Win32
+  - Win64
 
 configuration:
   - Debug
@@ -9,18 +9,28 @@ configuration:
 
 clone_folder: C:\projects\Phyre
 
-install:
-  - ps: .\install.ps1
-
 environment:
-  MSVC_DEFAULT_OPTIONS: ON
   BOOST_ROOT: C:\Libraries\boost_1_60_0
   BOOST_LIBRARYDIR: C:\Libraries\boost_1_60_0\lib64-msvc-14.0
   PHYRE_ROOT: C:\projects\Phyre
+  PYTHON_PATH: "C:/Python35"
+  PYTHON_PACKAGE_PATH: "C:/Python35/Scripts"
+
+install:
+  - cmd: "SET PATH=C:\\Python35;C:\\Python35\\Scripts;%PATH%"
+  - git submodule update --init --recursive
+  - cd %PHYRE_ROOT%\ThirdParty\Vulkan-LoaderAndValidationLayers
+  - update_external_sources.bat --all
+  - build_windows_targets.bat 64
+  - cd %PHYRE_ROOT%
+  - mkdir Build
+  - cd Build
+  - cmake -G "Visual Studio 14 Win64" ..
+  - cd %PHYRE_ROOT%
 
 build:
   parallel: true
-  project: C:\projects\Phyre\Build\Phyre.sln
+  project: C:\projects\Phyre\Build\ALL_BUILD.vcxproj
 
 test_script:
-  - ps: .\run_tests.ps1
+  - cmd: C:\projects\Phyre\CI\Tools\run_tests.bat

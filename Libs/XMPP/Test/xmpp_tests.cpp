@@ -1,5 +1,4 @@
-#include <Logging/logging.h>
-#include "configuration_tests.h"
+#include "xmpp_tests.h"
 
 int main(int argc, char* argv[]) {
     using Phyre::Utils::TestLoader;

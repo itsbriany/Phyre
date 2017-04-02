@@ -1,14 +1,16 @@
 #pragma once
+
+#include <gtest/gtest.h>
 #include <boost/assign.hpp>
 #include <boost/lexical_cast.hpp>
-#include <gtest/gtest.h>
 #include <Logging/logging.h>
+#include <Networking/tcp_client.h>
+#include <Networking/tcp_server.h>
 #include "fake_tcp_clients.h"
-#include "tcp_client.h"
-#include "tcp_server.h"
 
 namespace Phyre {
 namespace Networking {
+
     class TCPClientTest : public ::testing::Test {
     protected:
         TCPClientTest():
