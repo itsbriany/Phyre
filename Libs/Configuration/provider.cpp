@@ -45,6 +45,17 @@ std::string Phyre::Configuration::Provider::GetContents(const std::string& targe
     return std::string();
 }
 
+std::vector<uint32_t> Phyre::Configuration::Provider::GetContentsUint32t(const std::string& target_application, const std::string& resource) const {
+    std::string contents = GetContents(target_application, resource);
+    std::vector<uint32_t> contentsUint32t(contents.size() / sizeof(uint32_t));
+    memcpy(contentsUint32t.data(), contents.data(), contents.size());
+    return contentsUint32t;
+}
+
+std::vector<uint32_t> Phyre::Configuration::Provider::GetContentsSPIRV(const std::string& target_application, const std::string& resource) const {
+    return GetContentsUint32t(target_application, resource);
+}
+
 bool Phyre::Configuration::Provider::ParseConfiguration(boost::property_tree::ptree& pt) {
     for (const boost::property_tree::ptree::value_type& value : pt.get_child("Phyre.Applications")) {
         for (const boost::property_tree::ptree::value_type& application : value.second) {

@@ -6,13 +6,14 @@
 #include <Graphics/vulkan_window.h>
 #include <Graphics/vulkan_uniform_buffer.h>
 #include <Graphics/vulkan_render_pass.h>
+#include "Configuration/provider.h"
 
 namespace Phyre {
 namespace Graphics {
 
 class DrawCube {
 public:
-    DrawCube();
+    DrawCube(int argc, const char* argv[]);
     virtual ~DrawCube();
 
     // Returns true if the rendering system started correctly
@@ -137,6 +138,12 @@ private:
     // A fence that we use to know when the rendering is finished
     vk::Fence swapchain_image_available_fence_;
 
+    // The configuration provider for loading resources
+    std::unique_ptr<Configuration::Provider> p_provider_;
+
+    // The the name of this application
+    std::string target_;
+    
     // ---------------------- Logging ---------------------------
     static const std::string kWho;
 };

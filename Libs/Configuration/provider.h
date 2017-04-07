@@ -48,6 +48,20 @@ public:
      */
     std::string GetContents(const std::string& target_application, const std::string& resource) const;
 
+    /**
+    * \param target_application the application from which we are loading the resource data from
+    * \param resource the file we wish to open
+    * \return The contents of the resource represented as uint32_t. The contents will be empty if there is no resource.
+    */
+    std::vector<uint32_t> GetContentsUint32t(const std::string& target_application, const std::string& resource) const;
+
+    /**
+    * \param target_application the application from which we are loading the resource data from
+    * \param resource the file we wish to open
+    * \return The contents of the resource represented as SPIR-V bytecode. The contents will be empty if there is no resource.
+    */
+    std::vector<uint32_t> GetContentsSPIRV(const std::string& target_application, const std::string& resource) const;
+
 private:
     //----------------- Type Definitions ---------------------
    
