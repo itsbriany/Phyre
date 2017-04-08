@@ -17,6 +17,8 @@ public:
 
     /**
      * \brief Called when the window's framebuffer gets resized
+     * \param width the width in screen resolution pixels
+     * \param height the height in screen resolution pixels
      */
     virtual void OnFramebufferResize(int width, int height) = 0;
 

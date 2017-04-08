@@ -17,7 +17,7 @@ private:
     static vk::PhysicalDeviceMemoryProperties InitializePhysicalDeviceMemoryProperties(const vk::PhysicalDevice& physical_device);
 
     // The GPU
-    const vk::PhysicalDevice gpu_;
+    vk::PhysicalDevice gpu_;
 
     // The physical device's properties
     vk::PhysicalDeviceProperties properties_;

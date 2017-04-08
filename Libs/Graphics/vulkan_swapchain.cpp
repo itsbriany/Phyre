@@ -7,7 +7,7 @@
 const std::string Phyre::Graphics::VulkanSwapchain::kWho = "[VulkanSwapchain]";
 
 // Initialization pipeline
-Phyre::Graphics::VulkanSwapchain::VulkanSwapchain(const VulkanDevice& device, const VulkanWindow& window) :
+Phyre::Graphics::VulkanSwapchain::VulkanSwapchain(const VulkanDevice& device, const VulkanWindow& window, VulkanSwapchain* p_old_swapchain) :
     window_(window),
     surface_(window_.surface()),
     image_width_(window_.width()),
@@ -15,7 +15,7 @@ Phyre::Graphics::VulkanSwapchain::VulkanSwapchain(const VulkanDevice& device, co
     device_(device),
     swapchain_extent_(InitializeSwapchainExtent(window_)),
     pre_transform_(InitializePreTransform(window_.surface_capabilities())),
-    swapchain_(InitializeSwapchain(device_, window_, swapchain_extent_, pre_transform_, nullptr)),
+    swapchain_(InitializeSwapchain(device_, window_, swapchain_extent_, pre_transform_, p_old_swapchain)),
     swapchain_images_(InitializeSwapchainImages(device_.get(), swapchain_, window_.preferred_surface_format().format)),
     samples_(vk::SampleCountFlagBits::e1),
     depth_image_(InitializeDepthImage(device_, window_.width(), window_.height(), samples_)),
@@ -41,7 +41,7 @@ vk::SwapchainKHR Phyre::Graphics::VulkanSwapchain::InitializeSwapchain(const Vul
                                                                        const VulkanWindow& window, 
                                                                        const vk::Extent2D& extent,
                                                                        const vk::SurfaceTransformFlagBitsKHR& pre_transform,
-                                                                       vk::SwapchainKHR* p_old_swapchain) {
+                                                                       VulkanSwapchain* p_old_swapchain) {
     uint32_t desired_number_swapchain_images = window.surface_capabilities().minImageCount;
     vk::SwapchainCreateInfoKHR info;
     info.setSurface(window.surface());
@@ -54,7 +54,7 @@ vk::SwapchainKHR Phyre::Graphics::VulkanSwapchain::InitializeSwapchain(const Vul
     info.setPresentMode(window.preferred_present_mode());
 
     if (p_old_swapchain) {
-        info.setOldSwapchain(*p_old_swapchain);
+        info.setOldSwapchain(p_old_swapchain->swapchain());
     } else {
         info.setOldSwapchain(nullptr);
     }
@@ -100,6 +100,7 @@ vk::Extent2D Phyre::Graphics::VulkanSwapchain::InitializeSwapchainExtent(const V
         // If the surface size is defined, the swap chain size must match
         extent = surface_capabilities.currentExtent;
     }
+
     return extent;
 }
 
@@ -260,16 +261,4 @@ vk::Semaphore Phyre::Graphics::VulkanSwapchain::LoadImageAcquiredSemaphore(const
 void Phyre::Graphics::VulkanSwapchain::LoadCurrentFrameIndex() {
     vk::ResultValue<uint32_t> result = device_.get().acquireNextImageKHR(swapchain_, UINT64_MAX, image_acquired_semaphore_, nullptr);
     current_frame_index_ = result.value;
-}
-
-void Phyre::Graphics::VulkanSwapchain::Reload() {
-    swapchain_extent_ = InitializeSwapchainExtent(window_);
-    pre_transform_ = InitializePreTransform(window_.surface_capabilities());
-    vk::SwapchainKHR *p_old_swapchain = &swapchain_;
-    swapchain_ = InitializeSwapchain(device_, window_, swapchain_extent_, pre_transform_, p_old_swapchain);
-    swapchain_images_ = InitializeSwapchainImages(device_.get(), swapchain_, window_.preferred_surface_format().format);
-    depth_image_ = InitializeDepthImage(device_, window_.width(), window_.height(), samples_);
-    image_acquired_semaphore_ = LoadImageAcquiredSemaphore(device_);
-    current_frame_index_ = UINT32_MAX;
-
 }

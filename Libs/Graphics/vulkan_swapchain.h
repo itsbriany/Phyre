@@ -23,16 +23,11 @@ public:
 
     typedef std::vector<SwapchainImage> SwapchainImageVector;
 
-    explicit VulkanSwapchain(const VulkanDevice& device, const VulkanWindow& window);
+    explicit VulkanSwapchain(const VulkanDevice& device, const VulkanWindow& window, VulkanSwapchain* p_old_swapchain);
 
     // ------------------------ Interface -----------------------------------
     
     void LoadCurrentFrameIndex();
-
-    /**
-     * \brief Recreate the vulkan swapchain
-     */
-    void Reload();
 
     // ------------------------ Accessors -----------------------------------
     const VulkanWindow& window() const { return window_; }
@@ -69,7 +64,7 @@ private:
                                                 const VulkanWindow& window,
                                                 const vk::Extent2D& extent,
                                                 const vk::SurfaceTransformFlagBitsKHR& pre_transform,
-                                                vk::SwapchainKHR* p_old_swapchain);
+                                                VulkanSwapchain* p_old_swapchain);
 
     // Throws a runtime exception if the swapchain images failed to instantiate
     static SwapchainImageVector InitializeSwapchainImages(const vk::Device& device, const vk::SwapchainKHR& swapchain, const vk::Format& format);

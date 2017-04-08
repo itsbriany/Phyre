@@ -25,7 +25,6 @@ Phyre::Graphics::VulkanWindow::VulkanWindow(float width,
     p_window_(InitializeWindow(width, height, window_title)),
     is_running_(true),
     surface_(InitializeSurface(p_window_, instance_.get())),
-    surface_capabilities_(InitializeSurfaceCapabilities(gpu_, surface_)),
     surface_present_modes_(InitializePresentModes(gpu_, surface_)),
     surface_formats_(InitializeSurfaceFormats(gpu_, surface_)),
     preferred_present_mode_(InitializePreferredPresentMode(surface_present_modes_)),
@@ -62,11 +61,21 @@ void Phyre::Graphics::VulkanWindow::DestroySurface() const {
     }
 }
 
-void Phyre::Graphics::VulkanWindow::OSFramebufferResizeCallback(OSWindow* p_window, int width, int height) {
+void Phyre::Graphics::VulkanWindow::OSFramebufferResizeCallback(OSWindow* p_os_window, int width, int height) {
     if (width == 0 || height == 0) {
         return;
     }
-    Application *p_application = reinterpret_cast<Application*>(glfwGetWindowUserPointer(p_window));
+
+    VulkanWindow *p_window = reinterpret_cast<VulkanWindow*>(glfwGetWindowUserPointer(p_os_window));
+    if (!p_window) {
+        PHYRE_LOG(error, kWho) << "Could not get a handle to the window during framebuffer resize";
+        return;
+    }
+
+    p_window->set_width(static_cast<float>(width));
+    p_window->set_height(static_cast<float>(height));
+    Application *p_application = p_window->application();
+
     if (!p_application) {
         PHYRE_LOG(error, kWho) << "Could not get a handle to the application during framebuffer resize";
         return;
@@ -84,8 +93,7 @@ Phyre::Graphics::VulkanWindow::InitializeWindow(float width, float height, const
 
     // Cross platform window handle
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    OSWindow* p_window = glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), window_title.c_str(), nullptr, nullptr);
-    return p_window;
+    return glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), window_title.c_str(), nullptr, nullptr);
 }
 
 vk::SurfaceKHR Phyre::Graphics::VulkanWindow::InitializeSurface(OSWindow* window, const vk::Instance& instance) {
@@ -167,9 +175,9 @@ vk::SurfaceFormatKHR Phyre::Graphics::VulkanWindow::InitializePreferredSurfaceFo
     return surface_format;
 }
 
-void Phyre::Graphics::VulkanWindow::InitializeCallbacks() const {
-    // Allow calling back to the application
-    glfwSetWindowUserPointer(p_window_, p_application_);
+void Phyre::Graphics::VulkanWindow::InitializeCallbacks() {
+    // Allow calling back to us
+    glfwSetWindowUserPointer(p_window_, this);
 
     // The rest of the callbacks get set here
     glfwSetFramebufferSizeCallback(p_window_, &OSFramebufferResizeCallback);

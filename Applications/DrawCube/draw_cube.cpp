@@ -60,9 +60,14 @@ void Phyre::Graphics::DrawCube::DestroyFramebuffers() {
     }
 }
 
-void Phyre::Graphics::DrawCube::ReloadSwapchain() const {
+void Phyre::Graphics::DrawCube::ReloadSwapchain() {
     p_device_->get().waitIdle();
-    p_swapchain_->Reload();
+    LoadSwapchain();
+    LoadRenderPass();
+    LoadFrameBuffers();
+
+    // We don't need to create the graphics pipeline again because
+    // we specified that the viewport and scissor would have dynamic state
 }
 
 void Phyre::Graphics::DrawCube::Start() {
@@ -74,8 +79,6 @@ void Phyre::Graphics::DrawCube::Start() {
     // TODO On other platforms, we may need to initialize a connection to the window
 
     LoadDevice();
-    LoadCommandPool();
-    LoadCommandBuffers();
     LoadSwapchain();
     LoadShaderModules();
     LoadVertexBuffer();
@@ -87,6 +90,8 @@ void Phyre::Graphics::DrawCube::Start() {
     LoadPipelineCache();
     LoadPipelineLayout();
     LoadPipeline();
+    LoadCommandPool();
+    LoadCommandBuffers();
     LoadVulkanFence();
 }
 
@@ -102,11 +107,11 @@ Phyre::Graphics::DrawCube::~DrawCube() {
     p_device_->get().destroyDescriptorSetLayout(descriptor_set_layout_);
     p_device_->get().destroyDescriptorPool(descriptor_pool_);
     DestroyFramebuffers();
-    delete p_render_pass_;
+    p_render_pass_.reset();
     delete p_uniform_buffer_;
     DestroyVertexBuffer();
     DestroyShaderModules();
-    delete p_swapchain_;
+    p_swapchain_.reset();
     p_device_->get().destroyCommandPool(command_pool_);
     delete p_window_;
     delete p_device_;
@@ -115,7 +120,7 @@ Phyre::Graphics::DrawCube::~DrawCube() {
 
 void Phyre::Graphics::DrawCube::OnFramebufferResize(int width, int height) {
     PHYRE_LOG(trace, kWho) << "Framebuffer dimensions: (" << width << "x" << height << ')';
-    // ReloadSwapchain();
+    ReloadSwapchain();
 }
 
 void Phyre::Graphics::DrawCube::StartDebugger() {
@@ -186,7 +191,7 @@ void Phyre::Graphics::DrawCube::ExecuteBeginCommandBuffer(size_t command_buffer_
 }
 
 void Phyre::Graphics::DrawCube::LoadSwapchain() {
-    p_swapchain_ = new VulkanSwapchain(*p_device_, *p_window_);
+    p_swapchain_.reset(new VulkanSwapchain(*p_device_, *p_window_, p_swapchain_.get()));
 }
 
 void Phyre::Graphics::DrawCube::LoadPipeline() {
@@ -370,7 +375,6 @@ void Phyre::Graphics::DrawCube::Draw() {
     // Now the pipeline will know how to find its input data like the MVP transform
     uint32_t first_set = 0;
     command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout_, first_set, 1, descriptor_sets_.data(), 0, nullptr);
-    // command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline.pipeline_layout(), first_set, pipeline.descriptor_set(), nullptr);
 
     // We bind the viewports and scissors dynamically because earlier we specified that they would be dynamically
     // loaded from a command buffer.
@@ -442,7 +446,7 @@ void Phyre::Graphics::DrawCube::BeginRender() const {
     p_device_->graphics_queue().waitIdle();
 }
 
-void Phyre::Graphics::DrawCube::EndRender() const {
+void Phyre::Graphics::DrawCube::EndRender() {
     // Now present the image to the window
     vk::PresentInfoKHR present_info;
     present_info.setSwapchainCount(1);
@@ -453,15 +457,19 @@ void Phyre::Graphics::DrawCube::EndRender() const {
     present_info.setPResults(nullptr);
 
     // Make sure the command buffer finished before presenting
-    vk::Result result = vk::Result::eTimeout;
+    vk::Result timeout_result = vk::Result::eTimeout;
     do {
-        result = p_device_->get().waitForFences(1, &swapchain_image_available_fence_, true, UINT64_MAX);
-    } while (result == vk::Result::eTimeout);
+        timeout_result = p_device_->get().waitForFences(1, &swapchain_image_available_fence_, true, UINT64_MAX);
+    } while (timeout_result == vk::Result::eTimeout);
 
-    p_device_->presentation_queue().presentKHR(&present_info);
+    // We always want the swapchain to be in an optimal state
+    vk::Result present_result = p_device_->presentation_queue().presentKHR(&present_info);
+    if (present_result == vk::Result::eErrorOutOfDateKHR || present_result == vk::Result::eSuboptimalKHR) {
+        ReloadSwapchain();
+    }
 }
 
-void Phyre::Graphics::DrawCube::LogFPS() const {
+void Phyre::Graphics::DrawCube::LogFPS() {
     using std::chrono::high_resolution_clock;
     using std::chrono::duration;
     using std::chrono::seconds;
@@ -568,6 +576,10 @@ void Phyre::Graphics::DrawCube::LoadUniformBuffer() {
 }
 
 void Phyre::Graphics::DrawCube::LoadFrameBuffers() {
+    if (!framebuffers_.empty()) {
+        DestroyFramebuffers();
+    }
+
     uint32_t color = 0;
     uint32_t depth = 1;
     std::array<vk::ImageView, 2> attachments;
@@ -589,7 +601,7 @@ void Phyre::Graphics::DrawCube::LoadFrameBuffers() {
 }
 
 void Phyre::Graphics::DrawCube::LoadRenderPass() {
-    p_render_pass_ = new VulkanRenderPass(*p_device_, *p_swapchain_);
+    p_render_pass_.reset(new VulkanRenderPass(*p_device_, *p_swapchain_));
 }
 
 void Phyre::Graphics::DrawCube::LoadDescriptorPool() {
