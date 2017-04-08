@@ -41,6 +41,10 @@ public:
     // Signals that we have finished rendering a frame
     void EndRender();
 
+    // Gracefully clean up the application by waiting for 
+    // all the rendering operations to finish
+    void Stop() const;
+
     // Records the FPS
     static void LogFPS();
 
@@ -73,7 +77,7 @@ private:
     void LoadPipelineCache();
     void LoadPipelineLayout();
     void LoadPipeline();
-    void LoadVulkanFence();
+    void LoadSemaphores();
 
     // ------------------- Cleanup Stages ----------------------
     void DestroyShaderModules();
@@ -148,8 +152,8 @@ private:
     vk::PipelineLayout pipeline_layout_;
     vk::Pipeline pipeline_;
 
-    // A fence that we use to know when the rendering is finished
-    vk::Fence swapchain_image_available_fence_;
+    // Signals when the command buffers have finished executing
+    vk::Semaphore render_finished_semaphore_;
 
     // The configuration provider for loading resources
     std::unique_ptr<Configuration::Provider> p_provider_;

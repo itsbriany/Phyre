@@ -27,7 +27,8 @@ public:
 
     // ------------------------ Interface -----------------------------------
     
-    void LoadCurrentFrameIndex();
+    // Wait for an image to become available and set the index of the image accordingly
+    void AcquireNextImage();
 
     // ------------------------ Accessors -----------------------------------
     const VulkanWindow& window() const { return window_; }

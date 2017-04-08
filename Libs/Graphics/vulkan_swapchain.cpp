@@ -258,7 +258,7 @@ vk::Semaphore Phyre::Graphics::VulkanSwapchain::LoadImageAcquiredSemaphore(const
     return device.get().createSemaphore(semaphore_create_info);
 }
 
-void Phyre::Graphics::VulkanSwapchain::LoadCurrentFrameIndex() {
+void Phyre::Graphics::VulkanSwapchain::AcquireNextImage() {
     vk::ResultValue<uint32_t> result = device_.get().acquireNextImageKHR(swapchain_, UINT64_MAX, image_acquired_semaphore_, nullptr);
     current_frame_index_ = result.value;
 }
