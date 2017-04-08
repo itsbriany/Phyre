@@ -40,7 +40,7 @@ TEST_F(ConfigurationLoaderTest, GetContentsBinary) {
     std::string resource("vertices.spv");
     std::string contents = p_provider_->GetContents(target_, resource);
     ASSERT_FALSE(contents.empty());
-    EXPECT_EQ(996, contents.size());
+    EXPECT_EQ(996u, contents.size());
     EXPECT_EQ(contents[0], 0x03);
     EXPECT_EQ(contents[1], 0x02);
     EXPECT_EQ(contents[2], 0x23);
@@ -51,8 +51,8 @@ TEST_F(ConfigurationLoaderTest, GetContentsUint32t) {
     std::string resource("vertices.spv");
     std::vector<uint32_t> contents = p_provider_->GetContentsUint32t(target_, resource);
     ASSERT_FALSE(contents.empty());
-    EXPECT_EQ(996, contents.size() * sizeof(uint32_t));
-    EXPECT_EQ(contents[0], 0x07230203);
+    EXPECT_EQ(996u, contents.size() * sizeof(uint32_t));
+    EXPECT_EQ(contents[0], 0x07230203u);
 }
 
 TEST_F(ConfigurationLoaderTest, GetContentsUint32tNoSuchResource) {
@@ -65,6 +65,6 @@ TEST_F(ConfigurationLoaderTest, GetContentsSPIRV) {
     std::string resource("vertices.spv");
     std::vector<uint32_t> contents = p_provider_->GetContentsSPIRV(target_, resource);
     ASSERT_FALSE(contents.empty());
-    EXPECT_EQ(996, contents.size() * sizeof(uint32_t));
-    EXPECT_EQ(contents[0], 0x07230203);
+    EXPECT_EQ(996u, contents.size() * sizeof(uint32_t));
+    EXPECT_EQ(contents[0], 0x07230203u);
 }
