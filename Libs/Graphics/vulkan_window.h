@@ -1,16 +1,21 @@
 #pragma once
 #include <vulkan.hpp>
 #include <GLFW/glfw3.h>
-#include <functional>
 
 namespace Phyre {
 namespace Graphics {
+
+class Application;
 class VulkanGPU;
 class VulkanInstance;
 class VulkanDevice;
 class VulkanWindow {
 public:
-    explicit VulkanWindow(float width, float height, const std::string& window_title, const VulkanInstance& instance, const VulkanGPU& gpu);
+    explicit VulkanWindow(float width, float height,
+                          const std::string& window_title,
+                          const VulkanInstance& instance,
+                          const VulkanGPU& gpu,
+                          Application* p_application);
     
     // Clean up vulkan resources
     ~VulkanWindow();
@@ -59,6 +64,10 @@ private:
     static vk::SurfaceFormatKHR InitializePreferredSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& surface_formats);
 
     // -------------------- Post-Initializers --------------------
+    
+    /**
+     * \brief Register the callbacks to the application
+     */
     void InitializeCallbacks() const;
 
     // -------------------- Destroyers ----------------------
@@ -104,6 +113,9 @@ private:
 
     // The preferred surface format based on the GPU hardware
     vk::SurfaceFormatKHR preferred_surface_format_;
+
+    // A pointer to our application such that we can call back to it
+    Application* p_application_;
 
     // ------------------ Logging --------------------------
     static const std::string kWho;

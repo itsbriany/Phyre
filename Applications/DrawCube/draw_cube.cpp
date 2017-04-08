@@ -60,6 +60,11 @@ void Phyre::Graphics::DrawCube::DestroyFramebuffers() {
     }
 }
 
+void Phyre::Graphics::DrawCube::ReloadSwapchain() const {
+    p_device_->get().waitIdle();
+    p_swapchain_->Reload();
+}
+
 void Phyre::Graphics::DrawCube::Start() {
 #ifndef NDEBUG
     StartDebugger();
@@ -108,6 +113,11 @@ Phyre::Graphics::DrawCube::~DrawCube() {
     PHYRE_LOG(trace, kWho) << "Destroyed";
 }
 
+void Phyre::Graphics::DrawCube::OnFramebufferResize(int width, int height) {
+    PHYRE_LOG(trace, kWho) << "Framebuffer dimensions: (" << width << "x" << height << ')';
+    // ReloadSwapchain();
+}
+
 void Phyre::Graphics::DrawCube::StartDebugger() {
     debugger_.InitializeDebugReport();
 }
@@ -129,7 +139,7 @@ void Phyre::Graphics::DrawCube::LoadGPUs() {
 }
 
 void Phyre::Graphics::DrawCube::LoadWindow(float width, float height, const std::string& title) {
-    p_window_ = new VulkanWindow(width, height, title, instance_, *p_active_gpu_);
+    p_window_ = new VulkanWindow(width, height, title, instance_, *p_active_gpu_, this);
 }
 
 void Phyre::Graphics::DrawCube::LoadDevice() {
@@ -151,6 +161,10 @@ void Phyre::Graphics::DrawCube::LoadCommandPool() {
 }
 
 void Phyre::Graphics::DrawCube::LoadCommandBuffers() {
+    // We need to reload the command buffers when the swapchain gets reloaded
+    if (!command_buffers_.empty()) {
+        p_device_->get().freeCommandBuffers(command_pool_, static_cast<uint32_t>(command_buffers_.size()), command_buffers_.data());
+    }
     vk::CommandBufferAllocateInfo command_buffer_allocate_info;
     uint32_t command_buffer_count = 1;
     command_buffer_allocate_info.setCommandPool(command_pool_);

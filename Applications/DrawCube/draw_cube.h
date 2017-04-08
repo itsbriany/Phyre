@@ -1,4 +1,5 @@
 #pragma once
+#include <Graphics/application.h>
 #include <Graphics/vulkan_debugger.h>
 #include <Graphics/vulkan_device.h>
 #include <Graphics/vulkan_instance.h>
@@ -11,11 +12,20 @@
 namespace Phyre {
 namespace Graphics {
 
-class DrawCube {
+class DrawCube : public Application {
 public:
-    DrawCube(int argc, const char* argv[]);
-    virtual ~DrawCube();
+    //---------------------- Type Definitions -------------------------
+    typedef Application BaseClass;
 
+    //---------------------- Construction/Destruction -----------------
+    DrawCube(int argc, const char* argv[]);
+    ~DrawCube();
+
+    //---------------------- Base Class Overrides ---------------------
+
+    void OnFramebufferResize(int width, int height) override;
+
+    //---------------------- Interface --------------------------------
     // Returns true if the rendering system started correctly
     void Start();
 
@@ -69,6 +79,9 @@ private:
     void DestroyShaderModules();
     void DestroyVertexBuffer() const;
     void DestroyFramebuffers();
+
+    // ------------------- Event-Driven Stages ------------------
+    void ReloadSwapchain() const;
 
     // ------------------------ Helpers -------------------------
     // Load SPIR-V Bytecode from file

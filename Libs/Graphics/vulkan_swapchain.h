@@ -25,8 +25,14 @@ public:
 
     explicit VulkanSwapchain(const VulkanDevice& device, const VulkanWindow& window);
 
+    // ------------------------ Interface -----------------------------------
+    
     void LoadCurrentFrameIndex();
 
+    /**
+     * \brief Recreate the vulkan swapchain
+     */
+    void Reload();
 
     // ------------------------ Accessors -----------------------------------
     const VulkanWindow& window() const { return window_; }
@@ -62,7 +68,8 @@ private:
     static vk::SwapchainKHR InitializeSwapchain(const VulkanDevice& device,
                                                 const VulkanWindow& window,
                                                 const vk::Extent2D& extent,
-                                                const vk::SurfaceTransformFlagBitsKHR& pre_transform);
+                                                const vk::SurfaceTransformFlagBitsKHR& pre_transform,
+                                                vk::SwapchainKHR* p_old_swapchain);
 
     // Throws a runtime exception if the swapchain images failed to instantiate
     static SwapchainImageVector InitializeSwapchainImages(const vk::Device& device, const vk::SwapchainKHR& swapchain, const vk::Format& format);

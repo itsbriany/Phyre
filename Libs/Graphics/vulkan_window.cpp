@@ -1,15 +1,23 @@
 #include <Logging/logging.h>
+
 #include "vulkan_window.h"
 #include "vulkan_instance.h"
 #include "vulkan_gpu.h"
-#include <GLFW/glfw3.h>
+
+#include "application.h"
+
 
 const std::string Phyre::Graphics::VulkanWindow::kWho = "[VulkanWindow]";
 
 // Dynamically loaded functions
 static PFN_vkDestroySurfaceKHR  s_destroy_surface_khr_ = nullptr;
 
-Phyre::Graphics::VulkanWindow::VulkanWindow(float width, float height, const std::string& window_title, const VulkanInstance& instance, const VulkanGPU& gpu) :
+Phyre::Graphics::VulkanWindow::VulkanWindow(float width,
+                                            float height,
+                                            const std::string& window_title,
+                                            const VulkanInstance& instance,
+                                            const VulkanGPU& gpu,
+                                            Application* p_application) :
     width_(width),
     height_(height),
     instance_(instance),
@@ -21,7 +29,9 @@ Phyre::Graphics::VulkanWindow::VulkanWindow(float width, float height, const std
     surface_present_modes_(InitializePresentModes(gpu_, surface_)),
     surface_formats_(InitializeSurfaceFormats(gpu_, surface_)),
     preferred_present_mode_(InitializePreferredPresentMode(surface_present_modes_)),
-    preferred_surface_format_(InitializePreferredSurfaceFormat(surface_formats_)) {
+    preferred_surface_format_(InitializePreferredSurfaceFormat(surface_formats_)),
+    p_application_(p_application)
+{
     InitializeCallbacks();
     PHYRE_LOG(trace, kWho) << "Instantiated";
 }
@@ -52,8 +62,16 @@ void Phyre::Graphics::VulkanWindow::DestroySurface() const {
     }
 }
 
-void Phyre::Graphics::VulkanWindow::OSFramebufferResizeCallback(OSWindow*, int width, int height) {
-    PHYRE_LOG(info, kWho) << "Window dimensions: (" << width << "x" << height << ')';
+void Phyre::Graphics::VulkanWindow::OSFramebufferResizeCallback(OSWindow* p_window, int width, int height) {
+    if (width == 0 || height == 0) {
+        return;
+    }
+    Application *p_application = reinterpret_cast<Application*>(glfwGetWindowUserPointer(p_window));
+    if (!p_application) {
+        PHYRE_LOG(error, kWho) << "Could not get a handle to the application during framebuffer resize";
+        return;
+    }
+    p_application->OnFramebufferResize(width, height);
 }
 
 Phyre::Graphics::VulkanWindow::OSWindow* 
@@ -66,7 +84,8 @@ Phyre::Graphics::VulkanWindow::InitializeWindow(float width, float height, const
 
     // Cross platform window handle
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    return glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), window_title.c_str(), nullptr, nullptr);
+    OSWindow* p_window = glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), window_title.c_str(), nullptr, nullptr);
+    return p_window;
 }
 
 vk::SurfaceKHR Phyre::Graphics::VulkanWindow::InitializeSurface(OSWindow* window, const vk::Instance& instance) {
@@ -149,5 +168,9 @@ vk::SurfaceFormatKHR Phyre::Graphics::VulkanWindow::InitializePreferredSurfaceFo
 }
 
 void Phyre::Graphics::VulkanWindow::InitializeCallbacks() const {
+    // Allow calling back to the application
+    glfwSetWindowUserPointer(p_window_, p_application_);
+
+    // The rest of the callbacks get set here
     glfwSetFramebufferSizeCallback(p_window_, &OSFramebufferResizeCallback);
 }
