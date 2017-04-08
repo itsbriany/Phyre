@@ -1,13 +1,10 @@
 #pragma once
 #include <vulkan.hpp>
-#include "vulkan_gpu.h"
-#include <iostream>
 
 namespace Phyre {
 namespace Graphics {
 class VulkanDevice;
 class VulkanWindow;
-class VulkanUtils;
 
 class VulkanSwapchain {
 public:

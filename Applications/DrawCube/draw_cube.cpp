@@ -1,12 +1,14 @@
-#include <fstream>
 #include <chrono>
+#include <fstream>
+
 #include <Graphics/geometry.h>
 #include <Graphics/vulkan_utils.h>
 #include <Logging/logging.h>
+
 #include "draw_cube.h"
 
-int main() {
-    Phyre::Graphics::DrawCube app;
+int main(int argc, const char* argv[]) {
+    Phyre::Graphics::DrawCube app(argc, argv);
     app.Start();
 
     while (app.Run()) {
@@ -20,7 +22,7 @@ int main() {
 
 const std::string Phyre::Graphics::DrawCube::kWho = "[DrawCube]";
 
-Phyre::Graphics::DrawCube::DrawCube() : 
+Phyre::Graphics::DrawCube::DrawCube(int argc, const char* argv[]) :
     instance_(),
     debugger_(instance_),
     p_active_gpu_(nullptr),
@@ -28,7 +30,16 @@ Phyre::Graphics::DrawCube::DrawCube() :
     p_device_(nullptr),
     p_swapchain_(nullptr),
     p_uniform_buffer_(nullptr),
-    p_render_pass_(nullptr) {
+    p_render_pass_(nullptr),
+    p_provider_(nullptr),
+    target_("DrawCube")
+{
+    if (argc < 2) {
+        PHYRE_LOG(fatal, kWho) << "Please provide a phyre configuration file!";
+        exit(EXIT_FAILURE);
+    }
+    std::string configuration = argv[1];
+    p_provider_ = std::make_unique<Configuration::Provider>(configuration);
     PHYRE_LOG(trace, kWho) << "Instantiated";
 }
 
@@ -456,10 +467,20 @@ void Phyre::Graphics::DrawCube::LoadShaderModules() {
     // This is where the SPIR-V intermediate bytecode is located
     // std::string resource_directory("GraphicsTestResources/");
     std::string vertex_file_name("vertices.spv");
-    std::vector<uint32_t> vertex_shader_bytecode(ReadSpirV(vertex_file_name));
+    std::vector<uint32_t> vertex_shader_bytecode = p_provider_->GetContentsSPIRV(target_, vertex_file_name);
+
+    if (vertex_shader_bytecode.empty()) {
+        PHYRE_LOG(warning, kWho) << "Could not read any vertex shader bytecode!";
+        return;
+    }
 
     std::string fragment_file_name("fragments.spv");
-    std::vector<uint32_t> fragment_shader_bytecode(ReadSpirV(fragment_file_name));
+    std::vector<uint32_t> fragment_shader_bytecode = p_provider_->GetContentsSPIRV(target_, fragment_file_name);
+
+    if (vertex_shader_bytecode.empty()) {
+        PHYRE_LOG(warning, kWho) << "Could not read any fragment shader bytecode!";
+        return;
+    }
 
     // We will be creating two pipeline shader stages: One for vertices, and one for fragments
     // Create the vertex shader module

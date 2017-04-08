@@ -1,11 +1,10 @@
 #include "vulkan_utils.h"
 
-const std::string Phyre::Graphics::VulkanUtils::kWho = "[VulkanUtils]";
+namespace Phyre {
+namespace Graphics {
+namespace VulkanUtils {
 
-bool Phyre::Graphics::VulkanUtils::CanFindMemoryTypeFromProperties(const VulkanGPU& gpu,
-                                                                   uint32_t memory_type_bits,
-                                                                   MemoryPropertyFlags requirements_mask,
-                                                                   uint32_t& memory_type_index) {
+bool CanFindMemoryTypeFromProperties(const VulkanGPU& gpu, uint32_t memory_type_bits, MemoryPropertyFlags requirements_mask, uint32_t& memory_type_index) {
     const vk::PhysicalDeviceMemoryProperties& memory_properties = gpu.memory_properties();
     // Search memtypes to find first index with those properties
     for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++) {
@@ -21,3 +20,8 @@ bool Phyre::Graphics::VulkanUtils::CanFindMemoryTypeFromProperties(const VulkanG
     // No memory types matched, return failure
     return false;
 }
+
+}
+}
+}
+

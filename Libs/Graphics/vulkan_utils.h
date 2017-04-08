@@ -4,18 +4,15 @@
 
 namespace Phyre {
 namespace Graphics {
+namespace VulkanUtils {
 
-class VulkanUtils {
-public:
-    typedef vk::Flags<vk::MemoryPropertyFlagBits> MemoryPropertyFlags;
+typedef vk::Flags<vk::MemoryPropertyFlagBits> MemoryPropertyFlags;
 
-    // Returns true if we can find a proper memory type from the gpu's memory properties
-    static bool CanFindMemoryTypeFromProperties(const VulkanGPU& gpu, uint32_t type_bits, MemoryPropertyFlags requirements_mask, uint32_t& type_index);
+// Returns true if we can find a proper memory type from the gpu's memory properties
+bool CanFindMemoryTypeFromProperties(const VulkanGPU& gpu, uint32_t type_bits, MemoryPropertyFlags requirements_mask, uint32_t& type_index);
 
-private:
-    // For logging
-    static const std::string kWho;
-};
-
+// For logging
+const std::string kWho = "[VulkanUtils]";
+}
 }
 }

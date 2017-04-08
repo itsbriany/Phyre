@@ -4,7 +4,11 @@
             {
                 "ConfigurationLoaderTest": {
                     "Path": "Libs/Configuration/Test",
-                    "Resources": ["Example.txt"]
+                    "Resources": ["Example.txt", "vertices.spv"]
+                },
+                "DrawCube": {
+                    "Path": "Applications/DrawCube",
+                    "Resources": ["vertices.spv", "fragments.spv"] 
                 },
                 "XMPPTests": {
                     "Path": "Libs/XMPP/Test",

@@ -1,25 +1,14 @@
-Import-Module $env:PHYRE_ROOT\Build.psm1 -Force -DisableNameChecking
+# Run this script in any directory to compile all GLSL .vert and .frag files into SPIR-V bytecode
 
-# We may have made some changes to our resources, so we need to copy them over
-Copy-Test-Environment
-
-# Configuration is either "Debug" or "Release
-$GlslangValidator = "$env:VULKAN_ROOT\glslang\build\StandAlone\Release\glslangValidator.exe"
-function spirv-compile ($Configuration) {
-    Write-Output "Compiling $Configuration Shaders..."
-    $ResourceDir = "$env:PHYRE_ROOT\Build\Testing\Bin\$Configuration\GraphicsTestResources"
-    $Resources = Get-ChildItem $ResourceDir
-    $SpirvExtension = "spv"
-    foreach ($Shader in $Resources) {
-        $InputShader = $Shader.FullName
-        if ($InputShader -NotLike "*.$SpirvExtension") {
-            $BaseName = $Shader.basename
-            $Output = "$ResourceDir\$BaseName.$SpirvExtension"
-            $command = "$GlslangValidator -V $InputShader -o $Output"
-            Invoke-Expression $command
-        }
+$GlslangValidator = "$env:VULKAN_SDK\glslang\build\StandAlone\Release\glslangValidator.exe"
+Write-Output "Compiling Shaders..."
+$SpirvExtension = "spv"
+foreach ($File in Get-ChildItem) {
+    if ($File -like "*.vert" -Or $File -like "*.frag") {
+        $BaseName = $File.basename
+        $Output = "$BaseName.$SpirvExtension"
+        echo "$File -> $Output"
+        $command = "$GlslangValidator -V $File -o $Output"
+        Invoke-Expression $command
     }
 }
-
-spirv-compile("Debug")
-spirv-compile("Release")

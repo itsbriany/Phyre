@@ -1,6 +1,6 @@
 add_subdirectory(LoggingDemos)
 add_subdirectory(NetworkingDemos)
 if (NOT APPLE)
-   add_subdirectory(GraphicsDemos)
+   add_subdirectory(DrawCube)
 endif()
 add_subdirectory(XMPPDemos)
