@@ -1,16 +1,22 @@
 #pragma once
 #include <vulkan.hpp>
 #include <GLFW/glfw3.h>
-#include <functional>
+
+#include "vulkan_gpu.h"
 
 namespace Phyre {
 namespace Graphics {
-class VulkanGPU;
+
+class Application;
 class VulkanInstance;
 class VulkanDevice;
 class VulkanWindow {
 public:
-    explicit VulkanWindow(float width, float height, const std::string& window_title, const VulkanInstance& instance, const VulkanGPU& gpu);
+    explicit VulkanWindow(float width, float height,
+                          const std::string& window_title,
+                          const VulkanInstance& instance,
+                          const VulkanGPU& gpu,
+                          Application* p_application);
     
     // Clean up vulkan resources
     ~VulkanWindow();
@@ -26,12 +32,16 @@ public:
     const float& width() const { return width_; }
     const float& height() const { return height_; }
     const vk::SurfaceKHR& surface() const { return surface_; }
-    const vk::SurfaceCapabilitiesKHR& surface_capabilities() const { return surface_capabilities_; }
+    vk::SurfaceCapabilitiesKHR surface_capabilities() const { return gpu_.get().getSurfaceCapabilitiesKHR(surface_); }
     const std::vector<vk::PresentModeKHR>& present_modes() const { return surface_present_modes_; }
     const std::vector<vk::SurfaceFormatKHR>& surface_formats() const { return surface_formats_; }
     const vk::SurfaceFormatKHR& preferred_surface_format() const { return preferred_surface_format_; }
     const vk::PresentModeKHR& preferred_present_mode() const { return preferred_present_mode_; }
+    Application* application() const { return p_application_; }
 
+    // -------------------- Setters -------------------------
+    void set_width(float width) { width_ = width; }
+    void set_height(float height) { height_ = height; }
 
 private:
     // -------------------- Type Definitions --------------------
@@ -59,7 +69,11 @@ private:
     static vk::SurfaceFormatKHR InitializePreferredSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& surface_formats);
 
     // -------------------- Post-Initializers --------------------
-    void InitializeCallbacks() const;
+    
+    /**
+     * \brief Register the callbacks to the application
+     */
+    void InitializeCallbacks();
 
     // -------------------- Destroyers ----------------------
     // Destroys the SurfaceKHR
@@ -90,9 +104,6 @@ private:
     // The surface we are using to render images
     vk::SurfaceKHR surface_;
 
-    // What the surface is capable of on the active GPU
-    vk::SurfaceCapabilitiesKHR surface_capabilities_;
-
     // The presentation modes avaialble on the active GPU
     std::vector<vk::PresentModeKHR> surface_present_modes_;
 
@@ -104,6 +115,9 @@ private:
 
     // The preferred surface format based on the GPU hardware
     vk::SurfaceFormatKHR preferred_surface_format_;
+
+    // A pointer to our application such that we can call back to it
+    Application* p_application_;
 
     // ------------------ Logging --------------------------
     static const std::string kWho;

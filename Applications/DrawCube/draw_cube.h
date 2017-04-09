@@ -1,4 +1,5 @@
 #pragma once
+#include <Graphics/application.h>
 #include <Graphics/vulkan_debugger.h>
 #include <Graphics/vulkan_device.h>
 #include <Graphics/vulkan_instance.h>
@@ -11,11 +12,20 @@
 namespace Phyre {
 namespace Graphics {
 
-class DrawCube {
+class DrawCube : public Application {
 public:
-    DrawCube(int argc, const char* argv[]);
-    virtual ~DrawCube();
+    //---------------------- Type Definitions -------------------------
+    typedef Application BaseClass;
 
+    //---------------------- Construction/Destruction -----------------
+    DrawCube(int argc, const char* argv[]);
+    ~DrawCube();
+
+    //---------------------- Base Class Overrides ---------------------
+
+    void OnFramebufferResize(int width, int height) override;
+
+    //---------------------- Interface --------------------------------
     // Returns true if the rendering system started correctly
     void Start();
 
@@ -29,10 +39,10 @@ public:
     void BeginRender() const;
 
     // Signals that we have finished rendering a frame
-    void EndRender() const;
+    void EndRender();
 
     // Records the FPS
-    void LogFPS() const;
+    static void LogFPS();
 
 private:
     struct VertexBuffer {
@@ -70,6 +80,9 @@ private:
     void DestroyVertexBuffer() const;
     void DestroyFramebuffers();
 
+    // ------------------- Event-Driven Stages ------------------
+    void ReloadSwapchain();
+
     // ------------------------ Helpers -------------------------
     // Load SPIR-V Bytecode from file
     static std::vector<uint32_t> ReadSpirV(const std::string spirv_shader_file_name);
@@ -95,7 +108,7 @@ private:
     CommandBuffers command_buffers_;
 
     // A swapchain which helps manage image buffers
-    VulkanSwapchain* p_swapchain_;
+    std::unique_ptr<VulkanSwapchain> p_swapchain_;
 
     // The shaders which end up getting plugged into the pipeline
     std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages_;
@@ -109,7 +122,7 @@ private:
     std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes_;
 
     // The render pass used in the graphics pipeline
-    VulkanRenderPass *p_render_pass_;
+    std::unique_ptr<VulkanRenderPass> p_render_pass_;
 
     // Memory attachments used by the render pass instance such as the color image buffer
     // and the depth image buffer.
