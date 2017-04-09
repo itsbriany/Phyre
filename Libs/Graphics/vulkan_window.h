@@ -116,6 +116,14 @@ private:
      */
     static void OSMouseButtonCallback(OSWindow* p_os_window, int button, int action, int mods);
 
+    /**
+     * \brief Called when we get input from mouse scrolling
+     * \param p_os_window The window who we register the callback to
+     * \param x_offset How fast we are scolling on the x axis
+     * \param y_offset How fast we are scolling on the y axis
+     */
+    static void OSMouseScrollCallback(OSWindow* p_os_window, double x_offset, double y_offset);
+
     // -------------------- Callback Helpers ----------------------
     static Application* GetApplicationFromWindow(OSWindow* p_os_window);
 

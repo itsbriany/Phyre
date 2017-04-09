@@ -116,6 +116,11 @@ void VulkanWindow::OSMouseButtonCallback(OSWindow* p_os_window, int button, int 
     }
 }
 
+void VulkanWindow::OSMouseScrollCallback(OSWindow* p_os_window, double x_offset, double y_offset) {
+    Application *p_application = GetApplicationFromWindow(p_os_window);
+    p_application->OnMouseScroll(x_offset, y_offset);
+}
+
 Application* VulkanWindow::GetApplicationFromWindow(OSWindow* p_os_window) {
     VulkanWindow *p_window = reinterpret_cast<VulkanWindow*>(glfwGetWindowUserPointer(p_os_window));
     return p_window->application();
@@ -222,6 +227,7 @@ void VulkanWindow::InitializeCallbacks() {
     glfwSetCursorPosCallback(p_window_, &OSWindowMousePositionCallback);
     glfwSetKeyCallback(p_window_, &OSWindowKeyCallback);
     glfwSetMouseButtonCallback(p_window_, &OSMouseButtonCallback);
+    glfwSetScrollCallback(p_window_, &OSMouseScrollCallback);
 }
 
 }

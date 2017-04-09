@@ -65,6 +65,13 @@ public:
     */
     virtual void OnMouseRelease(Input::Mouse mouse_button, int mods);
 
+    /**
+     * \brief Called when the mouse wheel is scrolled
+     * \param x_offset How fast we are scolling on the x axis
+     * \param y_offset How fast we are scolling on the y axis
+     */
+    virtual void OnMouseScroll(double x_offset, double y_offset);
+
 private:
     //---------------------- Logging Helper --------------------------
     static const std::string kWho;

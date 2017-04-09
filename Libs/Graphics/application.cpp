@@ -44,5 +44,9 @@ void Application::OnMouseRelease(Input::Mouse mouse_button, int mods) {
     PHYRE_LOG(trace, kWho) << "Mouse " << Input::MouseToString(mouse_button) << " was released with the following mods: " << Input::ModifierFlagsToString(mods);
 }
 
+void Application::OnMouseScroll(double x_offset, double y_offset) {
+    PHYRE_LOG(trace, kWho) << "Scroll position: (" << x_offset << ", " << y_offset << ')';
+}
+
 }
 }
