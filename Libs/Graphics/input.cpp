@@ -221,5 +221,20 @@ std::string Input::ModifierFlagsToString(int modifier_flags) {
     oss << ']';
     return oss.str();
 }
+
+typedef std::unordered_map<Input::CursorMode, std::string> CursorModeToStringMap;
+const CursorModeToStringMap kCursorModeToStringMap = boost::assign::map_list_of
+    (Input::CursorMode::kDisabled, "DISABLED")
+    (Input::CursorMode::kNormal, "NORMAL")
+    (Input::CursorMode::kHidden, "HIDDEN")
+    ;
+
+std::string Input::CursorModeToString(CursorMode cursor_mode) {
+    CursorModeToStringMap::const_iterator cit = kCursorModeToStringMap.find(cursor_mode);
+    if (cit != kCursorModeToStringMap.end()) {
+        return cit->second;
+    }
+    return "UNKNOWN_CURSOR_MODE";
+}
 }
 }

@@ -37,10 +37,12 @@ public:
     const vk::SurfaceFormatKHR& preferred_surface_format() const { return preferred_surface_format_; }
     const vk::PresentModeKHR& preferred_present_mode() const { return preferred_present_mode_; }
     Application* application() const { return p_application_; }
+    Input::CursorMode cursor_mode() const { return cursor_mode_; }
 
     // -------------------- Setters -------------------------
     void set_width(float width) { width_ = width; }
     void set_height(float height) { height_ = height; }
+    void set_cursor_mode(Input::CursorMode cursor_mode);
 
 private:
     // -------------------- Type Definitions --------------------
@@ -74,11 +76,6 @@ private:
      */
     void InitializeCallbacks();
 
-    /**
-     * \brief Configure how the window will behave on various inputs
-     */
-    void PrepareInput() const;
-
     // -------------------- Destroyers ----------------------
     // Destroys the SurfaceKHR
     void DestroySurface() const;
@@ -109,6 +106,15 @@ private:
      * \param mods Flags that help determine if we are holding SHIFT, CTRL, ALT, etc...
      */
     static void OSWindowKeyCallback(OSWindow* p_os_window, int key, int scancode, int action, int mods);
+
+    /**
+     * \brief Called when we get input from a mouse button
+     * \param p_os_window The window who we register the callback to
+     * \param button The mouse button associated with the input
+     * \param action The action from the mouse button
+     * \param mods Were we holding SHIT/ALT/CTRL?
+     */
+    static void OSMouseButtonCallback(OSWindow* p_os_window, int button, int action, int mods);
 
     // -------------------- Callback Helpers ----------------------
     static Application* GetApplicationFromWindow(OSWindow* p_os_window);
@@ -149,6 +155,9 @@ private:
 
     // A pointer to our application such that we can call back to it
     Application* p_application_;
+
+    // Determines the state of our cursor in this window
+    Input::CursorMode cursor_mode_;
 
     // ------------------ Logging --------------------------
     static const std::string kWho;

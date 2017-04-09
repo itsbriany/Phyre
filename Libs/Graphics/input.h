@@ -188,6 +188,16 @@ std::string ModifierToString(Modifier mod);
  */
 std::string ModifierFlagsToString(int modifier_flags);
 
+/**
+ * \brief Help determine the cursor's state
+ */
+enum CursorMode {
+    kDisabled = GLFW_CURSOR_DISABLED,
+    kNormal = GLFW_CURSOR_NORMAL,
+    kHidden = GLFW_CURSOR_HIDDEN
+};
+
+std::string CursorModeToString(CursorMode cursor_mode);
 }
 }
 }

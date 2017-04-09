@@ -36,5 +36,16 @@ void Application::OnKeyHold(Input::Key key, int mods) {
     PHYRE_LOG(trace, kWho) << "Key " << Input::KeyToString(key) << " was held with the following mods: " << Input::ModifierFlagsToString(mods);
 }
 
+void Application::OnMousePress(Input::Mouse mouse_button, int mods) {
+    PHYRE_LOG(trace, kWho) << "Mouse " << Input::MouseToString(mouse_button) << " was pressed with the following mods: " << Input::ModifierFlagsToString(mods);
+}
+
+void Application::OnMouseRelease(Input::Mouse mouse_button, int mods) {
+    PHYRE_LOG(trace, kWho) << "Mouse " << Input::MouseToString(mouse_button) << " was released with the following mods: " << Input::ModifierFlagsToString(mods);
+}
+
+void Application::OnMouseHold(Input::Mouse mouse_button, int mods) {
+    PHYRE_LOG(trace, kWho) << "Mouse " << Input::MouseToString(mouse_button) << " was held with the following mods: " << Input::ModifierFlagsToString(mods);
+}
 }
 }
