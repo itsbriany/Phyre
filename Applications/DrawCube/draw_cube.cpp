@@ -121,8 +121,12 @@ Phyre::Graphics::DrawCube::~DrawCube() {
 }
 
 void Phyre::Graphics::DrawCube::OnFramebufferResize(int width, int height) {
-    PHYRE_LOG(trace, kWho) << "Framebuffer dimensions: (" << width << "x" << height << ')';
+    PHYRE_LOG(debug, kWho) << "Framebuffer dimensions: (" << width << "x" << height << ')';
     ReloadSwapchain();
+}
+
+void Phyre::Graphics::DrawCube::OnMousePositionUpdate(double x, double y) {
+    PHYRE_LOG(debug, kWho) << "Mouse position: (" << x << ", " << y << ')';
 }
 
 void Phyre::Graphics::DrawCube::StartDebugger() {

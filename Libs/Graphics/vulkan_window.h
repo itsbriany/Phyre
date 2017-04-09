@@ -1,13 +1,12 @@
 #pragma once
-#include <vulkan.hpp>
 #include <GLFW/glfw3.h>
 
 #include "vulkan_gpu.h"
+#include "application.h"
 
 namespace Phyre {
 namespace Graphics {
 
-class Application;
 class VulkanInstance;
 class VulkanDevice;
 class VulkanWindow {
@@ -75,12 +74,44 @@ private:
      */
     void InitializeCallbacks();
 
+    /**
+     * \brief Configure how the window will behave on various inputs
+     */
+    void PrepareInput() const;
+
     // -------------------- Destroyers ----------------------
     // Destroys the SurfaceKHR
     void DestroySurface() const;
+    static void DestroyOSWindow(OSWindow* p_os_window);
 
     // -------------------- Callbacks ----------------------
-    static void OSFramebufferResizeCallback(OSWindow*, int width, int height);
+
+    /**
+     * \brief Called when the OS Framebuffer is resized
+     * \param width The new framebuffer width
+     * \param height The new framebuffer height
+     */
+    static void OSFramebufferResizeCallback(OSWindow* p_os_window, int width, int height);
+
+    /**
+     * \brief Called when the OS Mouse position updates
+     * \param x The new x position of the mouse
+     * \param y The new y position of the mouse
+     */
+    static void OSWindowMousePositionCallback(OSWindow* p_os_window, double x, double y);
+
+    /**
+     * \brief Called when a key is either pressed, released
+     * \param p_os_window The window who we register the callback to
+     * \param key The key code
+     * \param scancode The key code specific to the OS
+     * \param action Press, Release, etc...
+     * \param mods Flags that help determine if we are holding SHIFT, CTRL, ALT, etc...
+     */
+    static void OSWindowKeyCallback(OSWindow* p_os_window, int key, int scancode, int action, int mods);
+
+    // -------------------- Callback Helpers ----------------------
+    static Application* GetApplicationFromWindow(OSWindow* p_os_window);
 
     // ------------------ Data Members ---------------------
     // Width of the window

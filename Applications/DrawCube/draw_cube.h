@@ -24,6 +24,7 @@ public:
     //---------------------- Base Class Overrides ---------------------
 
     void OnFramebufferResize(int width, int height) override;
+    void OnMousePositionUpdate(double x, double y) override;
 
     //---------------------- Interface --------------------------------
     // Returns true if the rendering system started correctly

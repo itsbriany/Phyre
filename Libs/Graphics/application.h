@@ -1,5 +1,6 @@
 #pragma once
-#include <string>
+
+#include "input.h"
 
 namespace Phyre {
 namespace Graphics {
@@ -20,7 +21,35 @@ public:
      * \param width the width in screen resolution pixels
      * \param height the height in screen resolution pixels
      */
-    virtual void OnFramebufferResize(int width, int height) = 0;
+    virtual void OnFramebufferResize(int width, int height);
+
+    /**
+     * \brief Called when the mouse changes position
+     * \param x The new x position of the mouse
+     * \param y The new y position of the mouse
+     */
+    virtual void OnMousePositionUpdate(double x, double y);
+
+    /**
+     * \brief Called when the key with the given code is pressed
+     * \param key Which key did we press?
+     * \param mods Did we hold down keys like SHIFT/ALT/CTRL?
+     */
+    virtual void OnKeyPress(Input::Key key, int mods);
+
+    /**
+    * \brief Called when the key with the given code is pressed
+    * \param key Which key did we press?
+    * \param mods Did we hold down keys like SHIFT/ALT/CTRL?
+    */
+    virtual void OnKeyRelease(Input::Key key, int mods);
+
+    /**
+    * \brief Called when the key with the given code is pressed
+    * \param key Which key did we press?
+    * \param mods Did we hold down keys like SHIFT/ALT/CTRL?
+    */
+    virtual void OnKeyHold(Input::Key key, int mods);
 
 private:
     //---------------------- Logging Helper --------------------------
