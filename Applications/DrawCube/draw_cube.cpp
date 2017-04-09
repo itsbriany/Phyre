@@ -17,6 +17,8 @@ int main(int argc, const char* argv[]) {
         app.Draw();
         app.EndRender();
     }
+
+    app.Stop();
     return 0;
 }
 
@@ -92,7 +94,7 @@ void Phyre::Graphics::DrawCube::Start() {
     LoadPipeline();
     LoadCommandPool();
     LoadCommandBuffers();
-    LoadVulkanFence();
+    LoadSemaphores();
 }
 
 bool Phyre::Graphics::DrawCube::Run() const {
@@ -100,7 +102,7 @@ bool Phyre::Graphics::DrawCube::Run() const {
 }
 
 Phyre::Graphics::DrawCube::~DrawCube() {
-    p_device_->get().destroyFence(swapchain_image_available_fence_);
+    p_device_->get().destroySemaphore(render_finished_semaphore_);
     p_device_->get().destroyPipeline(pipeline_);
     p_device_->get().destroyPipelineLayout(pipeline_layout_);
     p_device_->get().destroyPipelineCache(pipeline_cache_);
@@ -321,11 +323,9 @@ void Phyre::Graphics::DrawCube::LoadPipeline() {
     pipeline_ = p_device_->get().createGraphicsPipeline(pipeline_cache_, graphics_pipeline_create_info);
 }
 
-void Phyre::Graphics::DrawCube::LoadVulkanFence() {
-    // Create a fence which we can use to know when the GPU is done rendering
-    // This is so that we can be guaranteed to display fully rendered images
-    vk::FenceCreateInfo fence_create_info;
-    swapchain_image_available_fence_ = p_device_->get().createFence(fence_create_info);
+void Phyre::Graphics::DrawCube::LoadSemaphores() {
+    vk::SemaphoreCreateInfo info;
+    render_finished_semaphore_ = p_device_->get().createSemaphore(info);
 }
 
 void Phyre::Graphics::DrawCube::Draw() {
@@ -433,16 +433,15 @@ void Phyre::Graphics::DrawCube::Draw() {
     submit_info.setPWaitDstStageMask(&pipeline_stage_flags);
     submit_info.setCommandBufferCount(static_cast<uint32_t>(command_buffers.size()));
     submit_info.setPCommandBuffers(command_buffers.data());
-    submit_info.setSignalSemaphoreCount(0);
-    submit_info.setPSignalSemaphores(nullptr);
+    submit_info.setSignalSemaphoreCount(1);
+    submit_info.setPSignalSemaphores(&render_finished_semaphore_);
 
     // Submit to the queue
-    p_device_->graphics_queue().submit(1, &submit_info, swapchain_image_available_fence_);
+    p_device_->graphics_queue().submit(1, &submit_info, nullptr);
 }
 
 void Phyre::Graphics::DrawCube::BeginRender() const {
-    p_swapchain_->LoadCurrentFrameIndex();
-    p_device_->get().resetFences(1, &swapchain_image_available_fence_);
+    p_swapchain_->AcquireNextImage();
     p_device_->graphics_queue().waitIdle();
 }
 
@@ -452,21 +451,19 @@ void Phyre::Graphics::DrawCube::EndRender() {
     present_info.setSwapchainCount(1);
     present_info.setPSwapchains(&p_swapchain_->swapchain());
     present_info.setPImageIndices(&p_swapchain_->current_frame_index());
-    present_info.setWaitSemaphoreCount(0);
-    present_info.setPWaitSemaphores(nullptr);
+    present_info.setWaitSemaphoreCount(1);
+    present_info.setPWaitSemaphores(&render_finished_semaphore_);
     present_info.setPResults(nullptr);
-
-    // Make sure the command buffer finished before presenting
-    vk::Result timeout_result = vk::Result::eTimeout;
-    do {
-        timeout_result = p_device_->get().waitForFences(1, &swapchain_image_available_fence_, true, UINT64_MAX);
-    } while (timeout_result == vk::Result::eTimeout);
 
     // We always want the swapchain to be in an optimal state
     vk::Result present_result = p_device_->presentation_queue().presentKHR(&present_info);
     if (present_result == vk::Result::eErrorOutOfDateKHR || present_result == vk::Result::eSuboptimalKHR) {
         ReloadSwapchain();
     }
+}
+
+void Phyre::Graphics::DrawCube::Stop() const {
+    p_device_->get().waitIdle();
 }
 
 void Phyre::Graphics::DrawCube::LogFPS() {
