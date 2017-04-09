@@ -5,6 +5,9 @@
 namespace Phyre {
 namespace Graphics {
 
+// -------------------- Type Definitions --------------------
+typedef GLFWwindow OSWindow;
+
 /**
  * \brief Various input mappings that can be used to trigger events.
  * The purpose of this namespaces is to provide a compatible interface

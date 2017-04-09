@@ -3,6 +3,7 @@
 
 #include "vulkan_gpu.h"
 #include "application.h"
+#include "cursor.h"
 
 namespace Phyre {
 namespace Graphics {
@@ -11,6 +12,7 @@ class VulkanInstance;
 class VulkanDevice;
 class VulkanWindow {
 public:
+    // -------------------- Construction/Destruction ------------
     explicit VulkanWindow(float width, float height,
                           const std::string& window_title,
                           const VulkanInstance& instance,
@@ -19,6 +21,8 @@ public:
     
     // Clean up vulkan resources
     ~VulkanWindow();
+
+    // -------------------- Interface ---------------------------
 
     // Let the window live and respond to events continuously
     // Returns false on exit
@@ -37,17 +41,13 @@ public:
     const vk::SurfaceFormatKHR& preferred_surface_format() const { return preferred_surface_format_; }
     const vk::PresentModeKHR& preferred_present_mode() const { return preferred_present_mode_; }
     Application* application() const { return p_application_; }
-    Input::CursorMode cursor_mode() const { return cursor_mode_; }
+    Cursor& cursor() { return cursor_; }
 
     // -------------------- Setters -------------------------
     void set_width(float width) { width_ = width; }
     void set_height(float height) { height_ = height; }
-    void set_cursor_mode(Input::CursorMode cursor_mode);
 
 private:
-    // -------------------- Type Definitions --------------------
-    typedef GLFWwindow OSWindow;
-
     // -------------------- Initializers --------------------
     static OSWindow* InitializeWindow(float width, float height, const std::string& window_title);
 
@@ -156,8 +156,8 @@ private:
     // A pointer to our application such that we can call back to it
     Application* p_application_;
 
-    // Determines the state of our cursor in this window
-    Input::CursorMode cursor_mode_;
+    // This window's cursor
+    Cursor cursor_;
 
     // ------------------ Logging --------------------------
     static const std::string kWho;

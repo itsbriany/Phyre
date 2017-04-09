@@ -44,8 +44,5 @@ void Application::OnMouseRelease(Input::Mouse mouse_button, int mods) {
     PHYRE_LOG(trace, kWho) << "Mouse " << Input::MouseToString(mouse_button) << " was released with the following mods: " << Input::ModifierFlagsToString(mods);
 }
 
-void Application::OnMouseHold(Input::Mouse mouse_button, int mods) {
-    PHYRE_LOG(trace, kWho) << "Mouse " << Input::MouseToString(mouse_button) << " was held with the following mods: " << Input::ModifierFlagsToString(mods);
-}
 }
 }

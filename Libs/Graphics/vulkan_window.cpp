@@ -1,5 +1,4 @@
 #include <vulkan.hpp>
-#include <GLFW/glfw3.h>
 #include <Logging/logging.h>
 
 #include "input.h"
@@ -34,7 +33,7 @@ VulkanWindow::VulkanWindow(float width,
     preferred_present_mode_(InitializePreferredPresentMode(surface_present_modes_)),
     preferred_surface_format_(InitializePreferredSurfaceFormat(surface_formats_)),
     p_application_(p_application),
-    cursor_mode_(Input::CursorMode::kNormal)
+    cursor_(p_window_)
 {
     InitializeCallbacks();
     PHYRE_LOG(trace, kWho) << "Instantiated";
@@ -103,16 +102,14 @@ void VulkanWindow::OSWindowKeyCallback(OSWindow* p_os_window, int key, int /*sca
 }
 
 void VulkanWindow::OSMouseButtonCallback(OSWindow* p_os_window, int button, int action, int mods) {
-    Application *p_application = GetApplicationFromWindow(p_os_window);
+    VulkanWindow *p_window = reinterpret_cast<VulkanWindow*>(glfwGetWindowUserPointer(p_os_window));
+    Application *p_application = p_window->application();
     switch (action) {
     case Input::Action::kPressed:
         p_application->OnMousePress(static_cast<Input::Mouse>(button), mods);
         break;
     case Input::Action::kReleased:
         p_application->OnMouseRelease(static_cast<Input::Mouse>(button), mods);
-        break;
-    case Input::Action::kHold:
-        p_application->OnMouseHold(static_cast<Input::Mouse>(button), mods);
         break;
     default:
         PHYRE_LOG(error, kWho) << "Could not determine mouse action";
@@ -124,12 +121,7 @@ Application* VulkanWindow::GetApplicationFromWindow(OSWindow* p_os_window) {
     return p_window->application();
 }
 
-void VulkanWindow::set_cursor_mode(Input::CursorMode cursor_mode) {
-    cursor_mode_ = cursor_mode;
-    glfwSetInputMode(p_window_, GLFW_CURSOR, cursor_mode_);
-}
-
-VulkanWindow::OSWindow* VulkanWindow::InitializeWindow(float width, float height, const std::string& window_title) {
+OSWindow* VulkanWindow::InitializeWindow(float width, float height, const std::string& window_title) {
     if (!glfwInit()) {
         std::string error_message = "Could not initialize GLFW!";
         PHYRE_LOG(error, kWho) << error_message;

@@ -65,13 +65,6 @@ public:
     */
     virtual void OnMouseRelease(Input::Mouse mouse_button, int mods);
 
-    /**
-    * \brief Called when a mouse button was held
-    * \param mouse_button  Which mouse button did we press?
-    * \param mods Did we hold down keys like SHIFT/ALT/CTRL?
-    */
-    virtual void OnMouseHold(Input::Mouse mouse_button, int mods);
-
 private:
     //---------------------- Logging Helper --------------------------
     static const std::string kWho;
