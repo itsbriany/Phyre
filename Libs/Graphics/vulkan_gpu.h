@@ -11,6 +11,13 @@ public:
     const vk::PhysicalDevice& get() const { return gpu_; }
     const vk::PhysicalDeviceProperties& properties() const { return properties_; }
     const vk::PhysicalDeviceMemoryProperties& memory_properties() const { return memory_properties_; }
+
+    /**
+     * \param memory_type_bits The memory type bits to query
+     * \param requirements_mask Determines what our memory requirements are (i.e. host only? device only? host and device? etc...)
+     * \return The memory type index for allocating memory on the GPU
+     */
+    uint32_t FindMemoryTypeIndex(uint32_t memory_type_bits, vk::MemoryPropertyFlags requirements_mask) const;
     
 private:
     static vk::PhysicalDeviceProperties InitializePhysicalDeviceProperties(const vk::PhysicalDevice& physical_device);

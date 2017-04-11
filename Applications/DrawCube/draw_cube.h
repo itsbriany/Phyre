@@ -1,13 +1,13 @@
 #pragma once
+#include <Configuration/provider.h>
 #include <Graphics/application.h>
 #include <Graphics/vulkan_debugger.h>
 #include <Graphics/vulkan_device.h>
 #include <Graphics/vulkan_instance.h>
 #include <Graphics/vulkan_gpu.h>
 #include <Graphics/vulkan_window.h>
-#include <Graphics/vulkan_uniform_buffer.h>
 #include <Graphics/vulkan_render_pass.h>
-#include "Configuration/provider.h"
+#include <Graphics/uniform_buffer.h>
 
 namespace Phyre {
 namespace Graphics {
@@ -73,6 +73,7 @@ private:
     void LoadShaderModules();
     void LoadVertexBuffer();
     void LoadUniformBuffer();
+    void UpdateUniformBuffers() const;
     void LoadRenderPass();
     void LoadFrameBuffers();
     void LoadDescriptorPool();
@@ -89,10 +90,6 @@ private:
 
     // ------------------- Event-Driven Stages ------------------
     void ReloadSwapchain();
-
-    // ------------------------ Helpers -------------------------
-    // Load SPIR-V Bytecode from file
-    static std::vector<uint32_t> ReadSpirV(const std::string spirv_shader_file_name);
 
     // ---------------------- Data Types ------------------------
     VulkanInstance instance_;
@@ -121,7 +118,7 @@ private:
     std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages_;
 
     // The uniform buffer
-    VulkanUniformBuffer* p_uniform_buffer_;
+    std::unique_ptr<UniformBuffer> p_uniform_buffer_;
 
     // The vertex buffer which we will be binding
     VertexBuffer vertex_buffer_;

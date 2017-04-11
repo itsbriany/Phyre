@@ -1,11 +1,14 @@
 #include <chrono>
 #include <fstream>
+#include <glm/gtc/matrix_transform.inl>
 
 #include <Graphics/geometry.h>
 #include <Graphics/vulkan_utils.h>
+#include <Graphics/uniform_buffer.h>
 #include <Logging/logging.h>
 
 #include "draw_cube.h"
+
 
 int main(int argc, const char* argv[]) {
     Phyre::Graphics::DrawCube app(argc, argv);
@@ -110,7 +113,7 @@ Phyre::Graphics::DrawCube::~DrawCube() {
     p_device_->get().destroyDescriptorPool(descriptor_pool_);
     DestroyFramebuffers();
     p_render_pass_.reset();
-    delete p_uniform_buffer_;
+    p_uniform_buffer_.reset();
     DestroyVertexBuffer();
     DestroyShaderModules();
     p_swapchain_.reset();
@@ -354,6 +357,8 @@ void Phyre::Graphics::DrawCube::LoadSemaphores() {
 }
 
 void Phyre::Graphics::DrawCube::Draw() {
+    UpdateUniformBuffers();
+
     // We cannot bind the vertex buffer until we begin a renderpass
     std::array<vk::ClearValue, 2> clear_values;
     vk::ClearColorValue color;
@@ -366,24 +371,24 @@ void Phyre::Graphics::DrawCube::Draw() {
     clear_values[1].setDepthStencil(depth_stencil);
 
     // Prepare the begin render pass
-    vk::RenderPassBeginInfo begin_info;
-    begin_info.setRenderPass(p_render_pass_->get());
-    begin_info.setFramebuffer(framebuffers_[p_swapchain_->current_frame_index()]);
+    vk::RenderPassBeginInfo render_pass_begin_info;
+    render_pass_begin_info.setRenderPass(p_render_pass_->get());
+    render_pass_begin_info.setFramebuffer(framebuffers_[p_swapchain_->current_frame_index()]);
 
     vk::Offset2D offset;
     vk::Extent2D extent(static_cast<uint32_t>(p_swapchain_->image_width()), static_cast<uint32_t>(p_swapchain_->image_height()));
     vk::Rect2D render_area(offset, extent);
-    begin_info.setRenderArea(render_area);
+    render_pass_begin_info.setRenderArea(render_area);
 
-    begin_info.setClearValueCount(static_cast<uint32_t>(clear_values.size()));
-    begin_info.setPClearValues(clear_values.data());
+    render_pass_begin_info.setClearValueCount(static_cast<uint32_t>(clear_values.size()));
+    render_pass_begin_info.setPClearValues(clear_values.data());
 
     // We can only connect vertex buffers between the begin and end stages of a render pass
     // Begin the render pass stage
     uint32_t command_buffer_index = 0;
     const vk::CommandBuffer& command_buffer = command_buffers_[command_buffer_index];
     ExecuteBeginCommandBuffer(command_buffer_index);
-    command_buffer.beginRenderPass(&begin_info, vk::SubpassContents::eInline);
+    command_buffer.beginRenderPass(&render_pass_begin_info, vk::SubpassContents::eInline);
 
     // Bind vertex buffers
     uint32_t start_binding = 0; // We will start our binding at offset 0
@@ -391,12 +396,12 @@ void Phyre::Graphics::DrawCube::Draw() {
     std::array<vk::DeviceSize, 1> offsets = { 0 };
     command_buffer.bindVertexBuffers(start_binding, binding_count, &vertex_buffer_.buffer, offsets.data());
 
-    // Bind graphics pipeline
+    // Bind graphics pipeline to the command buffer
     // Note that it is also possible to create multiple graphics pipelines and switch between them with a single
     // command buffer
     command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline_);
 
-    // Bind the descriptor sets
+    // Bind the descriptor sets to the command buffer
     // Now the pipeline will know how to find its input data like the MVP transform
     uint32_t first_set = 0;
     command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout_, first_set, 1, descriptor_sets_.data(), 0, nullptr);
@@ -509,21 +514,20 @@ void Phyre::Graphics::DrawCube::LogFPS() {
 
 void Phyre::Graphics::DrawCube::LoadShaderModules() {
     // This is where the SPIR-V intermediate bytecode is located
-    // std::string resource_directory("GraphicsTestResources/");
     std::string vertex_file_name("vertices.spv");
     std::vector<uint32_t> vertex_shader_bytecode = p_provider_->GetContentsSPIRV(target_, vertex_file_name);
 
     if (vertex_shader_bytecode.empty()) {
-        PHYRE_LOG(warning, kWho) << "Could not read any vertex shader bytecode!";
-        return;
+        PHYRE_LOG(fatal, kWho) << "Could not read any vertex shader bytecode!";
+        exit(EXIT_FAILURE);
     }
 
     std::string fragment_file_name("fragments.spv");
     std::vector<uint32_t> fragment_shader_bytecode = p_provider_->GetContentsSPIRV(target_, fragment_file_name);
 
     if (vertex_shader_bytecode.empty()) {
-        PHYRE_LOG(warning, kWho) << "Could not read any fragment shader bytecode!";
-        return;
+        PHYRE_LOG(fatal, kWho) << "Could not read any fragment shader bytecode!";
+        exit(EXIT_FAILURE);
     }
 
     // We will be creating two pipeline shader stages: One for vertices, and one for fragments
@@ -594,7 +598,71 @@ void Phyre::Graphics::DrawCube::LoadVertexBuffer() {
 }
 
 void Phyre::Graphics::DrawCube::LoadUniformBuffer() {
-    p_uniform_buffer_ = new VulkanUniformBuffer(*p_device_);
+    uint32_t graphics_queue_family_index = p_device_->graphics_queue_family_index();
+    
+    vk::BufferCreateInfo uniform_buffer_create_info;
+    uniform_buffer_create_info.setPQueueFamilyIndices(&graphics_queue_family_index);
+    uniform_buffer_create_info.setQueueFamilyIndexCount(1);
+    uniform_buffer_create_info.setSharingMode(vk::SharingMode::eExclusive);
+    uniform_buffer_create_info.setUsage(vk::BufferUsageFlagBits::eUniformBuffer);
+    uniform_buffer_create_info.setSize(sizeof(ModelViewProjection));
+    
+    vk::Buffer buffer = p_device_->get().createBuffer(uniform_buffer_create_info);
+
+    // The memory requirements come with size, alignment, and memory type
+    // They vary accross GPU
+    vk::MemoryRequirements memory_requirements = p_device_->get().getBufferMemoryRequirements(buffer);
+
+    // We need the CPU to access this memory. The eHostCoherent bit is set because we want to write 
+    // to this memory witout flushing (i.e. synchronizing after every update).
+    vk::MemoryPropertyFlags memory_property_flags = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent;
+
+    // NOTE This may crash if no memory_type_index can be found
+    uint32_t memory_type_index = p_active_gpu_->FindMemoryTypeIndex(memory_requirements.memoryTypeBits, memory_property_flags);
+    vk::MemoryAllocateInfo malloc_info;
+    malloc_info.setAllocationSize(memory_requirements.size);
+    malloc_info.setMemoryTypeIndex(memory_type_index);
+
+    // Allocate some memory on the device
+    vk::DeviceMemory memory = p_device_->get().allocateMemory(malloc_info);
+
+    // Bind the memory to the buffer
+    p_device_->get().bindBufferMemory(buffer, memory, 0);
+
+    // Let's map this memory to the host
+    vk::DescriptorBufferInfo descriptor;
+    descriptor.setBuffer(buffer);
+    descriptor.setOffset(0);                          // Memory in this buffer is accessed realtive to this offset
+    descriptor.setRange(sizeof(ModelViewProjection)); // The range in bytes starting from offset
+    p_uniform_buffer_ = std::make_unique<UniformBuffer>(*p_device_, buffer, memory, descriptor);
+
+    UpdateUniformBuffers();
+}
+
+void Phyre::Graphics::DrawCube::UpdateUniformBuffers() const {
+    using std::chrono::high_resolution_clock;
+    static std::chrono::time_point<high_resolution_clock> startTime = high_resolution_clock::now();
+    std::chrono::time_point<high_resolution_clock> currentTime = high_resolution_clock::now();
+    float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
+
+    ModelViewProjection mvp;
+
+    // Rotate 90 degrees per second along the Z-Axis
+    mvp.model = glm::rotate(glm::mat4(), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    
+    // Set the "camera" eye position at the origin looking upwards
+    mvp.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    // Project the 3D world onto a plane with a 45 degree vertical field of view
+    mvp.projection = glm::perspective(glm::radians(45.0f), p_swapchain_->image_width() / p_swapchain_->image_height(), 0.1f, 10.0f);
+
+    // Flip the Y-coordinate since GLM was originally designed for OpenGL
+    // mvp.projection[1][1] *= -1;
+
+    // Map the memory from the device to the host, update it with the new transformation data, then remove the mapping
+    void *p_data = p_device_->get().mapMemory(p_uniform_buffer_->memory(), 0, sizeof(ModelViewProjection));
+    memcpy(p_data, &mvp, sizeof(ModelViewProjection));
+    p_device_->get().unmapMemory(p_uniform_buffer_->memory());
 }
 
 void Phyre::Graphics::DrawCube::LoadFrameBuffers() {
@@ -661,15 +729,16 @@ void Phyre::Graphics::DrawCube::LoadDescriptorSets() {
 
     descriptor_sets_ = p_device_->get().allocateDescriptorSets(allocate_info);
 
-    // Copy the vk::DescriptorBufferInfo to the descriptor likely residing in device memory
+    // Specify the descriptor set that we will write to
+    // In GLSL, we can specify uniform buffers and associate them with sets (i.e. descriptor sets)
     std::array<vk::WriteDescriptorSet, 1> writes;
     writes[0] = vk::WriteDescriptorSet();
-    writes[0].setDstSet(descriptor_sets_[0]);
-    writes[0].setDescriptorCount(1);
+    writes[0].setDstSet(descriptor_sets_[0]);     // The destination descriptor set to update
+    writes[0].setDescriptorCount(1);              // How many elements in the descriptor to update
     writes[0].setDescriptorType(vk::DescriptorType::eUniformBuffer);
-    writes[0].setPBufferInfo(&p_uniform_buffer_->descriptor_buffer_info());
-    writes[0].setDstArrayElement(0);
-    writes[0].setDstBinding(0);
+    writes[0].setPBufferInfo(&p_uniform_buffer_->descriptor());
+    writes[0].setDstArrayElement(0);              // The first element to update
+    writes[0].setDstBinding(0);                   // The destination descriptor binding to update
 
     // The byte layout of the actual descriptor is driver implementation specific,
     // Vulkan abstracts this
@@ -696,24 +765,4 @@ void Phyre::Graphics::DrawCube::LoadPipelineLayout() {
     create_info.setPSetLayouts(&descriptor_set_layout_);
 
     pipeline_layout_ = p_device_->get().createPipelineLayout(create_info);
-}
-
-std::vector<uint32_t> Phyre::Graphics::DrawCube::ReadSpirV(const std::string spirv_shader_file_name) {
-    std::ifstream shader_file(spirv_shader_file_name, std::ios::binary);
-    if (!shader_file) {
-        PHYRE_LOG(error, kWho) << "Could not open " << spirv_shader_file_name;
-        return std::vector<uint32_t>();
-    }
-    // get length of file:
-    shader_file.seekg(0, shader_file.end);
-    size_t length = shader_file.tellg();
-    shader_file.seekg(0, shader_file.beg);
-
-    // Spir-V byte alignment should represent the size of a uint32_t
-    std::vector<uint32_t> vertex_shader_bytecode(length / sizeof(uint32_t));
-    shader_file.read(reinterpret_cast<char*>(vertex_shader_bytecode.data()), length);
-    PHYRE_LOG(debug, kWho) << "Read " << vertex_shader_bytecode.size() << " SPIR-V data blocks";
-    shader_file.close();
-
-    return vertex_shader_bytecode;
 }
