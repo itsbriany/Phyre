@@ -62,8 +62,8 @@ bool VulkanWindow::Update() const {
     return p_window_->Update();
 }
 
-void VulkanWindow::Close() {
-    p_window_.reset();
+void VulkanWindow::Close() const {
+    p_window_->Close();
 }
 
 void VulkanWindow::DestroySurface() const {

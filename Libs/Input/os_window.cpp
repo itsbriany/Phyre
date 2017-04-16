@@ -14,11 +14,12 @@ Window::Window(int width, int height, const std::string& title) {
     }
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     p_os_window_ = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+    p_handlers_ = std::make_shared<HandlerMap>();
     DispatchEvents();
 }
 
 Window::~Window() {
-    glfwDestroyWindow(p_os_window_);
+    Close();
 }
 
 vk::SurfaceKHR Window::CreateVulkanSurfaceKHR(const vk::Instance& instance) const {
@@ -33,11 +34,18 @@ vk::SurfaceKHR Window::CreateVulkanSurfaceKHR(const vk::Instance& instance) cons
     return surface;
 }
 
-void Window::Bind(Handler::Pointer handler) {
+void Window::Close() {
+    if (p_os_window_) {
+        glfwDestroyWindow(p_os_window_);
+        p_os_window_ = nullptr;
+    }
+}
+
+void Window::Bind(Handler::Pointer handler) const {
     Add(handler);
 }
 
-void Window::Unbind(Handler::Pointer handler) {
+void Window::Unbind(Handler::Pointer handler) const {
     Remove(handler);
 }
 
@@ -74,93 +82,84 @@ void Window::DispatchEvents() {
     glfwSetKeyCallback(p_os_window_, &OSWindowKeyCallback);
     glfwSetMouseButtonCallback(p_os_window_, &OSMouseButtonCallback);
     glfwSetScrollCallback(p_os_window_, &OSMouseScrollCallback);
+    glfwSetWindowCloseCallback(p_os_window_, &OSWindowCloseCallback);
 }
 
-void Window::Add(Handler::Pointer handler) {
+void Window::Add(Handler::Pointer handler) const {
     std::pair<Handler::Priority, Handler::Pointer> pair(handler->priority(), handler);
-    handlers_.insert(pair);
+    p_handlers_->insert(pair);
 }
 
-void Window::Remove(Handler::Pointer handler) {
-    handlers_.erase(handler->priority());
+void Window::Remove(Handler::Pointer handler) const {
+    p_handlers_->erase(handler->priority());
 }
 
 void Window::OSFramebufferResizeCallback(OSWindow* p_os_window, int width, int height) {
     if (width == 0 || height == 0) {
         return;
     }
-    Window *p_window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(p_os_window));
-    for (auto pair : p_window->handlers()) {
-        Handler::Pointer p_handler = pair.second;
-        if (p_handler) {
-            p_handler->OnFramebufferResize(width, height);
-        } else {
-            p_window->Remove(p_handler);
-        }
-    }
+    NotifyHandlers(p_os_window, [width, height](Handler::Pointer p_handler) {
+        p_handler->OnFramebufferResize(width, height);
+    });
 }
 
 void Window::OSWindowMousePositionCallback(OSWindow* p_os_window, double x, double y) {
-    Window *p_window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(p_os_window));
-    for (auto pair : p_window->handlers()) {
-        Handler::Pointer p_handler = pair.second;
-        if (p_handler) {
-            p_handler->OnMousePositionUpdate(x, y);
-        } else {
-            p_window->Remove(p_handler);
-        }
-    }
+    NotifyHandlers(p_os_window, [x, y](Handler::Pointer p_handler) {
+        p_handler->OnMousePositionUpdate(x, y);
+    });
 }
 
 void Window::OSWindowKeyCallback(OSWindow* p_os_window, int key, int /*scancode*/, int action, int mods) {
-    Window *p_window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(p_os_window));
-    for (auto pair : p_window->handlers()) {
-        Handler::Pointer p_handler = pair.second;
-        if (p_handler) {
-            if (action == kPressed) {
-                p_handler->OnKeyPress(static_cast<Key>(key), mods);
-            }
-            else if (action == kReleased) {
-                p_handler->OnKeyRelease(static_cast<Key>(key), mods);
-            }
-            else if (action == kHold) {
-                p_handler->OnKeyHold(static_cast<Key>(key), mods);
-            }
-        } else {
-            p_window->Remove(p_handler);
+    NotifyHandlers(p_os_window, [key, action, mods](Handler::Pointer p_handler) {
+        if (action == kPressed) {
+            p_handler->OnKeyPress(static_cast<Key>(key), mods);
         }
-    }
+        else if (action == kReleased) {
+            p_handler->OnKeyRelease(static_cast<Key>(key), mods);
+        }
+        else if (action == kHold) {
+            p_handler->OnKeyHold(static_cast<Key>(key), mods);
+        }
+    });
 }
 
 void Window::OSMouseButtonCallback(OSWindow* p_os_window, int button, int action, int mods) {
-    Window *p_window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(p_os_window));
-    for (auto pair : p_window->handlers()) {
-        Handler::Pointer p_handler = pair.second;
-        if (p_handler) {
-            switch (action) {
-            case kPressed:
-                p_handler->OnMousePress(static_cast<Mouse>(button), mods);
-                break;
-            case kReleased:
-                p_handler->OnMouseRelease(static_cast<Mouse>(button), mods);
-                break;
-            default:
-                PHYRE_LOG(error, kWho) << "Could not determine mouse action";
-            }
-        } else {
-            p_window->Remove(p_handler);
+    NotifyHandlers(p_os_window, [button, action, mods](Handler::Pointer p_handler) {
+        switch (action) {
+        case kPressed:
+            p_handler->OnMousePress(static_cast<Mouse>(button), mods);
+            break;
+        case kReleased:
+            p_handler->OnMouseRelease(static_cast<Mouse>(button), mods);
+            break;
+        default:
+            PHYRE_LOG(error, kWho) << "Could not determine mouse action";
         }
-    }
+    });
 }
 
 void Window::OSMouseScrollCallback(OSWindow* p_os_window, double x_offset, double y_offset) {
+    NotifyHandlers(p_os_window, [x_offset, y_offset](Handler::Pointer p_handler) {
+        p_handler->OnMouseScroll(x_offset, y_offset);
+    });
+}
+
+void Window::OSWindowCloseCallback(OSWindow* p_os_window) {
     Window *p_window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(p_os_window));
-    for (auto pair : p_window->handlers()) {
-        Handler::Pointer p_handler = pair.second;
+    p_window->Close();
+}
+
+void Window::NotifyHandlers(OSWindow* p_os_window, NotificationCallback callback) {
+    Window *p_window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(p_os_window));
+    std::shared_ptr<HandlerMap> p_handlers = p_window->handlers();
+    HandlerMap::iterator it = p_handlers->begin();
+    while (it != p_handlers->end()) {
+        Handler::Pointer p_handler = it->second;
         if (p_handler) {
-            p_handler->OnMouseScroll(x_offset, y_offset);
+            callback(p_handler);
+            ++it;
         } else {
-            p_window->Remove(p_handler);
+            it = p_handlers->erase(it);
         }
     }
 }

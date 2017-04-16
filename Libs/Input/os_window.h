@@ -2,6 +2,7 @@
 #include <vulkan.hpp>
 #include <boost/utility.hpp>
 #include <map>
+#include <functional>
 
 #include "handler.h"
 
@@ -27,17 +28,22 @@ public:
     vk::SurfaceKHR CreateVulkanSurfaceKHR(const vk::Instance& instance) const;
 
     /**
+     * \brief Close this window
+     */
+    void Close();
+
+    /**
      * \brief Bind a handler to us
      * \param handler The pointer to the handler we wish to dispatch events to
      */
-    void Bind(Handler::Pointer handler);
+    void Bind(Handler::Pointer handler) const;
 
     /**
      * \brief Unbind a handler from us
      * \param handler The pointer to the handler from which we no longer wish to
      * dispatch events to
      */
-    void Unbind(Handler::Pointer handler);
+    void Unbind(Handler::Pointer handler) const;
 
     /**
      * \brief Update the cursor mode for this window
@@ -75,16 +81,16 @@ private:
      * \brief Manage a handler
      * \param handler The handler we want to manage
      */
-    void Add(Handler::Pointer handler);
+    void Add(Handler::Pointer handler) const;
 
     /**
      * \brief Remove a handler
      * \param handler The handler we wish to stop managing
      */
-    void Remove(Handler::Pointer handler);
+    void Remove(Handler::Pointer handler) const;
 
     // Get the set of handlers we are managing
-    const HandlerMap& handlers() const { return handlers_; }
+    std::shared_ptr<HandlerMap> handlers() const { return p_handlers_; }
 
     // ------------------------ OS Window Callbacks ------------------------
     static void OSFramebufferResizeCallback(OSWindow* p_os_window, int width, int height);
@@ -92,13 +98,20 @@ private:
     static void OSWindowKeyCallback(OSWindow* p_os_window, int key, int /*scancode*/, int action, int mods);
     static void OSMouseButtonCallback(OSWindow* p_os_window, int button, int action, int mods);
     static void OSMouseScrollCallback(OSWindow* p_os_window, double x_offset, double y_offset);
+    static void OSWindowCloseCallback(OSWindow* p_os_window);
+
+    // --------------------------- Helpers ---------------------------------
+    typedef std::function<void(Handler::Pointer)> NotificationCallback;
+    static void NotifyHandlers(OSWindow* p_os_window, NotificationCallback callback);
 
     // -------------------------- Data Members -----------------------------
     // A pointer to the underlying OS Window
     OSWindow* p_os_window_;
 
     // The handlers to whom we dispatch events to
-    HandlerMap handlers_;
+    // This is a shared_ptr because one of the handlers may end up deleting this object
+    // so it is important to keep a shared_ptr to it to prolong lifetime
+    std::shared_ptr<HandlerMap> p_handlers_;
 
     // -------------------------- Logging Helper ---------------------------
     static const std::string kWho;

@@ -38,7 +38,7 @@ public:
     bool Update() const;
     
     // Close the window
-    void Close();
+    void Close() const;
 
     // -------------------- Accessors -----------------------
     const float& width() const { return width_; }
