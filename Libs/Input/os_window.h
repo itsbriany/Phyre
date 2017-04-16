@@ -63,7 +63,7 @@ public:
 private:
     // -------------------------- Type Definitions -------------------------
     typedef GLFWwindow OSWindow;
-    typedef std::map<Handler::Priority, Handler::Weak> HandlerMap;
+    typedef std::multimap<Handler::Priority, Handler::Weak> HandlerMap;
 
     // ---------------------- Event Dispatching ----------------------------
     
