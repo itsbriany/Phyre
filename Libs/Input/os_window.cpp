@@ -15,6 +15,7 @@ Window::Window(int width, int height, const std::string& title) {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     p_os_window_ = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
     p_handlers_ = std::make_shared<HandlerMap>();
+    InitializeMouseActionMap();
     DispatchEvents();
 }
 
@@ -63,6 +64,14 @@ void Window::SetCursorPosition(const glm::vec2& coordinates) const {
     glfwSetCursorPos(p_os_window_, coordinates.x, coordinates.y);
 }
 
+Action Window::MouseButton(Mouse mouse_button) const {
+    MouseActionMap::const_iterator cit = mouse_action_map_.find(mouse_button);
+    if (cit != mouse_action_map_.end()) {
+        return cit->second;
+    }
+    return kReleased;
+}
+
 bool Window::Update() const {
     glfwPollEvents();
     if (!p_os_window_ || glfwWindowShouldClose(p_os_window_)) {
@@ -84,6 +93,22 @@ void Window::DispatchEvents() {
 void Window::Add(Handler::Pointer handler) const {
     std::pair<Handler::Priority, Handler::Pointer> pair(handler->priority(), handler);
     p_handlers_->insert(pair);
+}
+
+void Window::InitializeMouseActionMap() {
+    mouse_action_map_ = {
+        { kButton1, kReleased },
+        { kButton2, kReleased },
+        { kButton3, kReleased },
+        { kButton4, kReleased },
+        { kButton5, kReleased },
+        { kButton6, kReleased },
+        { kButton7, kReleased },
+        { kButton8, kReleased },
+        { kLeftButton, kReleased },
+        { kMiddleButton, kReleased },
+        { kRightButton, kReleased }
+    };
 }
 
 void Window::OSFramebufferResizeCallback(OSWindow* p_os_window, int width, int height) {
@@ -116,6 +141,7 @@ void Window::OSWindowKeyCallback(OSWindow* p_os_window, int key, int /*scancode*
 }
 
 void Window::OSMouseButtonCallback(OSWindow* p_os_window, int button, int action, int mods) {
+    UpdateMouseButton(p_os_window, button, action);
     NotifyHandlers(p_os_window, [button, action, mods](Handler::Pointer p_handler) {
         switch (action) {
         case kPressed:
@@ -158,6 +184,13 @@ void Window::NotifyHandlers(OSWindow* p_os_window, NotificationCallback callback
             it = p_handlers->erase(it);
         }
     }
+}
+
+void Window::UpdateMouseButton(OSWindow* p_os_window, int button, int action) {
+    Window *p_window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(p_os_window));
+    Mouse mouse_button = static_cast<Mouse>(button);
+    Action mouse_action = static_cast<Action>(action);
+    p_window->mouse_action_map_[mouse_button] = mouse_action;
 }
 
 }

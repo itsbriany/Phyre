@@ -58,6 +58,10 @@ void Handler::SetCursorPosition(const glm::vec2& coordinates) const {
     p_window_->SetCursorPosition(coordinates);
 }
 
+Action Handler::MouseButton(Mouse mouse_button) const {
+    return p_window_->MouseButton(mouse_button);
+}
+
 void Handler::OnFramebufferResize(int width, int height) {
     PHYRE_LOG(trace, kWho) << "Framebuffer resized: (" << width << 'x' << height << ')';
 }

@@ -53,6 +53,12 @@ public:
     glm::vec2 CursorPosition() const;
     void SetCursorPosition(const glm::vec2& coordinates) const;
 
+    /**
+     * \param mouse_button The mouse button we wish to query state from
+     * \return The state of the mouse button (i.e. pressed or released)
+     */
+    Action MouseButton(Mouse mouse_button) const;
+
     //---------------------- Window Handles --------------------------
 
     /**

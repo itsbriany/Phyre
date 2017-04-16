@@ -1,8 +1,10 @@
 #pragma once
+#include <map>
+#include <unordered_map>
+#include <functional>
+
 #include <vulkan.hpp>
 #include <boost/utility.hpp>
-#include <map>
-#include <functional>
 
 #include "handler.h"
 
@@ -20,7 +22,9 @@ public:
     */
     Window(int width, int height, const std::string& title);
     ~Window();
-    
+
+    // --------------------------- Interface ---------------------------------
+
     /** 
      * \param instance The vulkan instance required to create the vulkan surface
      * \return A vulkan surface from the OS window
@@ -56,6 +60,12 @@ public:
     void SetCursorPosition(const glm::vec2& coordinates) const;
 
     /**
+    * \param mouse_button The mouse button we wish to query state from
+    * \return The state of the mouse button (i.e. pressed or released)
+    */
+    Action MouseButton(Mouse mouse_button) const;
+
+    /**
     * \return Returns true if the window updated successfully.
     */
     bool Update() const;
@@ -64,6 +74,11 @@ private:
     // -------------------------- Type Definitions -------------------------
     typedef GLFWwindow OSWindow;
     typedef std::multimap<Handler::Priority, Handler::Weak> HandlerMap;
+    typedef std::unordered_map<Mouse, Action> MouseActionMap;
+
+    // --------------------------- Initializers ------------------------------
+
+    void InitializeMouseActionMap();
 
     // ---------------------- Event Dispatching ----------------------------
     
@@ -87,10 +102,11 @@ private:
     static void OSMouseScrollCallback(OSWindow* p_os_window, double x_offset, double y_offset);
     static void OSWindowCloseCallback(OSWindow* p_os_window);
 
-    // --------------------------- Helpers ---------------------------------
+    // --------------------------- Stateless Helpers -----------------------
     typedef std::function<void(Handler::Pointer)> NotificationCallback;
     static void NotifyHandlers(OSWindow* p_os_window, NotificationCallback callback);
-
+    static void UpdateMouseButton(OSWindow* p_os_window, int button, int action);
+    
     // -------------------------- Data Members -----------------------------
     // A pointer to the underlying OS Window
     OSWindow* p_os_window_;
@@ -99,6 +115,9 @@ private:
     // This is a shared_ptr because one of the handlers may end up deleting this object
     // so it is important to keep a shared_ptr to it to prolong lifetime
     std::shared_ptr<HandlerMap> p_handlers_;
+
+    // Maintains the state of the mouse buttons
+    MouseActionMap mouse_action_map_;
 
     // -------------------------- Logging Helper ---------------------------
     static const std::string kWho;

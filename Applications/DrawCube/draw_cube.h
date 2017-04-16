@@ -26,7 +26,7 @@ public:
     void OnFramebufferResize(int width, int height) override;
     void OnMousePositionUpdate(double x, double y) override;
     void OnKeyRelease(Input::Key key, int mods) override;
-    void OnMouseRelease(Input::Mouse mouse_button, int mods) override;
+    void OnMousePress(Input::Mouse mouse_button, int mods) override;
 
     //---------------------- Interface --------------------------------
 

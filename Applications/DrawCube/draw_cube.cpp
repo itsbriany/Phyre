@@ -141,8 +141,12 @@ void Phyre::Graphics::DrawCube::OnFramebufferResize(int width, int height) {
 }
 
 void Phyre::Graphics::DrawCube::OnMousePositionUpdate(double x, double y) {
-    if (CursorMode() == Input::Cursor::kHidden)
-        PHYRE_LOG(debug, kWho) << "Mouse position: (" << x << ", " << y << ')';
+    Input::Cursor::Mode cursor_mode = CursorMode();
+    if (cursor_mode == Input::Cursor::kDisabled) {
+        if (MouseButton(Input::Mouse::kButton1) == Input::Action::kPressed) {
+            PHYRE_LOG(debug, kWho) << "PRESSED: Mouse position: (" << x << ", " << y << ')';
+        }
+    }
 }
 
 void Phyre::Graphics::DrawCube::OnKeyRelease(Input::Key key, int mods) {
@@ -158,11 +162,11 @@ void Phyre::Graphics::DrawCube::OnKeyRelease(Input::Key key, int mods) {
     }
 }
 
-void Phyre::Graphics::DrawCube::OnMouseRelease(Input::Mouse mouse_button, int mods) {
+void Phyre::Graphics::DrawCube::OnMousePress(Input::Mouse mouse_button, int mods) {
     if (CursorMode() == Input::Cursor::Mode::kNormal && (mouse_button == Input::Mouse::kButton1 || mouse_button == Input::Mouse::kLeftButton)) {
         SetCursorMode(Input::Cursor::Mode::kDisabled);
     }
-    BaseClass::OnMouseRelease(mouse_button, mods);
+    BaseClass::OnMousePress(mouse_button, mods);
 }
 
 void Phyre::Graphics::DrawCube::StartDebugger() {
