@@ -33,17 +33,10 @@ public:
     void Close();
 
     /**
-     * \brief Bind a handler to us
+     * \brief Bind a handler to us. Handlers are automatically unbound when their lifetime expires.
      * \param handler The pointer to the handler we wish to dispatch events to
      */
     void Bind(Handler::Pointer handler) const;
-
-    /**
-     * \brief Unbind a handler from us
-     * \param handler The pointer to the handler from which we no longer wish to
-     * dispatch events to
-     */
-    void Unbind(Handler::Pointer handler) const;
 
     /**
      * \brief Update the cursor mode for this window
@@ -70,7 +63,7 @@ public:
 private:
     // -------------------------- Type Definitions -------------------------
     typedef GLFWwindow OSWindow;
-    typedef std::map<Handler::Priority, Handler::Pointer> HandlerMap;
+    typedef std::map<Handler::Priority, Handler::Weak> HandlerMap;
 
     // ---------------------- Event Dispatching ----------------------------
     
@@ -82,12 +75,6 @@ private:
      * \param handler The handler we want to manage
      */
     void Add(Handler::Pointer handler) const;
-
-    /**
-     * \brief Remove a handler
-     * \param handler The handler we wish to stop managing
-     */
-    void Remove(Handler::Pointer handler) const;
 
     // Get the set of handlers we are managing
     std::shared_ptr<HandlerMap> handlers() const { return p_handlers_; }

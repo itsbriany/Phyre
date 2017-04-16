@@ -45,10 +45,6 @@ void Window::Bind(Handler::Pointer handler) const {
     Add(handler);
 }
 
-void Window::Unbind(Handler::Pointer handler) const {
-    Remove(handler);
-}
-
 void Window::SetCursorMode(Cursor::Mode mode) const {
     glfwSetInputMode(p_os_window_, GLFW_CURSOR, mode);
 }
@@ -88,10 +84,6 @@ void Window::DispatchEvents() {
 void Window::Add(Handler::Pointer handler) const {
     std::pair<Handler::Priority, Handler::Pointer> pair(handler->priority(), handler);
     p_handlers_->insert(pair);
-}
-
-void Window::Remove(Handler::Pointer handler) const {
-    p_handlers_->erase(handler->priority());
 }
 
 void Window::OSFramebufferResizeCallback(OSWindow* p_os_window, int width, int height) {
@@ -154,10 +146,14 @@ void Window::NotifyHandlers(OSWindow* p_os_window, NotificationCallback callback
     std::shared_ptr<HandlerMap> p_handlers = p_window->handlers();
     HandlerMap::iterator it = p_handlers->begin();
     while (it != p_handlers->end()) {
-        Handler::Pointer p_handler = it->second;
-        if (p_handler) {
-            callback(p_handler);
-            ++it;
+        Handler::Weak p_weak_handler = it->second;
+        if (Handler::Pointer p_handler = p_weak_handler.lock()) {
+            if (p_handler) {
+                callback(p_handler);
+                ++it;
+            } else {
+                it = p_handlers->erase(it);
+            }
         } else {
             it = p_handlers->erase(it);
         }

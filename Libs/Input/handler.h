@@ -15,6 +15,7 @@ class Handler : public std::enable_shared_from_this<Handler> {
 public:
     //---------------------- Type Definitions ------------------------
     typedef std::shared_ptr<Handler> Pointer;
+    typedef std::weak_ptr<Handler> Weak;
     
     // The lower this number, the higher the priority.
     // This means that a lower number will get events dispatched to it before 

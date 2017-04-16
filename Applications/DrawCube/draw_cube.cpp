@@ -9,8 +9,7 @@
 
 #include "draw_cube.h"
 
-
-int main(int argc, const char* argv[]) {
+void Run(int argc, const char* argv[]) {
     using Phyre::Graphics::DrawCube;
     std::shared_ptr<DrawCube> app = DrawCube::Create(argc, argv);
 
@@ -22,6 +21,10 @@ int main(int argc, const char* argv[]) {
     }
 
     app->Stop();
+}
+
+int main(int argc, const char* argv[]) {
+    Run(argc, argv);
     return 0;
 }
 
