@@ -1,6 +1,5 @@
 #pragma once
 #include <Configuration/provider.h>
-#include <Graphics/application.h>
 #include <Graphics/vulkan_debugger.h>
 #include <Graphics/vulkan_device.h>
 #include <Graphics/vulkan_instance.h>
@@ -8,17 +7,18 @@
 #include <Graphics/vulkan_window.h>
 #include <Graphics/vulkan_render_pass.h>
 #include <Graphics/uniform_buffer.h>
+#include <Input/handler.h>
 
 namespace Phyre {
 namespace Graphics {
 
-class DrawCube : public Application {
+class DrawCube : public Input::Handler {
 public:
     //---------------------- Type Definitions -------------------------
-    typedef Application BaseClass;
+    typedef Handler BaseClass;
 
     //---------------------- Construction/Destruction -----------------
-    DrawCube(int argc, const char* argv[]);
+    static std::shared_ptr<DrawCube> Create(int argc, const char* argv[]);
     ~DrawCube();
 
     //---------------------- Base Class Overrides ---------------------
@@ -29,8 +29,6 @@ public:
     void OnMouseRelease(Input::Mouse mouse_button, int mods) override;
 
     //---------------------- Interface --------------------------------
-    // Returns true if the rendering system started correctly
-    void Start();
 
     // Run the game loop
     bool Run() const;
@@ -51,7 +49,14 @@ public:
     // Records the FPS
     static void LogFPS();
 
+    // Get the input window
+    Input::Window* input_window() const { return p_vk_window_->window(); }
+
 private:
+    // TODO This could be refactored into some factory pattern such that we can
+    // only create shared_ptrs from this class.
+    DrawCube(int argc, const char* argv[]);
+
     struct VertexBuffer {
         vk::Buffer buffer;
         vk::DeviceMemory memory;
@@ -83,6 +88,9 @@ private:
     void LoadPipeline();
     void LoadSemaphores();
 
+    // Loads all of the previous steps
+    void LoadGraphics();
+
     // ------------------- Cleanup Stages ----------------------
     void DestroyShaderModules();
     void DestroyVertexBuffer() const;
@@ -100,7 +108,7 @@ private:
     VulkanGPU* p_active_gpu_; 
 
     // Points to a window where we present our rendered data to
-    VulkanWindow* p_window_;
+    std::shared_ptr<VulkanWindow> p_vk_window_;
 
     // Points to a logical device which can be used to access queues to which we submit command buffers
     VulkanDevice* p_device_;

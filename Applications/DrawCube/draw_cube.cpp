@@ -11,27 +11,28 @@
 
 
 int main(int argc, const char* argv[]) {
-    Phyre::Graphics::DrawCube app(argc, argv);
-    app.Start();
+    using Phyre::Graphics::DrawCube;
+    std::shared_ptr<DrawCube> app = DrawCube::Create(argc, argv);
 
-    while (app.Run()) {
-        app.BeginRender();
-        app.LogFPS();
-        app.Draw();
-        app.EndRender();
+    while (app->Run()) {
+        app->BeginRender();
+        app->LogFPS();
+        app->Draw();
+        app->EndRender();
     }
 
-    app.Stop();
+    app->Stop();
     return 0;
 }
 
 const std::string Phyre::Graphics::DrawCube::kWho = "[DrawCube]";
 
 Phyre::Graphics::DrawCube::DrawCube(int argc, const char* argv[]) :
+    BaseClass(1),
     instance_(),
     debugger_(instance_),
     p_active_gpu_(nullptr),
-    p_window_(nullptr),
+    p_vk_window_(nullptr),
     p_device_(nullptr),
     p_swapchain_(nullptr),
     p_uniform_buffer_(nullptr),
@@ -45,6 +46,8 @@ Phyre::Graphics::DrawCube::DrawCube(int argc, const char* argv[]) :
     }
     std::string configuration = argv[1];
     p_provider_ = std::make_unique<Configuration::Provider>(configuration);
+
+    LoadGraphics();
     PHYRE_LOG(trace, kWho) << "Instantiated";
 }
 
@@ -75,7 +78,7 @@ void Phyre::Graphics::DrawCube::ReloadSwapchain() {
     // we specified that the viewport and scissor would have dynamic state
 }
 
-void Phyre::Graphics::DrawCube::Start() {
+void Phyre::Graphics::DrawCube::LoadGraphics() {
 #ifndef NDEBUG
     StartDebugger();
 #endif
@@ -101,7 +104,13 @@ void Phyre::Graphics::DrawCube::Start() {
 }
 
 bool Phyre::Graphics::DrawCube::Run() const {
-    return p_window_->Update();
+    return p_vk_window_->Update();
+}
+
+std::shared_ptr<Phyre::Graphics::DrawCube> Phyre::Graphics::DrawCube::Create(int argc, const char* argv[]) {
+    std::shared_ptr<DrawCube> app(new DrawCube(argc, argv));
+    app->Bind(app->input_window());
+    return app;
 }
 
 Phyre::Graphics::DrawCube::~DrawCube() {
@@ -118,7 +127,7 @@ Phyre::Graphics::DrawCube::~DrawCube() {
     DestroyShaderModules();
     p_swapchain_.reset();
     p_device_->get().destroyCommandPool(command_pool_);
-    delete p_window_;
+    p_vk_window_.reset();
     delete p_device_;
     PHYRE_LOG(trace, kWho) << "Destroyed";
 }
@@ -129,16 +138,17 @@ void Phyre::Graphics::DrawCube::OnFramebufferResize(int width, int height) {
 }
 
 void Phyre::Graphics::DrawCube::OnMousePositionUpdate(double x, double y) {
-    PHYRE_LOG(debug, kWho) << "Mouse position: (" << x << ", " << y << ')';
+    if (CursorMode() == Input::Cursor::kHidden)
+        PHYRE_LOG(debug, kWho) << "Mouse position: (" << x << ", " << y << ')';
 }
 
 void Phyre::Graphics::DrawCube::OnKeyRelease(Input::Key key, int mods) {
     switch (key) {
         case Input::Key::kEscape:
-            if (p_window_->cursor().mode() == Input::CursorMode::kDisabled) {
-                p_window_->cursor().set_mode(Input::CursorMode::kNormal);
+            if (CursorMode() == Input::Cursor::Mode::kDisabled) {
+                SetCursorMode(Input::Cursor::Mode::kNormal);
             } else {
-                p_window_->Close();
+                p_vk_window_->Close();
             }
             break;
         default: BaseClass::OnKeyRelease(key, mods);
@@ -146,9 +156,8 @@ void Phyre::Graphics::DrawCube::OnKeyRelease(Input::Key key, int mods) {
 }
 
 void Phyre::Graphics::DrawCube::OnMouseRelease(Input::Mouse mouse_button, int mods) {
-    Cursor &cursor = p_window_->cursor();
-    if (cursor.mode() == Input::CursorMode::kNormal && (mouse_button == Input::Mouse::kButton1 || mouse_button == Input::Mouse::kLeftButton)) {
-        cursor.set_mode(Input::CursorMode::kDisabled);
+    if (CursorMode() == Input::Cursor::Mode::kNormal && (mouse_button == Input::Mouse::kButton1 || mouse_button == Input::Mouse::kLeftButton)) {
+        SetCursorMode(Input::Cursor::Mode::kDisabled);
     }
     BaseClass::OnMouseRelease(mouse_button, mods);
 }
@@ -174,11 +183,11 @@ void Phyre::Graphics::DrawCube::LoadGPUs() {
 }
 
 void Phyre::Graphics::DrawCube::LoadWindow(float width, float height, const std::string& title) {
-    p_window_ = new VulkanWindow(width, height, title, instance_, *p_active_gpu_, this);
+    p_vk_window_ = VulkanWindow::Create(width, height, title, instance_, *p_active_gpu_);
 }
 
 void Phyre::Graphics::DrawCube::LoadDevice() {
-    p_device_ = new VulkanDevice(*p_active_gpu_, *p_window_);
+    p_device_ = new VulkanDevice(*p_active_gpu_, *p_vk_window_);
 }
 
 void Phyre::Graphics::DrawCube::LoadCommandPool() {
@@ -221,7 +230,7 @@ void Phyre::Graphics::DrawCube::ExecuteBeginCommandBuffer(size_t command_buffer_
 }
 
 void Phyre::Graphics::DrawCube::LoadSwapchain() {
-    p_swapchain_.reset(new VulkanSwapchain(*p_device_, *p_window_, p_swapchain_.get()));
+    p_swapchain_.reset(new VulkanSwapchain(*p_device_, *p_vk_window_, p_swapchain_.get()));
 }
 
 void Phyre::Graphics::DrawCube::LoadPipeline() {
@@ -518,16 +527,14 @@ void Phyre::Graphics::DrawCube::LoadShaderModules() {
     std::vector<uint32_t> vertex_shader_bytecode = p_provider_->GetContentsSPIRV(target_, vertex_file_name);
 
     if (vertex_shader_bytecode.empty()) {
-        PHYRE_LOG(fatal, kWho) << "Could not read any vertex shader bytecode!";
-        exit(EXIT_FAILURE);
+        throw std::runtime_error("Could not read any vertex shader bytecode!");
     }
 
     std::string fragment_file_name("fragments.spv");
     std::vector<uint32_t> fragment_shader_bytecode = p_provider_->GetContentsSPIRV(target_, fragment_file_name);
 
     if (vertex_shader_bytecode.empty()) {
-        PHYRE_LOG(fatal, kWho) << "Could not read any fragment shader bytecode!";
-        exit(EXIT_FAILURE);
+        throw std::runtime_error("Could not read any fragment shader bytecode!");
     }
 
     // We will be creating two pipeline shader stages: One for vertices, and one for fragments

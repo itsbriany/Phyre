@@ -1,7 +1,7 @@
 #include <vulkan.hpp>
 #include <Logging/logging.h>
+#include <Input/os_window.h>
 
-#include "input.h"
 #include "vulkan_instance.h"
 #include "vulkan_gpu.h"
 #include "vulkan_window.h"
@@ -19,42 +19,51 @@ VulkanWindow::VulkanWindow(float width,
                            float height,
                            const std::string& window_title,
                            const VulkanInstance& instance,
-                           const VulkanGPU& gpu,
-                           Application* p_application) :
+                           const VulkanGPU& gpu) :
+    BaseClass(0),
     width_(width),
     height_(height),
     instance_(instance),
     gpu_(gpu),
-    p_window_(InitializeWindow(width, height, window_title)),
-    is_running_(true),
-    surface_(InitializeSurface(p_window_, instance_.get())),
-    surface_present_modes_(InitializePresentModes(gpu_, surface_)),
-    surface_formats_(InitializeSurfaceFormats(gpu_, surface_)),
-    preferred_present_mode_(InitializePreferredPresentMode(surface_present_modes_)),
-    preferred_surface_format_(InitializePreferredSurfaceFormat(surface_formats_)),
-    p_application_(p_application),
-    cursor_(p_window_)
+    p_window_(nullptr)
 {
-    InitializeCallbacks();
+    p_window_ = InitializeWindow(width, height, window_title);
+    surface_ = InitializeSurface(instance_.get(), *p_window_);
+    surface_present_modes_ = InitializePresentModes(gpu_, surface_);
+    surface_formats_ = InitializeSurfaceFormats(gpu_, surface_);
+    preferred_present_mode_ = InitializePreferredPresentMode(surface_present_modes_);
+    preferred_surface_format_ = InitializePreferredSurfaceFormat(surface_formats_);
+
     PHYRE_LOG(trace, kWho) << "Instantiated";
+}
+
+VulkanWindow::Pointer VulkanWindow::Create(float width,
+                                           float height,
+                                           const std::string& window_title,
+                                           const VulkanInstance& instance,
+                                           const VulkanGPU& gpu) {
+    Pointer p_vk_window = Pointer(new VulkanWindow(width, height, window_title, instance, gpu));
+    p_vk_window->Bind(p_vk_window->window());
+    return p_vk_window;
 }
 
 VulkanWindow::~VulkanWindow() {
     DestroySurface();
-    DestroyOSWindow(p_window_);
+    Close();
     PHYRE_LOG(trace, kWho) << "Destroyed";
 }
 
-bool VulkanWindow::Update() {
-    glfwPollEvents();
-    if (!p_window_ || glfwWindowShouldClose(p_window_)) {
-        Close();
-    }
-    return is_running_;
+void VulkanWindow::OnFramebufferResize(int width, int height) {
+    width_ = static_cast<float>(width);
+    height_ = static_cast<float>(height);
+}
+
+bool VulkanWindow::Update() const {
+    return p_window_->Update();
 }
 
 void VulkanWindow::Close() {
-    is_running_ = false;
+    p_window_.reset();
 }
 
 void VulkanWindow::DestroySurface() const {
@@ -67,96 +76,16 @@ void VulkanWindow::DestroySurface() const {
     }
 }
 
-void VulkanWindow::DestroyOSWindow(OSWindow* p_os_window) {
-    glfwDestroyWindow(p_os_window);
+
+
+std::unique_ptr<Input::Window> VulkanWindow::InitializeWindow(float width, float height, const std::string& window_title) {
+    return std::make_unique<Input::Window>(static_cast<int>(width), static_cast<int>(height), window_title);
 }
 
-void VulkanWindow::OSFramebufferResizeCallback(OSWindow* p_os_window, int width, int height) {
-    if (width == 0 || height == 0) {
-        return;
-    }
-
-    VulkanWindow *p_window = reinterpret_cast<VulkanWindow*>(glfwGetWindowUserPointer(p_os_window));
-
-    p_window->set_width(static_cast<float>(width));
-    p_window->set_height(static_cast<float>(height));
-    Application *p_application = p_window->application();
-
-    p_application->OnFramebufferResize(width, height);
-}
-
-void VulkanWindow::OSWindowMousePositionCallback(OSWindow* p_os_window, double x, double y) {
-    Application *p_application = GetApplicationFromWindow(p_os_window);
-    p_application->OnMousePositionUpdate(x, y);
-}
-
-void VulkanWindow::OSWindowKeyCallback(OSWindow* p_os_window, int key, int /*scancode*/, int action, int mods) {
-    Application *p_application = GetApplicationFromWindow(p_os_window);
-    if (action == Input::Action::kPressed) {
-        p_application->OnKeyPress(static_cast<Input::Key>(key), mods);
-    } else if (action == Input::Action::kReleased) {
-        p_application->OnKeyRelease(static_cast<Input::Key>(key), mods);
-    } else if (action == Input::Action::kHold) {
-        p_application->OnKeyHold(static_cast<Input::Key>(key), mods);
-    }
-}
-
-void VulkanWindow::OSMouseButtonCallback(OSWindow* p_os_window, int button, int action, int mods) {
-    VulkanWindow *p_window = reinterpret_cast<VulkanWindow*>(glfwGetWindowUserPointer(p_os_window));
-    Application *p_application = p_window->application();
-    switch (action) {
-    case Input::Action::kPressed:
-        p_application->OnMousePress(static_cast<Input::Mouse>(button), mods);
-        break;
-    case Input::Action::kReleased:
-        p_application->OnMouseRelease(static_cast<Input::Mouse>(button), mods);
-        break;
-    default:
-        PHYRE_LOG(error, kWho) << "Could not determine mouse action";
-    }
-}
-
-void VulkanWindow::OSMouseScrollCallback(OSWindow* p_os_window, double x_offset, double y_offset) {
-    Application *p_application = GetApplicationFromWindow(p_os_window);
-    p_application->OnMouseScroll(x_offset, y_offset);
-}
-
-Application* VulkanWindow::GetApplicationFromWindow(OSWindow* p_os_window) {
-    VulkanWindow *p_window = reinterpret_cast<VulkanWindow*>(glfwGetWindowUserPointer(p_os_window));
-    return p_window->application();
-}
-
-OSWindow* VulkanWindow::InitializeWindow(float width, float height, const std::string& window_title) {
-    if (!glfwInit()) {
-        std::string error_message = "Could not initialize GLFW!";
-        PHYRE_LOG(error, kWho) << error_message;
-        throw std::runtime_error(error_message);
-    }
-
-    // Cross platform window handle
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    return glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), window_title.c_str(), nullptr, nullptr);
-}
-
-vk::SurfaceKHR VulkanWindow::InitializeSurface(OSWindow* window, const vk::Instance& instance) {
-    std::string error_message;
-
+vk::SurfaceKHR VulkanWindow::InitializeSurface(const vk::Instance& instance, const Input::Window& window) {
     // The surface where we render our output 
     // Underneath the covers, this calls the appropriate Vk<PLATFORM>SurfaceCreateInfoKHR
-    VkSurfaceKHR surface;
-    VkResult error = glfwCreateWindowSurface(instance, window, nullptr, &surface);
-    if (error == VK_ERROR_EXTENSION_NOT_PRESENT) {
-        error_message = "Failed to instantiate vulkan surface: Instance WSI extensions not present";
-        PHYRE_LOG(error, kWho) << error_message;
-        throw std::runtime_error(error_message);
-    }
-    if (error != VK_SUCCESS) {
-        error_message = "Failed to instantiate vulkan surface";
-        PHYRE_LOG(error, kWho) << error_message;
-        throw std::runtime_error(error_message);
-    }
-
-    return surface;
+    return window.CreateVulkanSurfaceKHR(instance);
 }
 
 vk::SurfaceCapabilitiesKHR VulkanWindow::InitializeSurfaceCapabilities(const VulkanGPU& gpu, const vk::SurfaceKHR& surface) {
@@ -216,18 +145,6 @@ vk::SurfaceFormatKHR VulkanWindow::InitializePreferredSurfaceFormat(const std::v
 
     surface_format.colorSpace = surface_formats.front().colorSpace;
     return surface_format;
-}
-
-void VulkanWindow::InitializeCallbacks() {
-    // Allow calling back to us
-    glfwSetWindowUserPointer(p_window_, this);
-
-    // The rest of the callbacks get set here
-    glfwSetFramebufferSizeCallback(p_window_, &OSFramebufferResizeCallback);
-    glfwSetCursorPosCallback(p_window_, &OSWindowMousePositionCallback);
-    glfwSetKeyCallback(p_window_, &OSWindowKeyCallback);
-    glfwSetMouseButtonCallback(p_window_, &OSMouseButtonCallback);
-    glfwSetScrollCallback(p_window_, &OSMouseScrollCallback);
 }
 
 }
