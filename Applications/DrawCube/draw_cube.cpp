@@ -1,5 +1,6 @@
 #include <chrono>
 #include <fstream>
+
 #include <glm/gtc/matrix_transform.inl>
 
 #include <Graphics/geometry.h>
@@ -145,6 +146,7 @@ void Phyre::Graphics::DrawCube::OnMousePositionUpdate(double x, double y) {
     if (cursor_mode == Input::Cursor::kDisabled) {
         if (MouseButton(Input::Mouse::kButton1) == Input::Action::kPressed) {
             PHYRE_LOG(debug, kWho) << "PRESSED: Mouse position: (" << x << ", " << y << ')';
+            UpdateUniformBuffers();
         }
     }
 }
@@ -373,7 +375,6 @@ void Phyre::Graphics::DrawCube::LoadSemaphores() {
 }
 
 void Phyre::Graphics::DrawCube::Draw() {
-    UpdateUniformBuffers();
 
     // We cannot bind the vertex buffer until we begin a renderpass
     std::array<vk::ClearValue, 2> clear_values;
@@ -654,24 +655,32 @@ void Phyre::Graphics::DrawCube::LoadUniformBuffer() {
 }
 
 void Phyre::Graphics::DrawCube::UpdateUniformBuffers() const {
-    using std::chrono::high_resolution_clock;
-    static std::chrono::time_point<high_resolution_clock> startTime = high_resolution_clock::now();
-    std::chrono::time_point<high_resolution_clock> currentTime = high_resolution_clock::now();
-    float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.0f;
-
     ModelViewProjection mvp;
 
-    // Rotate 90 degrees per second along the Z-Axis
-    mvp.model = glm::rotate(glm::mat4(), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    // TODO This is just a proof of concept for now, ideally, we would like to specify which model
+    // to rotate, more parameters, etc...
+    glm::vec2 cursor_position = CursorPosition();
+
+    // Rotate 90 degrees per second along the X-Axis
+    mvp.model = glm::mat4();
+    mvp.model = glm::rotate(mvp.model, cursor_position.x * glm::radians(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    mvp.model = glm::rotate(mvp.model, cursor_position.y * glm::radians(1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     
     // Set the "camera" eye position at the origin looking upwards
-    mvp.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::vec3 eye(4.0f, 0.0f, 0.0f);        // The position of our eye in the world
+    glm::vec3 center(0.0f, 0.0f, 0.0f);     // Where we want to look at in the world
+    glm::vec3 up(0.0f, 1.0f, 0.0f);         // Unit vector specifying which axis is UP in our world
+    mvp.view = glm::lookAt(eye, center, up);
 
-    // Project the 3D world onto a plane with a 45 degree vertical field of view
-    mvp.projection = glm::perspective(glm::radians(45.0f), p_swapchain_->image_width() / p_swapchain_->image_height(), 0.1f, 10.0f);
+    // Project the 3D world onto a plane
+    static const auto field_of_view = glm::radians(60.0f); // The camera lens: more degrees is wider, less is more zoomed in
+    float aspect_ratio = p_swapchain_->image_width() / p_swapchain_->image_height(); // Framebuffer resolution (e.g 1920x1080)
+    static const float near_clipping_plane = 0.1f;
+    static const float far_clipping_plane = 100.0f;
+    mvp.projection = glm::perspective(field_of_view, aspect_ratio, near_clipping_plane, far_clipping_plane);
 
     // Flip the Y-coordinate since GLM was originally designed for OpenGL
-    // mvp.projection[1][1] *= -1;
+    mvp.projection[1][1] *= -1;
 
     // Map the memory from the device to the host, update it with the new transformation data, then remove the mapping
     void *p_data = p_device_->get().mapMemory(p_uniform_buffer_->memory(), 0, sizeof(ModelViewProjection));
