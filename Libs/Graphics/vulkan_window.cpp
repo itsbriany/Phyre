@@ -1,23 +1,26 @@
+#include <vulkan.hpp>
 #include <Logging/logging.h>
 
-#include "vulkan_window.h"
+#include "input.h"
 #include "vulkan_instance.h"
 #include "vulkan_gpu.h"
+#include "vulkan_window.h"
 
-#include "application.h"
 
+namespace Phyre {
+namespace Graphics {
 
-const std::string Phyre::Graphics::VulkanWindow::kWho = "[VulkanWindow]";
+const std::string VulkanWindow::kWho = "[VulkanWindow]";
 
 // Dynamically loaded functions
 static PFN_vkDestroySurfaceKHR  s_destroy_surface_khr_ = nullptr;
 
-Phyre::Graphics::VulkanWindow::VulkanWindow(float width,
-                                            float height,
-                                            const std::string& window_title,
-                                            const VulkanInstance& instance,
-                                            const VulkanGPU& gpu,
-                                            Application* p_application) :
+VulkanWindow::VulkanWindow(float width,
+                           float height,
+                           const std::string& window_title,
+                           const VulkanInstance& instance,
+                           const VulkanGPU& gpu,
+                           Application* p_application) :
     width_(width),
     height_(height),
     instance_(instance),
@@ -29,18 +32,20 @@ Phyre::Graphics::VulkanWindow::VulkanWindow(float width,
     surface_formats_(InitializeSurfaceFormats(gpu_, surface_)),
     preferred_present_mode_(InitializePreferredPresentMode(surface_present_modes_)),
     preferred_surface_format_(InitializePreferredSurfaceFormat(surface_formats_)),
-    p_application_(p_application)
+    p_application_(p_application),
+    cursor_(p_window_)
 {
     InitializeCallbacks();
     PHYRE_LOG(trace, kWho) << "Instantiated";
 }
 
-Phyre::Graphics::VulkanWindow::~VulkanWindow() {
+VulkanWindow::~VulkanWindow() {
     DestroySurface();
+    DestroyOSWindow(p_window_);
     PHYRE_LOG(trace, kWho) << "Destroyed";
 }
 
-bool Phyre::Graphics::VulkanWindow::Update() {
+bool VulkanWindow::Update() {
     glfwPollEvents();
     if (!p_window_ || glfwWindowShouldClose(p_window_)) {
         Close();
@@ -48,43 +53,80 @@ bool Phyre::Graphics::VulkanWindow::Update() {
     return is_running_;
 }
 
-void Phyre::Graphics::VulkanWindow::Close() {
+void VulkanWindow::Close() {
     is_running_ = false;
 }
 
-void Phyre::Graphics::VulkanWindow::DestroySurface() const {
+void VulkanWindow::DestroySurface() const {
     s_destroy_surface_khr_ = reinterpret_cast<PFN_vkDestroySurfaceKHR>(vkGetInstanceProcAddr(instance_.get(), "vkDestroySurfaceKHR"));
     if (s_destroy_surface_khr_) {
         s_destroy_surface_khr_(instance_.get(), surface_, nullptr);
-    } else {
+    }
+    else {
         PHYRE_LOG(warning, kWho) << "Could not delete surface";
     }
 }
 
-void Phyre::Graphics::VulkanWindow::OSFramebufferResizeCallback(OSWindow* p_os_window, int width, int height) {
+void VulkanWindow::DestroyOSWindow(OSWindow* p_os_window) {
+    glfwDestroyWindow(p_os_window);
+}
+
+void VulkanWindow::OSFramebufferResizeCallback(OSWindow* p_os_window, int width, int height) {
     if (width == 0 || height == 0) {
         return;
     }
 
     VulkanWindow *p_window = reinterpret_cast<VulkanWindow*>(glfwGetWindowUserPointer(p_os_window));
-    if (!p_window) {
-        PHYRE_LOG(error, kWho) << "Could not get a handle to the window during framebuffer resize";
-        return;
-    }
 
     p_window->set_width(static_cast<float>(width));
     p_window->set_height(static_cast<float>(height));
     Application *p_application = p_window->application();
 
-    if (!p_application) {
-        PHYRE_LOG(error, kWho) << "Could not get a handle to the application during framebuffer resize";
-        return;
-    }
     p_application->OnFramebufferResize(width, height);
 }
 
-Phyre::Graphics::VulkanWindow::OSWindow* 
-Phyre::Graphics::VulkanWindow::InitializeWindow(float width, float height, const std::string& window_title) {
+void VulkanWindow::OSWindowMousePositionCallback(OSWindow* p_os_window, double x, double y) {
+    Application *p_application = GetApplicationFromWindow(p_os_window);
+    p_application->OnMousePositionUpdate(x, y);
+}
+
+void VulkanWindow::OSWindowKeyCallback(OSWindow* p_os_window, int key, int /*scancode*/, int action, int mods) {
+    Application *p_application = GetApplicationFromWindow(p_os_window);
+    if (action == Input::Action::kPressed) {
+        p_application->OnKeyPress(static_cast<Input::Key>(key), mods);
+    } else if (action == Input::Action::kReleased) {
+        p_application->OnKeyRelease(static_cast<Input::Key>(key), mods);
+    } else if (action == Input::Action::kHold) {
+        p_application->OnKeyHold(static_cast<Input::Key>(key), mods);
+    }
+}
+
+void VulkanWindow::OSMouseButtonCallback(OSWindow* p_os_window, int button, int action, int mods) {
+    VulkanWindow *p_window = reinterpret_cast<VulkanWindow*>(glfwGetWindowUserPointer(p_os_window));
+    Application *p_application = p_window->application();
+    switch (action) {
+    case Input::Action::kPressed:
+        p_application->OnMousePress(static_cast<Input::Mouse>(button), mods);
+        break;
+    case Input::Action::kReleased:
+        p_application->OnMouseRelease(static_cast<Input::Mouse>(button), mods);
+        break;
+    default:
+        PHYRE_LOG(error, kWho) << "Could not determine mouse action";
+    }
+}
+
+void VulkanWindow::OSMouseScrollCallback(OSWindow* p_os_window, double x_offset, double y_offset) {
+    Application *p_application = GetApplicationFromWindow(p_os_window);
+    p_application->OnMouseScroll(x_offset, y_offset);
+}
+
+Application* VulkanWindow::GetApplicationFromWindow(OSWindow* p_os_window) {
+    VulkanWindow *p_window = reinterpret_cast<VulkanWindow*>(glfwGetWindowUserPointer(p_os_window));
+    return p_window->application();
+}
+
+OSWindow* VulkanWindow::InitializeWindow(float width, float height, const std::string& window_title) {
     if (!glfwInit()) {
         std::string error_message = "Could not initialize GLFW!";
         PHYRE_LOG(error, kWho) << error_message;
@@ -96,7 +138,7 @@ Phyre::Graphics::VulkanWindow::InitializeWindow(float width, float height, const
     return glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), window_title.c_str(), nullptr, nullptr);
 }
 
-vk::SurfaceKHR Phyre::Graphics::VulkanWindow::InitializeSurface(OSWindow* window, const vk::Instance& instance) {
+vk::SurfaceKHR VulkanWindow::InitializeSurface(OSWindow* window, const vk::Instance& instance) {
     std::string error_message;
 
     // The surface where we render our output 
@@ -117,11 +159,11 @@ vk::SurfaceKHR Phyre::Graphics::VulkanWindow::InitializeSurface(OSWindow* window
     return surface;
 }
 
-vk::SurfaceCapabilitiesKHR Phyre::Graphics::VulkanWindow::InitializeSurfaceCapabilities(const VulkanGPU& gpu, const vk::SurfaceKHR& surface) {
+vk::SurfaceCapabilitiesKHR VulkanWindow::InitializeSurfaceCapabilities(const VulkanGPU& gpu, const vk::SurfaceKHR& surface) {
     return gpu.get().getSurfaceCapabilitiesKHR(surface);
 }
 
-std::vector<vk::PresentModeKHR> Phyre::Graphics::VulkanWindow::InitializePresentModes(const VulkanGPU& gpu, const vk::SurfaceKHR& surface) {
+std::vector<vk::PresentModeKHR> VulkanWindow::InitializePresentModes(const VulkanGPU& gpu, const vk::SurfaceKHR& surface) {
     std::vector<vk::PresentModeKHR> present_modes = gpu.get().getSurfacePresentModesKHR(surface);
     if (present_modes.empty()) {
         PHYRE_LOG(warning, kWho) << "No present modes found for the surface on the active GPU";
@@ -129,7 +171,7 @@ std::vector<vk::PresentModeKHR> Phyre::Graphics::VulkanWindow::InitializePresent
     return present_modes;
 }
 
-std::vector<vk::SurfaceFormatKHR> Phyre::Graphics::VulkanWindow::InitializeSurfaceFormats(const VulkanGPU& gpu, const vk::SurfaceKHR& surface) {
+std::vector<vk::SurfaceFormatKHR> VulkanWindow::InitializeSurfaceFormats(const VulkanGPU& gpu, const vk::SurfaceKHR& surface) {
     std::vector<vk::SurfaceFormatKHR> surface_formats = gpu.get().getSurfaceFormatsKHR(surface);
     if (surface_formats.empty()) {
         PHYRE_LOG(warning, kWho) << "No surface formats available on GPU";
@@ -137,7 +179,7 @@ std::vector<vk::SurfaceFormatKHR> Phyre::Graphics::VulkanWindow::InitializeSurfa
     return surface_formats;
 }
 
-vk::PresentModeKHR Phyre::Graphics::VulkanWindow::InitializePreferredPresentMode(const std::vector<vk::PresentModeKHR>& surface_present_modes) {
+vk::PresentModeKHR VulkanWindow::InitializePreferredPresentMode(const std::vector<vk::PresentModeKHR>& surface_present_modes) {
     // Tears when the app misses, but does not tear when the app is fast enough
     if (std::find(surface_present_modes.cbegin(), surface_present_modes.cend(), vk::PresentModeKHR::eFifoRelaxed) != surface_present_modes.cend()) {
         return vk::PresentModeKHR::eFifoRelaxed;
@@ -157,7 +199,7 @@ vk::PresentModeKHR Phyre::Graphics::VulkanWindow::InitializePreferredPresentMode
     return vk::PresentModeKHR::eImmediate;
 }
 
-vk::SurfaceFormatKHR Phyre::Graphics::VulkanWindow::InitializePreferredSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& surface_formats) {
+vk::SurfaceFormatKHR VulkanWindow::InitializePreferredSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& surface_formats) {
     if (surface_formats.empty()) {
         PHYRE_LOG(warning, kWho) << "No surface formats detected!";
     }
@@ -167,7 +209,8 @@ vk::SurfaceFormatKHR Phyre::Graphics::VulkanWindow::InitializePreferredSurfaceFo
     const vk::Format default_image_format = vk::Format::eB8G8R8A8Unorm;
     if (surface_formats.size() == 1 && surface_formats.front().format == vk::Format::eUndefined) {
         surface_format.format = default_image_format;
-    } else {
+    }
+    else {
         surface_format.format = surface_formats.front().format;
     }
 
@@ -175,10 +218,17 @@ vk::SurfaceFormatKHR Phyre::Graphics::VulkanWindow::InitializePreferredSurfaceFo
     return surface_format;
 }
 
-void Phyre::Graphics::VulkanWindow::InitializeCallbacks() {
+void VulkanWindow::InitializeCallbacks() {
     // Allow calling back to us
     glfwSetWindowUserPointer(p_window_, this);
 
     // The rest of the callbacks get set here
     glfwSetFramebufferSizeCallback(p_window_, &OSFramebufferResizeCallback);
+    glfwSetCursorPosCallback(p_window_, &OSWindowMousePositionCallback);
+    glfwSetKeyCallback(p_window_, &OSWindowKeyCallback);
+    glfwSetMouseButtonCallback(p_window_, &OSMouseButtonCallback);
+    glfwSetScrollCallback(p_window_, &OSMouseScrollCallback);
+}
+
+}
 }

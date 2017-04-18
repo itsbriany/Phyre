@@ -1,17 +1,18 @@
 #pragma once
-#include <vulkan.hpp>
 #include <GLFW/glfw3.h>
 
 #include "vulkan_gpu.h"
+#include "application.h"
+#include "cursor.h"
 
 namespace Phyre {
 namespace Graphics {
 
-class Application;
 class VulkanInstance;
 class VulkanDevice;
 class VulkanWindow {
 public:
+    // -------------------- Construction/Destruction ------------
     explicit VulkanWindow(float width, float height,
                           const std::string& window_title,
                           const VulkanInstance& instance,
@@ -20,6 +21,8 @@ public:
     
     // Clean up vulkan resources
     ~VulkanWindow();
+
+    // -------------------- Interface ---------------------------
 
     // Let the window live and respond to events continuously
     // Returns false on exit
@@ -38,15 +41,13 @@ public:
     const vk::SurfaceFormatKHR& preferred_surface_format() const { return preferred_surface_format_; }
     const vk::PresentModeKHR& preferred_present_mode() const { return preferred_present_mode_; }
     Application* application() const { return p_application_; }
+    Cursor& cursor() { return cursor_; }
 
     // -------------------- Setters -------------------------
     void set_width(float width) { width_ = width; }
     void set_height(float height) { height_ = height; }
 
 private:
-    // -------------------- Type Definitions --------------------
-    typedef GLFWwindow OSWindow;
-
     // -------------------- Initializers --------------------
     static OSWindow* InitializeWindow(float width, float height, const std::string& window_title);
 
@@ -78,9 +79,53 @@ private:
     // -------------------- Destroyers ----------------------
     // Destroys the SurfaceKHR
     void DestroySurface() const;
+    static void DestroyOSWindow(OSWindow* p_os_window);
 
     // -------------------- Callbacks ----------------------
-    static void OSFramebufferResizeCallback(OSWindow*, int width, int height);
+
+    /**
+     * \brief Called when the OS Framebuffer is resized
+     * \param width The new framebuffer width
+     * \param height The new framebuffer height
+     */
+    static void OSFramebufferResizeCallback(OSWindow* p_os_window, int width, int height);
+
+    /**
+     * \brief Called when the OS Mouse position updates
+     * \param x The new x position of the mouse
+     * \param y The new y position of the mouse
+     */
+    static void OSWindowMousePositionCallback(OSWindow* p_os_window, double x, double y);
+
+    /**
+     * \brief Called when a key is either pressed, released
+     * \param p_os_window The window who we register the callback to
+     * \param key The key code
+     * \param scancode The key code specific to the OS
+     * \param action Press, Release, etc...
+     * \param mods Flags that help determine if we are holding SHIFT, CTRL, ALT, etc...
+     */
+    static void OSWindowKeyCallback(OSWindow* p_os_window, int key, int scancode, int action, int mods);
+
+    /**
+     * \brief Called when we get input from a mouse button
+     * \param p_os_window The window who we register the callback to
+     * \param button The mouse button associated with the input
+     * \param action The action from the mouse button
+     * \param mods Were we holding SHIT/ALT/CTRL?
+     */
+    static void OSMouseButtonCallback(OSWindow* p_os_window, int button, int action, int mods);
+
+    /**
+     * \brief Called when we get input from mouse scrolling
+     * \param p_os_window The window who we register the callback to
+     * \param x_offset How fast we are scolling on the x axis
+     * \param y_offset How fast we are scolling on the y axis
+     */
+    static void OSMouseScrollCallback(OSWindow* p_os_window, double x_offset, double y_offset);
+
+    // -------------------- Callback Helpers ----------------------
+    static Application* GetApplicationFromWindow(OSWindow* p_os_window);
 
     // ------------------ Data Members ---------------------
     // Width of the window
@@ -118,6 +163,9 @@ private:
 
     // A pointer to our application such that we can call back to it
     Application* p_application_;
+
+    // This window's cursor
+    Cursor cursor_;
 
     // ------------------ Logging --------------------------
     static const std::string kWho;
