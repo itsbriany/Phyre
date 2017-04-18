@@ -1,5 +1,4 @@
 #include <Logging/logging.h>
-#include <vulkan/vulkan.h>
 
 #include "os_window.h"
 
@@ -23,6 +22,7 @@ Window::~Window() {
     Close();
 }
 
+#ifndef __APPLE__
 vk::SurfaceKHR Window::CreateVulkanSurfaceKHR(const vk::Instance& instance) const {
     VkSurfaceKHR surface;
     VkResult error = glfwCreateWindowSurface(instance, p_os_window_, nullptr, &surface);
@@ -34,6 +34,7 @@ vk::SurfaceKHR Window::CreateVulkanSurfaceKHR(const vk::Instance& instance) cons
     }
     return surface;
 }
+#endif
 
 void Window::Close() {
     if (p_os_window_) {

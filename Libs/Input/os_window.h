@@ -2,8 +2,9 @@
 #include <map>
 #include <unordered_map>
 #include <functional>
-
+#ifndef __APPLE__
 #include <vulkan.hpp>
+#endif
 #include <boost/utility.hpp>
 
 #include "handler.h"
@@ -25,11 +26,13 @@ public:
 
     // --------------------------- Interface ---------------------------------
 
-    /** 
+#ifndef __APPLE__
+    /**
      * \param instance The vulkan instance required to create the vulkan surface
      * \return A vulkan surface from the OS window
      */
     vk::SurfaceKHR CreateVulkanSurfaceKHR(const vk::Instance& instance) const;
+#endif
 
     /**
      * \brief Close this window
@@ -81,7 +84,7 @@ private:
     void InitializeMouseActionMap();
 
     // ---------------------- Event Dispatching ----------------------------
-    
+
     // Dispatch events to all bound handlers
     void DispatchEvents();
 
@@ -106,7 +109,7 @@ private:
     typedef std::function<void(Handler::Pointer)> NotificationCallback;
     static void NotifyHandlers(OSWindow* p_os_window, NotificationCallback callback);
     static void UpdateMouseButton(OSWindow* p_os_window, int button, int action);
-    
+
     // -------------------------- Data Members -----------------------------
     // A pointer to the underlying OS Window
     OSWindow* p_os_window_;

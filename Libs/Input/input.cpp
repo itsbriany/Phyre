@@ -1,4 +1,5 @@
 #include <boost/assign/list_of.hpp>
+#include <vector>
 #include <unordered_map>
 #include <sstream>
 
@@ -228,7 +229,7 @@ std::string FlagsToString(int modifier_flags) {
     std::ostringstream oss;
     oss << '[';
     if (!mod_names.empty()) {
-        for (int i = 0; i < mod_names.size(); ++i) {
+        for (size_t i = 0; i < mod_names.size(); ++i) {
             if (i + 1 >= mod_names.size()) {
                 break;
             }
