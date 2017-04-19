@@ -1,35 +1,44 @@
 #pragma once
-#include <GLFW/glfw3.h>
+#include <boost/utility.hpp>
+#include <Input/os_window.h>
+#include <Input/handler.h>
+
 
 #include "vulkan_gpu.h"
-#include "application.h"
-#include "cursor.h"
+
 
 namespace Phyre {
 namespace Graphics {
 
 class VulkanInstance;
 class VulkanDevice;
-class VulkanWindow {
+class VulkanWindow : public Input::Handler {
 public:
+    // -------------------- Type Definitions --------------------
+    typedef std::shared_ptr<VulkanWindow> Pointer;
+
     // -------------------- Construction/Destruction ------------
-    explicit VulkanWindow(float width, float height,
+    static Pointer Create(float width,
+                          float height,
                           const std::string& window_title,
                           const VulkanInstance& instance,
-                          const VulkanGPU& gpu,
-                          Application* p_application);
+                          const VulkanGPU& gpu);
     
     // Clean up vulkan resources
     ~VulkanWindow();
 
-    // -------------------- Interface ---------------------------
+    // -------------------- Input::Handler Overrides ------------
 
+    void OnFramebufferResize(int width, int height) override;
+
+    // -------------------- Interface ---------------------------
+    
     // Let the window live and respond to events continuously
     // Returns false on exit
-    bool Update();
+    bool Update() const;
     
     // Close the window
-    void Close();
+    void Close() const;
 
     // -------------------- Accessors -----------------------
     const float& width() const { return width_; }
@@ -40,19 +49,28 @@ public:
     const std::vector<vk::SurfaceFormatKHR>& surface_formats() const { return surface_formats_; }
     const vk::SurfaceFormatKHR& preferred_surface_format() const { return preferred_surface_format_; }
     const vk::PresentModeKHR& preferred_present_mode() const { return preferred_present_mode_; }
-    Application* application() const { return p_application_; }
-    Cursor& cursor() { return cursor_; }
+    Input::Window* window() const { return p_window_.get(); }
 
     // -------------------- Setters -------------------------
     void set_width(float width) { width_ = width; }
     void set_height(float height) { height_ = height; }
 
 private:
+    // -------------------- Type Definitions --------------------
+    typedef Handler BaseClass;
+
+    // -------------------- Construction ------------------------
+    explicit VulkanWindow(float width,
+        float height,
+        const std::string& window_title,
+        const VulkanInstance& instance,
+        const VulkanGPU& gpu);
+
     // -------------------- Initializers --------------------
-    static OSWindow* InitializeWindow(float width, float height, const std::string& window_title);
+    static std::unique_ptr<Input::Window> InitializeWindow(float width, float height, const std::string& window_title);
 
     // Throws a runtime exception if the surface could not properly be initialized
-    static vk::SurfaceKHR InitializeSurface(OSWindow* window, const vk::Instance& instance);
+    static vk::SurfaceKHR InitializeSurface(const vk::Instance& instance, const Input::Window& window);
 
     // Initialize surface capabilities
     static vk::SurfaceCapabilitiesKHR InitializeSurfaceCapabilities(const VulkanGPU& gpu, const vk::SurfaceKHR& surface);
@@ -69,63 +87,9 @@ private:
     // Returns the optimal surface format given the ones available
     static vk::SurfaceFormatKHR InitializePreferredSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& surface_formats);
 
-    // -------------------- Post-Initializers --------------------
-    
-    /**
-     * \brief Register the callbacks to the application
-     */
-    void InitializeCallbacks();
-
     // -------------------- Destroyers ----------------------
     // Destroys the SurfaceKHR
     void DestroySurface() const;
-    static void DestroyOSWindow(OSWindow* p_os_window);
-
-    // -------------------- Callbacks ----------------------
-
-    /**
-     * \brief Called when the OS Framebuffer is resized
-     * \param width The new framebuffer width
-     * \param height The new framebuffer height
-     */
-    static void OSFramebufferResizeCallback(OSWindow* p_os_window, int width, int height);
-
-    /**
-     * \brief Called when the OS Mouse position updates
-     * \param x The new x position of the mouse
-     * \param y The new y position of the mouse
-     */
-    static void OSWindowMousePositionCallback(OSWindow* p_os_window, double x, double y);
-
-    /**
-     * \brief Called when a key is either pressed, released
-     * \param p_os_window The window who we register the callback to
-     * \param key The key code
-     * \param scancode The key code specific to the OS
-     * \param action Press, Release, etc...
-     * \param mods Flags that help determine if we are holding SHIFT, CTRL, ALT, etc...
-     */
-    static void OSWindowKeyCallback(OSWindow* p_os_window, int key, int scancode, int action, int mods);
-
-    /**
-     * \brief Called when we get input from a mouse button
-     * \param p_os_window The window who we register the callback to
-     * \param button The mouse button associated with the input
-     * \param action The action from the mouse button
-     * \param mods Were we holding SHIT/ALT/CTRL?
-     */
-    static void OSMouseButtonCallback(OSWindow* p_os_window, int button, int action, int mods);
-
-    /**
-     * \brief Called when we get input from mouse scrolling
-     * \param p_os_window The window who we register the callback to
-     * \param x_offset How fast we are scolling on the x axis
-     * \param y_offset How fast we are scolling on the y axis
-     */
-    static void OSMouseScrollCallback(OSWindow* p_os_window, double x_offset, double y_offset);
-
-    // -------------------- Callback Helpers ----------------------
-    static Application* GetApplicationFromWindow(OSWindow* p_os_window);
 
     // ------------------ Data Members ---------------------
     // Width of the window
@@ -141,10 +105,7 @@ private:
     const VulkanGPU& gpu_;
 
     // The underlying window implementation provided by the operating system
-    OSWindow* p_window_;
-
-    // Is the window alive and running?
-    bool is_running_;
+    std::unique_ptr<Input::Window> p_window_;
 
     // The surface we are using to render images
     vk::SurfaceKHR surface_;
@@ -160,12 +121,6 @@ private:
 
     // The preferred surface format based on the GPU hardware
     vk::SurfaceFormatKHR preferred_surface_format_;
-
-    // A pointer to our application such that we can call back to it
-    Application* p_application_;
-
-    // This window's cursor
-    Cursor cursor_;
 
     // ------------------ Logging --------------------------
     static const std::string kWho;

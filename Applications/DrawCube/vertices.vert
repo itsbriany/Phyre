@@ -1,10 +1,11 @@
-#version 400
+#version 450
 #extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
 
-layout (std140, binding = 0) uniform bufferVals {
-    mat4 mvp;
-} myBufferVals;
+layout (set = 0, binding = 0) uniform UBO {
+    mat4 model;
+    mat4 view;
+    mat4 projection;
+} ubo;
 
 layout (location = 0) in vec4 pos;
 layout (location = 1) in vec4 inColor;
@@ -16,5 +17,5 @@ out gl_PerVertex {
 
 void main() {
    outColor = inColor;
-   gl_Position = myBufferVals.mvp * pos;
+   gl_Position = ubo.projection * ubo.view * ubo.model * pos;
 }

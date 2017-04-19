@@ -1,23 +1,40 @@
 #pragma once
 #include <GLFW/glfw3.h>
-#include <string>
 
 namespace Phyre {
-namespace Graphics {
-
-// -------------------- Type Definitions --------------------
-typedef GLFWwindow OSWindow;
-
-/**
- * \brief Various input mappings that can be used to trigger events.
- * The purpose of this namespaces is to provide a compatible interface
- * to map human input to OS Window related events.
- */
 namespace Input {
 
-/**
- * \brief Keyboard key events
- */
+namespace Cursor {
+
+    /**
+    * \brief Help determine the cursor's state
+    */
+    enum Mode {
+        kDisabled = GLFW_CURSOR_DISABLED,
+        kNormal = GLFW_CURSOR_NORMAL,
+        kHidden = GLFW_CURSOR_HIDDEN
+    };
+
+    std::string ModeToString(enum Mode cursor_mode);
+
+}
+
+enum Mouse {
+    kButton1 = GLFW_MOUSE_BUTTON_1,
+    kButton2 = GLFW_MOUSE_BUTTON_2,
+    kButton3 = GLFW_MOUSE_BUTTON_3,
+    kButton4 = GLFW_MOUSE_BUTTON_4,
+    kButton5 = GLFW_MOUSE_BUTTON_5,
+    kButton6 = GLFW_MOUSE_BUTTON_6,
+    kButton7 = GLFW_MOUSE_BUTTON_7,
+    kButton8 = GLFW_MOUSE_BUTTON_8,
+    kLeftButton = GLFW_MOUSE_BUTTON_LEFT,
+    kRightButton = GLFW_MOUSE_BUTTON_RIGHT,
+    kMiddleButton = GLFW_MOUSE_BUTTON_MIDDLE
+};
+
+std::string ToString(Mouse mouse);
+
 enum Key {
     kUnknown = GLFW_KEY_UNKNOWN,
     kSpace = GLFW_KEY_SPACE,
@@ -140,30 +157,11 @@ enum Key {
     kMenu = GLFW_KEY_MENU
 };
 
-std::string KeyToString(Key key);
+std::string ToString(Key key);
 
 /**
- * \brief Mouse events
- */
-enum Mouse {
-    kButton1 = GLFW_MOUSE_BUTTON_1,
-    kButton2 = GLFW_MOUSE_BUTTON_2,
-    kButton3 = GLFW_MOUSE_BUTTON_3,
-    kButton4 = GLFW_MOUSE_BUTTON_4,
-    kButton5 = GLFW_MOUSE_BUTTON_5,
-    kButton6 = GLFW_MOUSE_BUTTON_6,
-    kButton7 = GLFW_MOUSE_BUTTON_7,
-    kButton8 = GLFW_MOUSE_BUTTON_8,
-    kLeftButton = GLFW_MOUSE_BUTTON_LEFT,
-    kRightButton = GLFW_MOUSE_BUTTON_RIGHT,
-    kMiddleButton = GLFW_MOUSE_BUTTON_MIDDLE
-};
-
-std::string MouseToString(Mouse mouse);
-
-/**
- * \brief An action which is usually associated with an Action
- */
+* \brief An action which is usually associated with an Action
+*/
 enum Action {
     kPressed = GLFW_PRESS,
     kReleased = GLFW_RELEASE,
@@ -171,6 +169,7 @@ enum Action {
 };
 
 std::string ActionToString(Action action);
+
 
 /**
 * \brief A modifier which is generally associated when performing an Action with a given Key
@@ -183,24 +182,14 @@ enum Modifier {
     kSuper = GLFW_MOD_SUPER
 };
 
-std::string ModifierToString(Modifier mod);
+std::string ToString(Modifier mod);
 
 /**
- * \param modifier_flags Binary flag bits which represent various Modifiers
- * \return A list of modifiers represented as a string
- */
-std::string ModifierFlagsToString(int modifier_flags);
+* \param modifier_flags Binary flag bits which represent various Modifiers
+* \return A list of modifiers represented as a string
+*/
+std::string FlagsToString(int modifier_flags);
 
-/**
- * \brief Help determine the cursor's state
- */
-enum CursorMode {
-    kDisabled = GLFW_CURSOR_DISABLED,
-    kNormal = GLFW_CURSOR_NORMAL,
-    kHidden = GLFW_CURSOR_HIDDEN
-};
 
-std::string CursorModeToString(CursorMode cursor_mode);
-}
 }
 }
